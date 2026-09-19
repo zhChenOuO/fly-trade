@@ -1,0 +1,132 @@
+{
+  "mean_sub": {
+    "passed": false,
+    "gates": {
+      "G1_minority_ratio": 0.485,
+      "G2_finite_nonconst": true,
+      "G3_between_within": 2.989883697860389,
+      "G4_perturbation": 1.209042417839092,
+      "G5_ks_p_vs_mean_image": 0.09710349657052789
+    },
+    "perturbation_effect": {
+      "flip_price": 1.127191987504131,
+      "shuffle_time": 1.209042417839092,
+      "mask_recent25": 0.9595029796427266,
+      "black": 0.9771462876472626,
+      "mean_image": 1.0424991016216592
+    },
+    "sd_train_margin": 0.9171915326978596,
+    "margin_val": {
+      "mean": 0.02975633908732498,
+      "std": 0.9188830799674684,
+      "p5_p95": [
+        -1.488980315222753,
+        1.495265384196883
+      ]
+    },
+    "nuisance_r2_full": 0.008317355303483764,
+    "nuisance_r2_shortcut": 0.006747876646407747,
+    "nuisance_spearman": {
+      "mean_brightness": 0.05803913221324961,
+      "nonzero_pixel_ratio": 0.06734751812015285,
+      "total_pixel_energy": 0.05171382371382372,
+      "price_vertical_range": -0.04594732594732595,
+      "n_up_candles": 0.0010644233246836592,
+      "n_down_candles": -0.0010644233246836592,
+      "volatility": -0.0204943644943645
+    },
+    "baseline": {
+      "buy_mean": 0.0005604355927940428,
+      "buy_std": 0.2538863413148152,
+      "sell_mean": 0.0012803995111787855,
+      "sell_std": 0.26253101047463484
+    }
+  },
+  "zero_black": {
+    "passed": false,
+    "gates": {
+      "G1_minority_ratio": 0.49,
+      "G2_finite_nonconst": true,
+      "G3_between_within": 1.4085466031399525,
+      "G4_perturbation": 1.1403426957524845,
+      "G5_ks_p_vs_mean_image": 0.00013349301651925088
+    },
+    "perturbation_effect": {
+      "flip_price": 1.1243028572584997,
+      "shuffle_time": 1.1403426957524845,
+      "mask_recent25": 0.9620391767000259,
+      "black": 1.0890367463553434,
+      "mean_image": 1.0103806389943562
+    },
+    "sd_train_margin": 0.9281348874658807,
+    "margin_val": {
+      "mean": 0.02465992550498137,
+      "std": 0.9345514836529325,
+      "p5_p95": [
+        -1.6024915391627235,
+        1.5409154897665573
+      ]
+    },
+    "nuisance_r2_full": 0.003355605431595632,
+    "nuisance_r2_shortcut": 0.0008650983264435474,
+    "nuisance_spearman": {
+      "mean_brightness": 0.014891642936317864,
+      "nonzero_pixel_ratio": 0.01872629743234069,
+      "total_pixel_energy": 0.013032397032397034,
+      "price_vertical_range": -0.07086934686934689,
+      "n_up_candles": -0.003947306323929674,
+      "n_down_candles": 0.003947306323929674,
+      "volatility": -0.06737077937077937
+    },
+    "baseline": {
+      "buy_mean": -0.034196587008582136,
+      "buy_std": 0.24028297115022126,
+      "sell_mean": -0.023511691446217484,
+      "sell_std": 0.2556124798825113
+    }
+  },
+  "on_off": {
+    "passed": false,
+    "gates": {
+      "G1_minority_ratio": 0.484,
+      "G2_finite_nonconst": true,
+      "G3_between_within": 1.8212949771630018,
+      "G4_perturbation": 1.0430274737756584,
+      "G5_ks_p_vs_mean_image": 0.9690010280430694
+    },
+    "perturbation_effect": {
+      "flip_price": 0.9795442640541367,
+      "shuffle_time": 1.0430274737756584,
+      "mask_recent25": 0.6995729698532808,
+      "black": 1.141222777472742,
+      "mean_image": 1.0168956116778898
+    },
+    "sd_train_margin": 0.9400361019708119,
+    "margin_val": {
+      "mean": -0.01710216220559377,
+      "std": 0.9676156914259776,
+      "p5_p95": [
+        -1.4896789183620176,
+        1.643064755747754
+      ]
+    },
+    "nuisance_r2_full": 0.006708124871061427,
+    "nuisance_r2_shortcut": 0.0018268747366066984,
+    "nuisance_spearman": {
+      "mean_brightness": -0.01884045689697827,
+      "nonzero_pixel_ratio": -0.017863975261807157,
+      "total_pixel_energy": -0.017395313395313396,
+      "price_vertical_range": 0.03873944673944674,
+      "n_up_candles": -0.05719223023111813,
+      "n_down_candles": 0.05719223023111813,
+      "volatility": 0.026984414984414982
+    },
+    "baseline": {
+      "buy_mean": 0.054472099030570355,
+      "buy_std": 0.24965009349696068,
+      "sell_mean": 0.05051380062470105,
+      "sell_std": 0.24467026951127563
+    }
+  },
+  "chosen": null
+}

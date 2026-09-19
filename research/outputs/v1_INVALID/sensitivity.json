@@ -1,0 +1,32 @@
+{
+  "original": {
+    "action_change_rate": 0.0,
+    "mean_abs_score_diff_change": 0.0,
+    "buy_ratio": 0.0
+  },
+  "flip_price": {
+    "action_change_rate": 0.0,
+    "mean_abs_score_diff_change": 23.660269895170234,
+    "buy_ratio": 0.0
+  },
+  "shuffle_time": {
+    "action_change_rate": 0.0,
+    "mean_abs_score_diff_change": 26.00553749533131,
+    "buy_ratio": 0.0
+  },
+  "mask_recent25": {
+    "action_change_rate": 0.0,
+    "mean_abs_score_diff_change": 23.516956129464905,
+    "buy_ratio": 0.0
+  },
+  "black": {
+    "action_change_rate": 0.0,
+    "mean_abs_score_diff_change": 18.81198552268904,
+    "buy_ratio": 0.0
+  },
+  "mean_image": {
+    "action_change_rate": 0.0,
+    "mean_abs_score_diff_change": 20.59114223339785,
+    "buy_ratio": 0.0
+  }
+}

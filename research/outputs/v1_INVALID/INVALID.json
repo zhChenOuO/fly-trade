@@ -1,0 +1,4 @@
+{"status": "INVALID_INPUT_MAPPING", "highest_level": 0,
+ "reason": "action collapse caused by DC input bias: fly_intact BUY ratio 0.0004 on real K-line images (88.7% black pixels, (x-128)/128 gives large negative DC current). Violated research.md Step 4 gate (>=99% same action).",
+ "do_not_cite": ["Level 1 pass (trivial consistency of a constant output)", "Level 4 matched_random/permutation flags (BA 0.5003, from a handful of BUY rows)"],
+ "test_split_status": "development_test_v1: opened once under the invalid mapping; not valid as formal Level 4 evidence"}

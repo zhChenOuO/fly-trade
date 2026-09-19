@@ -1,0 +1,6 @@
+simulated 1,890,720 rows in 933s
+highest_level = 1
+level_1 True {'consistency': True, 'input_variation': True, 'constant_input': True}
+level_2 False {'level_1': True, 'input_shuffle': False, 'seed_direction': False, 'beyond_fixed_bias': True}
+level_3 False {'level_2': False, 'real_connectome': False, 'degree_scramble': False, 'bootstrap_ci': False, 'seed_direction': False}
+level_4 False {'level_2': False, 'matched_random': True, 'permutation': True, 'independent_period': True}

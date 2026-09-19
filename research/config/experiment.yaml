@@ -1,0 +1,21 @@
+# 鎖定後不可因看到 test 結果而修改(見 ../research.md §4-§6)
+symbol: BTC/USDT
+interval: 5m
+window_bars: 48
+horizon_bars: 6
+sample_stride: 6          # = horizon,label 區間互不重疊
+history_years: 3          # 需 >= 10,000 個 test 樣本 (last 20% / stride 6)
+image_size: [64, 64]
+actions: [BUY, SELL]
+tie_rule: SELL            # buy_score > sell_score -> BUY, 其他(含平手) -> SELL
+split: {train: 0.6, val: 0.2, test: 0.2}   # 依時間切,split 間留 embargo = window_bars + horizon_bars
+seeds: 30
+repeats_per_input: 100
+primary_metric: balanced_accuracy
+permutations: 1000
+bootstrap_samples: 2000
+cost: 0.0004              # 嚴格標籤版本用 (single-side fee+slippage 粗估)
+connectome:
+  source: synthetic       # synthetic(先驗證 pipeline) | flywire | hemibrain -- Level 3 必須用真實連接體
+  synthetic: {n_neurons: 4000, avg_out_degree: 8.0, long_range_fraction: 0.05, frac_inhibitory: 0.2, n_sensory: 48, n_motor: 12, seed: 0}
+sim: {steps: 32, gain: 1.0, leak: 0.5, noise_std: 0.1}   # 0 會讓 consistency/seed 檢驗失去意義;0.1 約為感覺電流跨樣本 std(0.285) 的 35%,於開啟 test 前鎖定
