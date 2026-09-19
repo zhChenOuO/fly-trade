@@ -1,0 +1,39 @@
+connectome:
+  source: synthetic     # synthetic | hemibrain | flywire
+  synthetic:
+    n_neurons: 4000
+    avg_out_degree: 8.0
+    long_range_fraction: 0.05
+    frac_inhibitory: 0.2
+    n_sensory: 48
+    n_motor: 12
+    seed: 0
+
+market:
+  symbol: "BTC/USDT"
+  timeframe: "4h"
+  limit: 10000
+  fee_bps: 5.0
+  # 依序嘗試的交易所,都是免 API key 的公開行情端點,第一個連得上就用它
+  exchange_ids: ["binance", "okx", "kraken", "coinbase", "bybit"]
+
+train:
+  sigma0: 0.3
+  max_iter: 40
+  popsize: null
+  seed: 0
+  train_fraction: 0.7   # main.py(單次示範用)用這個做二段切分
+  val_fraction: 0.2      # run_evolution.py(持續進化用)用 train/val/test 三段切分,
+                          # 剩下 1 - train_fraction - val_fraction 是 test
+  motor_window: 8
+
+# run_evolution.py / run_forward_test.py 共用的「champion(目前最好解)」設定
+champion:
+  path: "outputs/champion"
+  # 新解要贏過舊 champion 的 validation Sharpe 至少這麼多,才會取代它
+  # (留一點緩衝,避免雜訊造成的「假進步」把原本能用的解洗掉)
+  min_improvement: 0.05
+  # warm start 時,在舊 champion 參數上加多大的雜訊做為新一代的起點
+  warm_start_noise: 0.15
+  # run_forward_test.py 每次檢查「最新這麼多根 K 棒」champion 的表現
+  forward_test_bars: 200

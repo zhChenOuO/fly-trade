@@ -1,0 +1,23 @@
+# 核心運算
+numpy>=1.24
+scipy>=1.11
+pandas>=2.0
+
+# 演化式訓練(不需要反向傳播,適合當作 reservoir 的讀出層優化器)
+cma>=3.3
+
+# 加密貨幣市場資料(Binance 等交易所的公開 REST API,抓 OHLCV 不需要 API key)
+ccxt>=4.3
+
+# 設定檔
+pyyaml>=6.0
+
+# 連接體資料(選用,需要使用者自己申請帳號/token 才能下載真實資料)
+neuprint-python>=0.5.0   # hemibrain 連接體 (Janelia neuprint)
+requests>=2.31           # FlyWire codex 下載用
+
+# 圖表與績效檢視(選用)
+matplotlib>=3.7
+
+# 測試
+pytest>=7.4

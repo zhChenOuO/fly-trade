@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+# 大檔(>100MB 會被 GitHub 拒絕,或可由腳本重新產生;見 research/data/flywire/DOWNLOAD.md)
+research/data/images.npy
+research/data/flywire/Connectivity_783.parquet
+research/data/flywire/graph_cache.npz
+research/data/flywire/Supplemental_file1_neuron_annotations.tsv
+research/outputs/**/decisions.parquet

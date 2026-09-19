@@ -1,0 +1,2 @@
+generation,decision,candidate_val_sharpe,old_champion_val_sharpe,candidate_train_sharpe,kept_theta_test_sharpe,data_source,timestamp
+1,REJECTED_NO_CHAMPION,-4.9798,,8.6659,,binance,2026-09-18 23:15:10
