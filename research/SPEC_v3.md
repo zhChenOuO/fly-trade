@@ -39,3 +39,18 @@ PC-2(波動水準 R²>=0.5)在本規格下不可能通過,與管線好壞無關:
 處置: PC-2 改為「僅報告(不設關卡)」,Phase 0 的 S4 判定只看 PC-1、PC-3、NC-1。其餘關卡與門檻不變。
 研究含意(須寫入最終報告): 此渲染方式丟棄絕對尺度(波動水準、單根幅度),任何以這類圖片為輸入的零樣本管線都無法使用波動 regime 資訊。
 S3 說明: Mac 部分結果 corr_adjacent=0.4894(n=200 對,標準誤約 0.05)在 0.5 邊緣,屬統計上不確定;門檻不變,改用更大的 n(>=500 對)重測,以更精確的估計為準。
+
+## Phase 0 判定(2026-09-19 22:30,GPU/RTX 5070,outputs/v3/phase0_report_remote.json)
+S1-S3、S5、PC-1、PC-3、NC-1 通過;PC-2 未過(R²=-0.0048)但依修訂 2 僅報告 => Phase 0 = GO。凍結動力學: gain=0.00043894245687583935(=0.95/ρ, ρ=2164.29;S1 飽和上限未生效,sat=0)、leak=0.5、steps=32、noise_std=0.012225364(Train 感覺電流 std 0.24450728 的 5%)。
+已知限制(須寫入最終報告): (a) ρ 由少數強突觸 hub 決定,全域 0.95/ρ 使大多數神經元處於近線性小訊號區,動力學遠非臨界;(b) render 抹除絕對波動尺度(修訂 2);(c) S3 相鄰窗相關僅 0.574,語意平滑度中等;(d) PC-3 BA 0.622 只是剛過門檻。
+此 GO 只表示「管線能攜帶資訊、非雜湊」,不代表有任何預測力。
+
+## Phase 1a — Level 1-2(RQ1:輸入依賴),真實 FlyWire。凍結於執行之前。
+資料: research/data/samples.parquet 的 val + test(test 已標為 development_test_v1,結果一律標記 development,不得當 Level 4 證據)。不得使用 future_return/label 做任何設計決策;Level 1-2 只用 label-free 的輸入、actions、margin。
+模型: 使用上方凍結動力學;retina_encoder + train_mean_image(outputs/v3/train_mean_image.npy);z-score 基準以 2000 張 Train 圖(等距抽樣)在 GPU 上量測後凍結存 outputs/v3/baseline_remote.json;margin=z_buy - z_sell,margin>0 -> BUY。
+組別(seeds 0..29,seed 決定 noise 與 shuffle/random 的隨機性): A fly_intact(val+test 全部樣本);B matched_random(BUY 機率=A 在 val 的 BUY 比例);C input_shuffled(每個 seed 對 A 的整列做隨機錯配);E constant_input(Train 平均圖經同一編碼,每 seed 產生與 A 相同筆數的 noise 抽樣,可用較少張數如 1000 張/seed 以節省算力並在報告註明);D degree_scramble 不在本次範圍(Phase 1b)。
+market_state(past-only、對「縮放不變」的圖可見): 6 態 = [48 根報酬符號(2)] x [最後一根收盤在窗內 [min low,max high] 區間的位置三分位(3,切點取自 Train)]。
+nuisance 特徵: 沿用 research/v2_health.py::nuisance() 的 7 個特徵;nuisance_r2 = margin 對這些特徵的線性 R²(Val)。
+Level 1: 200 個 Val 輸入 x 100 次不同 noise 重複(repeat_actions/repeat_margins);受控擾動 = run_experiment.variant_images 的 flip/shuffle/mask/black/mean(perturbation_margins,train_margin_sd=Train 2000 張 margin 的 std)。
+評估: 呼叫 statistics.evaluate_levels 的預設(預先註冊)門檻,不得改預設;n_permutations=1000,n_bootstrap=2000。輸出所有 Level 1-2 的每項數值、每 seed 效果;Level 3/4 因缺真實拓撲對照(D)與 sealed holdout,只回傳其 pass/fail 與原因,不解讀。
+決策: Level 2 通過 => 才進 Phase 1b(D 對照與規模化的 scramble)。Level 2 未通過 => 停止並回報失敗項,不得為了通過而改規則。
