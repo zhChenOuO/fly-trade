@@ -1,0 +1,22 @@
+{
+  "buy_mean": -9.586108592731652e-08,
+  "buy_std": 5.437125351140587e-07,
+  "sell_mean": -5.454138404974983e-08,
+  "sell_std": 3.1038701325072014e-07,
+  "train_margin_sd": 1.295404013715729,
+  "calibration_count": 2000,
+  "calibration_sample_id_first": 0,
+  "calibration_sample_id_last": 31555,
+  "selection": "2000 equally spaced rows from sample_id-sorted Train split",
+  "dynamics": {
+    "gain": 0.00043894245687583935,
+    "leak": 0.5,
+    "steps": 32,
+    "noise_std_calibration": 0.0,
+    "noise_std_robustness": 0.012225364148616791
+  },
+  "train_mean_image_sha256": "0b23070b314d6949c55b70c2f3b6d93cf3772d7543d01e1769797dd38c7b6322",
+  "backend": "torch",
+  "torch_version": "2.14.0+cu130",
+  "cuda_version": "13.0"
+}
