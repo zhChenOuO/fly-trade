@@ -1,0 +1,17 @@
+{
+  "graph": "flywire",
+  "spectral_radius": 2164.2928022082856,
+  "gain_spectral": 0.00043894245687583935,
+  "g_sat": 0.00043894245687583935,
+  "gain": 0.00043894245687583935,
+  "leak": 0.5,
+  "steps": 32,
+  "sensory_currents_std": 0.24450728297233582,
+  "noise_std_robustness": 0.012225364148616791,
+  "n_neurons": 138639,
+  "n_sensory": 10582,
+  "n_motor": 1291,
+  "torch_peak_memory_allocated_bytes": 2330056704,
+  "torch_peak_memory_reserved_bytes": 4120903680,
+  "torch_total_vram_bytes": 12343050240
+}

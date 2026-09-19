@@ -1,0 +1,97 @@
+{
+  "graph": "flywire",
+  "backend": "torch",
+  "decision": "STOP",
+  "all_passed": false,
+  "reasons": [
+    "S4 failed: pipeline cannot carry structured information"
+  ],
+  "runtime_seconds": 68.27116808699975,
+  "gates": {
+    "S1_saturation": {
+      "passed": true,
+      "sat_ratio": 0.0,
+      "threshold": 0.05,
+      "n_samples": 300
+    },
+    "S2_no_collapse": {
+      "passed": true,
+      "finite_nonconst": true,
+      "minority_action_ratio": 0.338,
+      "margin_std": 1.2366943140239401,
+      "threshold": 0.05
+    },
+    "S3_semantic_smoothness": {
+      "passed": true,
+      "corr_adjacent": 0.5738386035607271,
+      "corr_independent": -0.007897545855658945,
+      "corr_adjacent_threshold": 0.5,
+      "corr_independent_threshold": 0.2,
+      "pixel_noise_1pct": {
+        "corr": 0.9995944103374445,
+        "delta_over_sd": 0.024017867048359256
+      }
+    },
+    "S4_positive_negative_controls": {
+      "passed": false,
+      "PC1_trend": {
+        "passed": true,
+        "sign_balanced_accuracy": 0.9868480342458037,
+        "slope_r2": 0.7700712324297764,
+        "sign_ba_threshold": 0.95,
+        "r2_threshold": 0.5,
+        "zero_shot_margin_spearman": -0.4721951321951322,
+        "best_alpha": 100.0
+      },
+      "PC2_vol": {
+        "passed": false,
+        "r2": -0.004805966936946238,
+        "r2_threshold": 0.5,
+        "best_alpha": 1000.0
+      },
+      "PC3_ar1": {
+        "passed": true,
+        "direction_balanced_accuracy": 0.6223138110205915,
+        "threshold": 0.6,
+        "best_alpha": 1000.0
+      },
+      "NC1_gbm": {
+        "passed": true,
+        "direction_balanced_accuracy": 0.5059512200976317,
+        "target_interval": [
+          0.47808653382050204,
+          0.521913466179498
+        ],
+        "n_test_samples": 2000,
+        "best_alpha": 1000.0,
+        "amendment": "SPEC_v3 Amendment 1 (0.5 +/- 1.96*0.5/sqrt(n_test))"
+      }
+    },
+    "S5_snr": {
+      "passed": true,
+      "between_within_variance_ratio": 10607.748895524901,
+      "threshold": 3.0,
+      "between_var": 1.1112904704543534,
+      "within_var": 0.00010476213958299619,
+      "noise_std": 0.012225364148616791,
+      "repeats": 10
+    }
+  },
+  "dynamics": {
+    "graph": "flywire",
+    "spectral_radius": 2164.2928022082856,
+    "gain_spectral": 0.00043894245687583935,
+    "g_sat": 0.00043894245687583935,
+    "gain": 0.00043894245687583935,
+    "leak": 0.5,
+    "steps": 32,
+    "sensory_currents_std": 0.24450728297233582,
+    "noise_std_robustness": 0.012225364148616791,
+    "n_neurons": 138639,
+    "n_sensory": 10582,
+    "n_motor": 1291,
+    "torch_peak_memory_allocated_bytes": 2330056704,
+    "torch_peak_memory_reserved_bytes": 4120903680,
+    "torch_total_vram_bytes": 12343050240
+  }
+}
