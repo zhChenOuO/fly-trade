@@ -57,6 +57,7 @@ class FlySimulator:
         encoder=None,
         baseline: dict | None = None,
         direct_currents: bool = False,
+        backend: str = "scipy",
     ):
         self.graph = graph
         self.seed = int(seed)
@@ -68,9 +69,17 @@ class FlySimulator:
         self.encoder = encoder
         self.baseline = baseline
         self.direct_currents = bool(direct_currents)
+        if backend not in ("scipy", "torch"):
+            raise ValueError(f"backend must be 'scipy' or 'torch', got {backend!r}")
+        self.backend = backend
 
         # Reuse existing LeakyReservoir directly
         self.reservoir = LeakyReservoir(graph)
+        self.torch_reservoir = None
+        if self.backend == "torch":
+            from research.pipeline.torch_sim import TorchReservoir
+
+            self.torch_reservoir = TorchReservoir(graph)
 
         n_motor = len(graph.motor_idx)
         if n_motor < 2:
@@ -181,34 +190,67 @@ class FlySimulator:
             W_in = get_fixed_projection(n_features, n_sensory)
             currents_1d = flat_img @ W_in  # (B, n_sensory)
 
-        # 3. Temporal expansion over simulation window
-        currents = np.repeat(currents_1d[:, None, :], self.steps, axis=1)  # (B, steps, n_sensory)
+        # 3-5. Temporal expansion, optional noise, and reservoir simulation.
+        if self.backend == "scipy":
+            # Keep the legacy path unchanged by default.
+            currents = np.repeat(
+                currents_1d[:, None, :], self.steps, axis=1
+            )  # (B, steps, n_sensory)
+            if self.noise_std > 0.0:
+                noise = self._rng.normal(0.0, self.noise_std, size=currents.shape)
+                currents = currents + noise
 
-        # 4. Inject noise if noise_std > 0
-        if self.noise_std > 0.0:
-            noise = self._rng.normal(0.0, self.noise_std, size=currents.shape)
-            currents = currents + noise
-
-        # 5. Reservoir simulation via simulate_batch
-        chunk_size = 500
-        if B <= chunk_size:
-            gain_arr = np.full(B, self.gain, dtype=np.float64)
-            leak_arr = np.full(B, self.leak, dtype=np.float64)
-            motor_trace = self.reservoir.simulate_batch(currents, gain_arr, leak_arr)
-            buy_score = motor_trace[:, :, self._buy_cols].sum(axis=(1, 2))
-            sell_score = motor_trace[:, :, self._sell_cols].sum(axis=(1, 2))
+            chunk_size = 500
+            if B <= chunk_size:
+                gain_arr = np.full(B, self.gain, dtype=np.float64)
+                leak_arr = np.full(B, self.leak, dtype=np.float64)
+                motor_trace = self.reservoir.simulate_batch(currents, gain_arr, leak_arr)
+                buy_score = motor_trace[:, :, self._buy_cols].sum(axis=(1, 2))
+                sell_score = motor_trace[:, :, self._sell_cols].sum(axis=(1, 2))
+            else:
+                buy_scores_list = []
+                sell_scores_list = []
+                for start_idx in range(0, B, chunk_size):
+                    end_idx = min(start_idx + chunk_size, B)
+                    c_chunk = currents[start_idx:end_idx]
+                    p_chunk = len(c_chunk)
+                    gain_chunk = np.full(p_chunk, self.gain, dtype=np.float64)
+                    leak_chunk = np.full(p_chunk, self.leak, dtype=np.float64)
+                    m_chunk = self.reservoir.simulate_batch(c_chunk, gain_chunk, leak_chunk)
+                    buy_scores_list.append(m_chunk[:, :, self._buy_cols].sum(axis=(1, 2)))
+                    sell_scores_list.append(m_chunk[:, :, self._sell_cols].sum(axis=(1, 2)))
+                buy_score = np.concatenate(buy_scores_list, axis=0)
+                sell_score = np.concatenate(sell_scores_list, axis=0)
         else:
+            assert self.torch_reservoir is not None
+            chunk_size = min(
+                500,
+                self.torch_reservoir.max_batch_size(
+                    steps=self.steps, n_sensory=n_sensory
+                ),
+            )
             buy_scores_list = []
             sell_scores_list = []
             for start_idx in range(0, B, chunk_size):
                 end_idx = min(start_idx + chunk_size, B)
-                c_chunk = currents[start_idx:end_idx]
-                p_chunk = len(c_chunk)
-                gain_chunk = np.full(p_chunk, self.gain, dtype=np.float64)
-                leak_chunk = np.full(p_chunk, self.leak, dtype=np.float64)
-                m_chunk = self.reservoir.simulate_batch(c_chunk, gain_chunk, leak_chunk)
-                buy_scores_list.append(m_chunk[:, :, self._buy_cols].sum(axis=(1, 2)))
-                sell_scores_list.append(m_chunk[:, :, self._sell_cols].sum(axis=(1, 2)))
+                current_chunk = np.repeat(
+                    currents_1d[start_idx:end_idx, None, :], self.steps, axis=1
+                )
+                if self.noise_std > 0.0:
+                    noise = self._rng.normal(0.0, self.noise_std, size=current_chunk.shape)
+                    current_chunk = current_chunk + noise
+                count = end_idx - start_idx
+                gain_chunk = np.full(count, self.gain, dtype=np.float32)
+                leak_chunk = np.full(count, self.leak, dtype=np.float32)
+                motor_trace = self.torch_reservoir.simulate_batch(
+                    current_chunk, gain_chunk, leak_chunk
+                )
+                buy_scores_list.append(
+                    motor_trace[:, :, self._buy_cols].sum(axis=(1, 2))
+                )
+                sell_scores_list.append(
+                    motor_trace[:, :, self._sell_cols].sum(axis=(1, 2))
+                )
             buy_score = np.concatenate(buy_scores_list, axis=0)
             sell_score = np.concatenate(sell_scores_list, axis=0)
 

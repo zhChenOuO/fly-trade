@@ -14,8 +14,8 @@ Implements SPEC_v3 Phase 0:
 - S5 SNR: 200 Val inputs x 10 repeats with 5% sensory noise, between/within ratio >= 3.0
 
 Outputs:
-- outputs/v3/dynamics.json
-- outputs/v3/phase0_report.json
+- outputs/v3/dynamics_remote.json
+- outputs/v3/phase0_report_remote.json
 """
 from __future__ import annotations
 
@@ -177,6 +177,8 @@ def bisection_find_gsat(
     sat_thresh: float = 0.9,
     max_sat_ratio: float = 0.05,
     n_iter: int = 6,
+    backend: str = "scipy",
+    graph=None,
 ) -> float:
     """Find largest gain in [gain_spectral, 10.0] such that non-sensory |x| > 0.9 ratio < 5%."""
     n_neurons = W.shape[0]
@@ -184,12 +186,34 @@ def bisection_find_gsat(
     sub_currents = currents_train_300[: min(len(currents_train_300), 50)]
     B = sub_currents.shape[0]
     non_sensory = np.setdiff1d(np.arange(n_neurons), sensory_idx)
-    cur_t = np.ascontiguousarray(sub_currents.transpose(1, 2, 0))  # (steps, n_s, B)
+    torch_reservoir = None
+    if backend == "torch":
+        if graph is None:
+            raise ValueError("graph is required for torch gain calibration")
+        from research.pipeline.torch_sim import TorchReservoir
+
+        torch_reservoir = TorchReservoir(graph)
+    elif backend != "scipy":
+        raise ValueError(f"unknown backend {backend!r}")
+    cur_t = (
+        np.ascontiguousarray(sub_currents.transpose(1, 2, 0))
+        if torch_reservoir is None
+        else None
+    )  # (steps, n_s, B)
 
     def eval_gain(g: float) -> float:
+        if torch_reservoir is not None:
+            _, final_state = torch_reservoir.simulate_batch(
+                sub_currents,
+                np.full(B, g, dtype=np.float32),
+                np.full(B, leak, dtype=np.float32),
+                return_final_state=True,
+            )
+            return float(np.mean(np.abs(final_state[:, non_sensory]) > sat_thresh))
         X = np.zeros((n_neurons, B), dtype=np.float64)
         for t in range(steps):
             Z = g * W.dot(X)
+            assert cur_t is not None
             Z[sensory_idx] += cur_t[t]
             X = (1.0 - leak) * X + leak * np.tanh(Z)
         return float(np.mean(np.abs(X[non_sensory]) > sat_thresh))
@@ -244,8 +268,14 @@ def extract_dn_activity(
         gain_arr = np.full(p_chunk, gain, dtype=np.float64)
         leak_arr = np.full(p_chunk, leak, dtype=np.float64)
 
-        # Simulate batch
-        motor_trace = sim.reservoir.simulate_batch(currents, gain_arr, leak_arr)
+        # Simulate batch on the selected backend.
+        if sim.backend == "torch":
+            assert sim.torch_reservoir is not None
+            motor_trace = sim.torch_reservoir.simulate_batch(
+                currents, gain_arr, leak_arr
+            )
+        else:
+            motor_trace = sim.reservoir.simulate_batch(currents, gain_arr, leak_arr)
         dn_last = motor_trace[:, -1, :]  # (p_chunk, n_motor)
         features_list.append(dn_last)
 
@@ -264,7 +294,17 @@ def run_phase0(
     n_nc1_test: int = 2000,
     n_val_s5: int = 200,
     seed: int = 0,
+    backend: str = "scipy",
 ) -> dict:
+    if backend not in ("scipy", "torch"):
+        raise ValueError(f"backend must be 'scipy' or 'torch', got {backend!r}")
+    if backend == "torch":
+        import torch
+
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA is unavailable for --backend torch")
+        torch.cuda.reset_peak_memory_stats()
+
     OUT_V3.mkdir(parents=True, exist_ok=True)
     t_start = time.perf_counter()
 
@@ -298,7 +338,7 @@ def run_phase0(
             cache_path = ROOT / "data/flywire/graph_cache.npz"
             if not cache_path.exists():
                 raise FileNotFoundError(f"FlyWire cache not found at {cache_path}")
-            g = load_flywire_graph(cache_path)
+            g = load_flywire_graph(cache_path=cache_path)
             retina = retina_encoder(g, train_mean_img)
             enc = None
         except Exception as e:
@@ -341,6 +381,8 @@ def run_phase0(
         gain_spectral=gain_spectral,
         leak=0.5,
         steps=32,
+        backend=backend,
+        graph=g,
     )
     chosen_gain = float(min(gain_spectral, g_sat))
 
@@ -380,6 +422,7 @@ def run_phase0(
             encoder=active_enc,
             baseline=None,
             direct_currents=use_direct,
+            backend=backend,
         ),
         cal_imgs,
     )
@@ -394,6 +437,7 @@ def run_phase0(
         encoder=active_enc,
         baseline=bl,
         direct_currents=use_direct,
+        backend=backend,
     )
 
     # -----------------------------------------------------------------------
@@ -401,13 +445,23 @@ def run_phase0(
     # -----------------------------------------------------------------------
     print(f"[1/5] Running S1 (Saturation) on {len(s1_images)} Train images...", flush=True)
     non_sensory = np.setdiff1d(np.arange(g.n_neurons), g.sensory_idx)
-    cur_t = np.ascontiguousarray(currents_train_300.transpose(1, 2, 0))
-    X_s1 = np.zeros((g.n_neurons, len(s1_images)), dtype=np.float64)
-    for t in range(32):
-        Z = chosen_gain * g.weights.dot(X_s1)
-        Z[g.sensory_idx] += cur_t[t]
-        X_s1 = 0.5 * X_s1 + 0.5 * np.tanh(Z)
-    sat_ratio = float(np.mean(np.abs(X_s1[non_sensory]) > 0.9))
+    if backend == "torch":
+        assert sim_det.torch_reservoir is not None
+        _, final_state = sim_det.torch_reservoir.simulate_batch(
+            currents_train_300,
+            np.full(len(s1_images), chosen_gain, dtype=np.float32),
+            np.full(len(s1_images), 0.5, dtype=np.float32),
+            return_final_state=True,
+        )
+        sat_ratio = float(np.mean(np.abs(final_state[:, non_sensory]) > 0.9))
+    else:
+        cur_t = np.ascontiguousarray(currents_train_300.transpose(1, 2, 0))
+        X_s1 = np.zeros((g.n_neurons, len(s1_images)), dtype=np.float64)
+        for t in range(32):
+            Z = chosen_gain * g.weights.dot(X_s1)
+            Z[g.sensory_idx] += cur_t[t]
+            X_s1 = 0.5 * X_s1 + 0.5 * np.tanh(Z)
+        sat_ratio = float(np.mean(np.abs(X_s1[non_sensory]) > 0.9))
     s1_pass = bool(sat_ratio < 0.05)
     print(f"[1/5] S1 Result: sat_ratio={sat_ratio:.4f} (pass={s1_pass})", flush=True)
 
@@ -642,6 +696,7 @@ def run_phase0(
             encoder=active_enc,
             baseline=bl,
             direct_currents=use_direct,
+            backend=backend,
         )
         out_r = sim_noisy.run(s5_imgs)
         rep_margins.append(out_r["buy_score"] - out_r["sell_score"])
@@ -682,10 +737,25 @@ def run_phase0(
     if not s5_pass:
         reason_list.append(f"S5 failed: between/within={bw_ratio:.4f} < 3.0")
 
+    if backend == "torch":
+        import torch
+
+        torch.cuda.synchronize()
+        dynamics_info["torch_peak_memory_allocated_bytes"] = int(
+            torch.cuda.max_memory_allocated()
+        )
+        dynamics_info["torch_peak_memory_reserved_bytes"] = int(
+            torch.cuda.max_memory_reserved()
+        )
+        dynamics_info["torch_total_vram_bytes"] = int(
+            torch.cuda.get_device_properties(0).total_memory
+        )
+
     dt = time.perf_counter() - t_start
 
     report = {
         "graph": graph_type,
+        "backend": backend,
         "decision": decision,
         "all_passed": all_passed,
         "reasons": reason_list,
@@ -700,7 +770,12 @@ def run_phase0(
         "dynamics": dynamics_info,
     }
 
-    (OUT_V3 / "phase0_report.json").write_text(json.dumps(report, indent=2))
+    (OUT_V3 / "dynamics_remote.json").write_text(
+        json.dumps(dynamics_info, indent=2)
+    )
+    (OUT_V3 / "phase0_report_remote.json").write_text(
+        json.dumps(report, indent=2)
+    )
     return report
 
 
@@ -743,6 +818,12 @@ def main():
         default="synthetic",
         help="Connectome graph type to evaluate",
     )
+    parser.add_argument(
+        "--backend",
+        choices=["scipy", "torch"],
+        default="scipy",
+        help="Reservoir backend (torch requires a CUDA GPU)",
+    )
     parser.add_argument("--n-train-s1", type=int, default=300)
     parser.add_argument("--n-val-s2", type=int, default=500)
     parser.add_argument("--n-val-s3", type=int, default=200)
@@ -761,6 +842,7 @@ def main():
         n_nc1_test=args.n_nc1_test,
         n_val_s5=args.n_val_s5,
         seed=args.seed,
+        backend=args.backend,
     )
     print_summary(report)
 
