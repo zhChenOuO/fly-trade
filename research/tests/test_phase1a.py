@@ -2,8 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from research.pipeline.render_market import render
-from research.run_phase1a import (
+pytest.importorskip("torch")  # run_phase1a 在模組層 import torch;無 torch(如 Mac)時跳過
+
+from research.pipeline.render_market import render  # noqa: E402
+from research.run_phase1a import (  # noqa: E402
     get_windows,
     market_state,
     preflight_summary,
