@@ -571,6 +571,7 @@ def run_probe_v2(
     bootstrap_samples: int = 1000,
     permutations: int = 1000,
     strict_gates: bool = False,
+    variants: list[str] | None = None,
 ) -> dict:
     """Execute Phase 5 Frozen Connectome Linear Probe analysis."""
     features_dir = Path(features_dir)
@@ -613,8 +614,9 @@ def run_probe_v2(
     feature_hashes = {}
     variant_results = {}
 
-    # 2. Evaluate available graph variants (real, random, scramble)
-    for variant in ["real", "random", "scramble"]:
+    # 2. Evaluate available graph variants
+    variants_to_eval = list(variants) if variants is not None else ["real", "random", "scramble"]
+    for variant in variants_to_eval:
         tr_file = features_dir / f"{variant}_train.npy"
         va_file = features_dir / f"{variant}_val.npy"
         if not tr_file.exists() or not va_file.exists():
@@ -733,6 +735,20 @@ def run_probe_v2(
             d_ci = paired_block_bootstrap_delta_ci(y_va_eval, real_pred_cont, scram_pred, n_bootstraps=bootstrap_samples)
             comparisons["delta_ic_vs_scramble"] = {"delta_ic": d_ic, "delta_ic_ci_95": list(d_ci)}
 
+        # Compare vs Scramble Mixed (well-mixed)
+        if "scramble_mixed" in variant_results:
+            scram_m_pred = variant_results["scramble_mixed"]["ridge"]["pred_cont"]
+            d_ic = float(real_ridge["continuous"]["spearman_ic"] - variant_results["scramble_mixed"]["ridge"]["continuous"]["spearman_ic"])
+            d_ci = paired_block_bootstrap_delta_ci(y_va_eval, real_pred_cont, scram_m_pred, n_bootstraps=bootstrap_samples)
+            comparisons["delta_ic_vs_scramble_mixed"] = {"delta_ic": d_ic, "delta_ic_ci_95": list(d_ci)}
+
+        # Compare vs Weight Shuffle
+        if "weight_shuffle" in variant_results:
+            ws_pred = variant_results["weight_shuffle"]["ridge"]["pred_cont"]
+            d_ic = float(real_ridge["continuous"]["spearman_ic"] - variant_results["weight_shuffle"]["ridge"]["continuous"]["spearman_ic"])
+            d_ci = paired_block_bootstrap_delta_ci(y_va_eval, real_pred_cont, ws_pred, n_bootstraps=bootstrap_samples)
+            comparisons["delta_ic_vs_weight_shuffle"] = {"delta_ic": d_ic, "delta_ic_ci_95": list(d_ci)}
+
         # Compare vs Best OHLCV baseline
         d_base = float(real_ridge["continuous"]["spearman_ic"] - best_ohlcv_ic)
         comparisons["delta_ic_vs_ohlcv_baseline"] = {"delta_ic": d_base}
@@ -827,6 +843,7 @@ def main() -> None:
     parser.add_argument("--bootstrap-samples", type=int, default=500)
     parser.add_argument("--permutations", type=int, default=500)
     parser.add_argument("--strict-gates", action="store_true", help="Apply strict gate conjunction and audit rules.")
+    parser.add_argument("--variants", nargs="+", default=None, help="Variants to evaluate (default: real random scramble).")
     args = parser.parse_args()
 
     run_probe_v2(
@@ -838,6 +855,7 @@ def main() -> None:
         bootstrap_samples=args.bootstrap_samples,
         permutations=args.permutations,
         strict_gates=args.strict_gates,
+        variants=args.variants,
     )
 
 

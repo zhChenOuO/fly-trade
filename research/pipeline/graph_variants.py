@@ -9,6 +9,8 @@ Contract (from research/SPEC.md & research.md §4 Step 4 / §6 Level 3):
 """
 from __future__ import annotations
 
+import time
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -19,7 +21,10 @@ def degree_preserved_scramble(
     graph: ConnectomeGraph,
     seed: int = 0,
     n_swap_multiplier: float = 2.0,
-) -> ConnectomeGraph:
+    target_overlap: float | None = None,
+    max_attempts_multiplier: float = 5.0,
+    return_diagnostics: bool = False,
+) -> ConnectomeGraph | tuple[ConnectomeGraph, dict]:
     """Scramble connectome edges while preserving in-degree and out-degree of all nodes.
 
     Uses the directed double-edge swap algorithm:
@@ -37,13 +42,24 @@ def degree_preserved_scramble(
         Random seed for edge selection and swapping.
     n_swap_multiplier: float
         Number of swap attempts as a multiple of total edges E. Default 2.0.
+        Ignored if target_overlap is specified.
+    target_overlap: float | None
+        If specified (e.g. 0.05), iteratively performs double-edge swaps in batches
+        until the edge overlap ratio between original and scrambled graph <= target_overlap
+        (or until max_attempts_multiplier * E is reached).
+    max_attempts_multiplier: float
+        Maximum total swap attempts as a multiple of E when target_overlap is used. Default 5.0.
+    return_diagnostics: bool
+        If True, returns a tuple (scrambled_graph, diagnostics_dict).
+        If False (default), returns scrambled_graph with diagnostics attached to graph.meta.
 
     Returns
     -------
-    ConnectomeGraph
+    ConnectomeGraph | tuple[ConnectomeGraph, dict]
         Scrambled connectome with identical in/out-degree sequences and preserved
         sensory/motor indices.
     """
+    t0 = time.time()
     coo = graph.weights.tocoo()
     dst = coo.row.copy()
     src = coo.col.copy()
@@ -52,7 +68,19 @@ def degree_preserved_scramble(
 
     if E < 4:
         # Not enough edges to swap, return duplicate
-        return ConnectomeGraph(
+        diag = {
+            "attempted_swaps": 0,
+            "successful_swaps": 0,
+            "overlap_ratio": 1.0,
+            "modified_ratio": 0.0,
+            "in_degree_preserved": True,
+            "out_degree_preserved": True,
+            "sign_ratio_preserved": True,
+            "target_overlap": target_overlap,
+            "target_reached": False if target_overlap is not None else True,
+            "elapsed_seconds": float(time.time() - t0),
+        }
+        res_g = ConnectomeGraph(
             weights=graph.weights.copy(),
             neuron_ids=list(graph.neuron_ids),
             neuron_types=list(graph.neuron_types),
@@ -62,75 +90,187 @@ def degree_preserved_scramble(
                 **graph.meta,
                 "variant": "degree_preserved_scramble",
                 "scramble_seed": seed,
+                "scramble_diagnostics": diag,
             },
         )
+        return (res_g, diag) if return_diagnostics else res_g
 
     rng = np.random.default_rng(seed)
-    n_attempts = max(10, int(E * n_swap_multiplier))
-
-    idx1 = rng.integers(0, E, size=n_attempts)
-    idx2 = rng.integers(0, E, size=n_attempts)
+    total_successful = 0
+    total_attempts = 0
 
     if E < 100_000:
         # Standard tuple-based edge set for smaller graphs (100% backward compatible)
-        edge_set = set(zip(src, dst))
-        for i in range(n_attempts):
-            e1, e2 = idx1[i], idx2[i]
-            if e1 == e2:
-                continue
-            s1, d1 = src[e1], dst[e1]
-            s2, d2 = src[e2], dst[e2]
+        orig_edge_set = set(zip(src, dst))
+        edge_set = set(orig_edge_set)
 
-            if s1 == s2 or d1 == d2:
-                continue
-            if s1 == d2 or s2 == d1:
-                continue
-            if (s1, d2) in edge_set or (s2, d1) in edge_set:
-                continue
+        if target_overlap is None:
+            n_attempts = max(10, int(E * n_swap_multiplier))
+            idx1 = rng.integers(0, E, size=n_attempts)
+            idx2 = rng.integers(0, E, size=n_attempts)
+            for i in range(n_attempts):
+                e1, e2 = idx1[i], idx2[i]
+                if e1 == e2:
+                    continue
+                s1, d1 = src[e1], dst[e1]
+                s2, d2 = src[e2], dst[e2]
 
-            edge_set.remove((s1, d1))
-            edge_set.remove((s2, d2))
-            edge_set.add((s1, d2))
-            edge_set.add((s2, d1))
+                if s1 == s2 or d1 == d2 or s1 == d2 or s2 == d1:
+                    continue
+                if (s1, d2) in edge_set or (s2, d1) in edge_set:
+                    continue
 
-            dst[e1] = d2
-            dst[e2] = d1
+                edge_set.remove((s1, d1))
+                edge_set.remove((s2, d2))
+                edge_set.add((s1, d2))
+                edge_set.add((s2, d1))
+
+                dst[e1] = d2
+                dst[e2] = d1
+                total_successful += 1
+            total_attempts = n_attempts
+        else:
+            max_attempts = max(10, int(E * max_attempts_multiplier))
+            batch_size = max(10, E)
+            while total_attempts < max_attempts:
+                this_batch = min(batch_size, max_attempts - total_attempts)
+                idx1 = rng.integers(0, E, size=this_batch)
+                idx2 = rng.integers(0, E, size=this_batch)
+                for i in range(this_batch):
+                    e1, e2 = idx1[i], idx2[i]
+                    if e1 == e2:
+                        continue
+                    s1, d1 = src[e1], dst[e1]
+                    s2, d2 = src[e2], dst[e2]
+
+                    if s1 == s2 or d1 == d2 or s1 == d2 or s2 == d1:
+                        continue
+                    if (s1, d2) in edge_set or (s2, d1) in edge_set:
+                        continue
+
+                    edge_set.remove((s1, d1))
+                    edge_set.remove((s2, d2))
+                    edge_set.add((s1, d2))
+                    edge_set.add((s2, d1))
+
+                    dst[e1] = d2
+                    dst[e2] = d1
+                    total_successful += 1
+                total_attempts += this_batch
+                curr_overlap = len(edge_set.intersection(orig_edge_set)) / E
+                if curr_overlap <= target_overlap:
+                    break
+
+        overlap_cnt = len(edge_set.intersection(orig_edge_set))
+        overlap_ratio = float(overlap_cnt / E)
+
     else:
         # Packed int64 keys ((src << 32) | dst) for large graphs (e.g. 15M edges)
-        # Avoids allocating 15M tuples and speeds up set lookups by 3x.
         packed = (src.astype(np.int64) << 32) | dst.astype(np.int64)
+        orig_packed_set = set(packed)
         packed_set = set(packed)
-        for i in range(n_attempts):
-            e1, e2 = idx1[i], idx2[i]
-            if e1 == e2:
-                continue
-            s1, d1 = int(src[e1]), int(dst[e1])
-            s2, d2 = int(src[e2]), int(dst[e2])
 
-            if s1 == s2 or d1 == d2:
-                continue
-            if s1 == d2 or s2 == d1:
-                continue
+        if target_overlap is None:
+            n_attempts = max(10, int(E * n_swap_multiplier))
+            idx1 = rng.integers(0, E, size=n_attempts)
+            idx2 = rng.integers(0, E, size=n_attempts)
+            for i in range(n_attempts):
+                e1, e2 = idx1[i], idx2[i]
+                if e1 == e2:
+                    continue
+                s1, d1 = int(src[e1]), int(dst[e1])
+                s2, d2 = int(src[e2]), int(dst[e2])
 
-            k_new1 = (s1 << 32) | d2
-            k_new2 = (s2 << 32) | d1
-            if k_new1 in packed_set or k_new2 in packed_set:
-                continue
+                if s1 == s2 or d1 == d2 or s1 == d2 or s2 == d1:
+                    continue
 
-            packed_set.remove((s1 << 32) | d1)
-            packed_set.remove((s2 << 32) | d2)
-            packed_set.add(k_new1)
-            packed_set.add(k_new2)
+                k_new1 = (s1 << 32) | d2
+                k_new2 = (s2 << 32) | d1
+                if k_new1 in packed_set or k_new2 in packed_set:
+                    continue
 
-            dst[e1] = d2
-            dst[e2] = d1
+                packed_set.remove((s1 << 32) | d1)
+                packed_set.remove((s2 << 32) | d2)
+                packed_set.add(k_new1)
+                packed_set.add(k_new2)
+
+                dst[e1] = d2
+                dst[e2] = d1
+                total_successful += 1
+            total_attempts = n_attempts
+        else:
+            max_attempts = max(10, int(E * max_attempts_multiplier))
+            batch_size = max(100, int(E * 0.33))
+            while total_attempts < max_attempts:
+                this_batch = min(batch_size, max_attempts - total_attempts)
+                idx1 = rng.integers(0, E, size=this_batch)
+                idx2 = rng.integers(0, E, size=this_batch)
+                for i in range(this_batch):
+                    e1, e2 = idx1[i], idx2[i]
+                    if e1 == e2:
+                        continue
+                    s1, d1 = int(src[e1]), int(dst[e1])
+                    s2, d2 = int(src[e2]), int(dst[e2])
+
+                    if s1 == s2 or d1 == d2 or s1 == d2 or s2 == d1:
+                        continue
+
+                    k_new1 = (s1 << 32) | d2
+                    k_new2 = (s2 << 32) | d1
+                    if k_new1 in packed_set or k_new2 in packed_set:
+                        continue
+
+                    packed_set.remove((s1 << 32) | d1)
+                    packed_set.remove((s2 << 32) | d2)
+                    packed_set.add(k_new1)
+                    packed_set.add(k_new2)
+
+                    dst[e1] = d2
+                    dst[e2] = d1
+                    total_successful += 1
+                total_attempts += this_batch
+                curr_overlap_cnt = sum(1 for e in range(E) if ((int(src[e]) << 32) | int(dst[e])) in orig_packed_set)
+                if (curr_overlap_cnt / E) <= target_overlap:
+                    break
+
+        overlap_cnt = sum(1 for e in range(E) if ((int(src[e]) << 32) | int(dst[e])) in orig_packed_set)
+        overlap_ratio = float(overlap_cnt / E)
 
     new_W = sp.coo_matrix(
         (val, (dst, src)), shape=(graph.n_neurons, graph.n_neurons)
     ).tocsr()
     new_W.sum_duplicates()
 
-    return ConnectomeGraph(
+    # Diagnostics validation
+    orig_in = np.bincount(coo.row, minlength=graph.n_neurons)
+    orig_out = np.bincount(coo.col, minlength=graph.n_neurons)
+    scram_in = np.bincount(dst, minlength=graph.n_neurons)
+    scram_out = np.bincount(src, minlength=graph.n_neurons)
+
+    in_deg_ok = bool(np.array_equal(orig_in, scram_in))
+    out_deg_ok = bool(np.array_equal(orig_out, scram_out))
+
+    pos_orig = int(np.sum(val > 0))
+    neg_orig = int(np.sum(val < 0))
+    pos_scram = int(np.sum(val > 0))
+    neg_scram = int(np.sum(val < 0))
+    sign_ok = bool(pos_orig == pos_scram and neg_orig == neg_scram)
+
+    elapsed_s = float(time.time() - t0)
+    diagnostics = {
+        "attempted_swaps": int(total_attempts),
+        "successful_swaps": int(total_successful),
+        "overlap_ratio": float(overlap_ratio),
+        "modified_ratio": float(1.0 - overlap_ratio),
+        "in_degree_preserved": in_deg_ok,
+        "out_degree_preserved": out_deg_ok,
+        "sign_ratio_preserved": sign_ok,
+        "target_overlap": float(target_overlap) if target_overlap is not None else None,
+        "target_reached": bool(overlap_ratio <= target_overlap) if target_overlap is not None else True,
+        "elapsed_seconds": elapsed_s,
+    }
+
+    out_graph = ConnectomeGraph(
         weights=new_W,
         neuron_ids=list(graph.neuron_ids),
         neuron_types=list(graph.neuron_types),
@@ -141,8 +281,109 @@ def degree_preserved_scramble(
             "variant": "degree_preserved_scramble",
             "scramble_seed": seed,
             "spectral_radius": None,
+            "scramble_diagnostics": diagnostics,
         },
     )
+
+    if return_diagnostics:
+        return out_graph, diagnostics
+    return out_graph
+
+
+def well_mixed_scramble(
+    graph: ConnectomeGraph,
+    seed: int = 0,
+    target_overlap: float = 0.05,
+    max_attempts_multiplier: float = 5.0,
+    return_diagnostics: bool = False,
+) -> ConnectomeGraph | tuple[ConnectomeGraph, dict]:
+    """Scramble connectome edges until edge overlap with original graph <= target_overlap.
+
+    Ensures thorough mixing of directed edges while strictly preserving in- and out-degrees.
+    Default target_overlap is 0.05 (at least 95% of edges altered).
+    """
+    out_g, diag = degree_preserved_scramble(
+        graph=graph,
+        seed=seed,
+        target_overlap=target_overlap,
+        max_attempts_multiplier=max_attempts_multiplier,
+        return_diagnostics=True,
+    )
+    out_g.meta["variant"] = "scramble_mixed"
+    if return_diagnostics:
+        return out_g, diag
+    return out_g
+
+
+def weight_shuffled_graph(
+    graph: ConnectomeGraph,
+    seed: int = 0,
+    separate_signs: bool = True,
+    return_diagnostics: bool = False,
+) -> ConnectomeGraph | tuple[ConnectomeGraph, dict]:
+    """Generate a weight-shuffled connectome with topology strictly preserved.
+
+    Preserves:
+    - Graph topology (indices, indptr, shape) is 100% invariant.
+    - Empirical synaptic weight multiset is identical.
+    - If separate_signs=True (default):
+      Positive weights are permuted only among positive edges, and negative weights
+      only among negative edges. Preserves the excitatory/inhibitory sign of every
+      connection (honoring Dale's principle and E/I balance) while shuffling magnitudes.
+    - If separate_signs=False:
+      All weights are permuted jointly across all edges, preserving overall weight
+      distribution while allowing edge signs to change.
+    """
+    t0 = time.time()
+    rng = np.random.default_rng(seed)
+    csr = graph.weights.tocsr()
+    data = csr.data.copy()
+
+    if separate_signs:
+        pos_mask = data > 0
+        neg_mask = data < 0
+        new_data = data.copy()
+        new_data[pos_mask] = rng.permutation(new_data[pos_mask])
+        new_data[neg_mask] = rng.permutation(new_data[neg_mask])
+    else:
+        new_data = rng.permutation(data.copy())
+
+    new_W = sp.csr_matrix(
+        (new_data, csr.indices.copy(), csr.indptr.copy()),
+        shape=csr.shape,
+        dtype=csr.dtype,
+    )
+
+    elapsed = float(time.time() - t0)
+    diagnostics = {
+        "variant": "weight_shuffle",
+        "seed": int(seed),
+        "separate_signs": bool(separate_signs),
+        "topology_preserved": True,
+        "weights_identical_multiset": bool(np.array_equal(np.sort(data), np.sort(new_data))),
+        "positive_count_preserved": bool(int(np.sum(data > 0)) == int(np.sum(new_data > 0))),
+        "negative_count_preserved": bool(int(np.sum(data < 0)) == int(np.sum(new_data < 0))),
+        "elapsed_seconds": elapsed,
+    }
+
+    out_g = ConnectomeGraph(
+        weights=new_W,
+        neuron_ids=list(graph.neuron_ids),
+        neuron_types=list(graph.neuron_types),
+        sensory_idx=graph.sensory_idx.copy(),
+        motor_idx=graph.motor_idx.copy(),
+        meta={
+            **graph.meta,
+            "variant": "weight_shuffle",
+            "seed": seed,
+            "spectral_radius": None,
+            "weight_shuffle_diagnostics": diagnostics,
+        },
+    )
+
+    if return_diagnostics:
+        return out_g, diagnostics
+    return out_g
 
 
 def random_matched_graph(

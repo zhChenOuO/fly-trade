@@ -34,13 +34,15 @@ from research.pipeline.flywire_graph import load_flywire_graph, spectral_radius
 from research.pipeline.graph_variants import (
     random_matched_graph,
     degree_preserved_scramble,
+    well_mixed_scramble,
+    weight_shuffled_graph,
     normalize_graph_spectral_radius,
 )
 from research.pipeline.retina import retina_encoder
 from research.pipeline.fly_simulator import FlySimulator
 
 ALLOWED_SPLITS = ("train", "val")
-ALLOWED_VARIANTS = ("real", "random", "scramble")
+ALLOWED_VARIANTS = ("real", "random", "scramble", "scramble_mixed", "weight_shuffle")
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
@@ -107,18 +109,29 @@ def load_or_create_variant_graph(
             shape=tuple(loaded["csr_shape"]),
             dtype=np.float32,
         )
+        meta_dict = {
+            **base_graph.meta,
+            "variant": variant,
+            "variant_seed": seed,
+            "spectral_radius": float(loaded["spectral_radius"][0]),
+        }
+        if "diag_json" in loaded:
+            try:
+                diag_payload = json.loads(str(loaded["diag_json"]))
+                if "scramble_diagnostics" in diag_payload:
+                    meta_dict["scramble_diagnostics"] = diag_payload["scramble_diagnostics"]
+                if "weight_shuffle_diagnostics" in diag_payload:
+                    meta_dict["weight_shuffle_diagnostics"] = diag_payload["weight_shuffle_diagnostics"]
+            except Exception:
+                pass
+
         return ConnectomeGraph(
             weights=W,
             neuron_ids=list(base_graph.neuron_ids),
             neuron_types=list(base_graph.neuron_types),
             sensory_idx=base_graph.sensory_idx.copy(),
             motor_idx=base_graph.motor_idx.copy(),
-            meta={
-                **base_graph.meta,
-                "variant": variant,
-                "variant_seed": seed,
-                "spectral_radius": float(loaded["spectral_radius"][0]),
-            },
+            meta=meta_dict,
         )
 
     print(f"Generating {variant} graph (seed={seed})...")
@@ -126,9 +139,13 @@ def load_or_create_variant_graph(
     if variant == "random":
         g_var = random_matched_graph(base_graph, seed=seed)
     elif variant == "scramble":
-        # For large graphs (15M edges), 1M swaps is fast and thoroughly scrambled
+        # For large graphs (15M edges), 1M swaps was original Phase 5 behavior
         n_multiplier = 0.1 if base_graph.weights.nnz > 1_000_000 else 2.0
         g_var = degree_preserved_scramble(base_graph, seed=seed, n_swap_multiplier=n_multiplier)
+    elif variant == "scramble_mixed":
+        g_var = well_mixed_scramble(base_graph, seed=seed, target_overlap=0.05)
+    elif variant == "weight_shuffle":
+        g_var = weight_shuffled_graph(base_graph, seed=seed, separate_signs=True)
     else:
         raise ValueError(f"Unknown variant {variant}")
     t_gen = time.time() - t0
@@ -138,14 +155,24 @@ def load_or_create_variant_graph(
 
     # Save cache
     cache_dir.mkdir(parents=True, exist_ok=True)
-    np.savez(
-        cache_file,
-        csr_data=g_norm.weights.data,
-        csr_indices=g_norm.weights.indices,
-        csr_indptr=g_norm.weights.indptr,
-        csr_shape=np.array(g_norm.weights.shape),
-        spectral_radius=np.array([target_rho], dtype=np.float32),
-    )
+    save_kwargs = {
+        "csr_data": g_norm.weights.data,
+        "csr_indices": g_norm.weights.indices,
+        "csr_indptr": g_norm.weights.indptr,
+        "csr_shape": np.array(g_norm.weights.shape),
+        "spectral_radius": np.array([target_rho], dtype=np.float32),
+    }
+    diag_to_save = {}
+    if "scramble_diagnostics" in g_var.meta:
+        diag_to_save["scramble_diagnostics"] = g_var.meta["scramble_diagnostics"]
+        g_norm.meta["scramble_diagnostics"] = g_var.meta["scramble_diagnostics"]
+    if "weight_shuffle_diagnostics" in g_var.meta:
+        diag_to_save["weight_shuffle_diagnostics"] = g_var.meta["weight_shuffle_diagnostics"]
+        g_norm.meta["weight_shuffle_diagnostics"] = g_var.meta["weight_shuffle_diagnostics"]
+    if diag_to_save:
+        save_kwargs["diag_json"] = np.array(json.dumps(diag_to_save))
+
+    np.savez(cache_file, **save_kwargs)
     print(f"Saved {variant} graph cache to {cache_file}.")
     return g_norm
 
@@ -314,6 +341,10 @@ def extract_features(
         "git_commit": get_git_commit(),
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
+    if "scramble_diagnostics" in graph.meta:
+        meta["scramble_diagnostics"] = graph.meta["scramble_diagnostics"]
+    if "weight_shuffle_diagnostics" in graph.meta:
+        meta["weight_shuffle_diagnostics"] = graph.meta["weight_shuffle_diagnostics"]
 
     json_path = output_dir / f"{variant}_{split}.json"
     with tempfile.NamedTemporaryFile("w", dir=output_dir, delete=False) as tmp:
