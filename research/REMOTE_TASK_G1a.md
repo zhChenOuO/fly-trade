@@ -42,7 +42,8 @@ python -m pytest research/tests/test_g1_reservoir.py -k test_cpu_vs_torch_state_
 *若出現任何錯誤或最大絕對誤差 $> 10^{-4}$，立即終止並回報！*
 
 ### Step 2: 執行 1,000 步真實 FlyWire CUDA Timed Pilot
-使用真實果蠅全腦圖（138,639 神經元，1,509 萬突觸）在目標譜半徑 $\rho=0.95$、批次維度 $B=10$ 條序列下，實測 1,000 步更新耗時與峰值顯存，並外推全量 G1 成本：
+使用真實果蠅全腦圖（138,639 神經元，1,509 萬突觸）在目標譜半徑 $\rho=0.95$、批次維度 $B=10$ 條序列下，實測 1,000 步更新耗時與峰值顯存，並外推全量 G1 成本。
+（引擎內部已強制使用 `select_r16_indices` 僅對有限視網膜座標之 R1-6 神經元注入電流、排除 R7/R8，並使用線上串流飽和追蹤 `track_saturation=True` 避免 28 GiB 記憶體配置；加上 `--require-cuda` 確保嚴格在 GPU 上執行）：
 
 ```bash
 mkdir -p research/outputs/v3
@@ -53,6 +54,7 @@ python -m research.pipeline.g1_reservoir \
     --batch-size 10 \
     --rho 0.95 \
     --device cuda \
+    --require-cuda \
     2>&1 | tee research/outputs/v3/g1_timed_pilot.log
 ```
 

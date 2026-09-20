@@ -1,3 +1,4 @@
+已被 v2 取代，僅供歷史參考
 # G1 預註冊規格草案：stateful FlyWire Reservoir 的合成時序基準
 
 ## 修訂紀錄
