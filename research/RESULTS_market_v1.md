@@ -32,11 +32,18 @@
 - 分季 IC（real Logistic）：0.0198 / 0.0192 / 0.0394 / 0.0200，四季皆正；random 3/4、scramble 3/4 為正；real Ridge 2/4。
 - 檔案：outputs/v2/probe_posthoc_val.json。
 
-## MDE 標籤注入
-- 首次執行於校準步驟停止（momentum、目標 IC 0.005：Val 振幅校準得 0.00616）。原因：雜訊與訊號的樣本 Spearman SD 約 0.009（Val），且逐 split 強制 oracle IC 移除母體抽樣變異；設計已改為固定母體係數，重跑中。
+## MDE 標籤注入（探索性；remote/phase5c，R=100、bootstrap=500，耗時 685 秒）
+- 設計：固定母體係數（Train 校準，K=50 雜訊抽樣）；訊號形態 momentum / mean_reversion / image_projection；目標 IC 0–0.05；偵測＝Val IC 的 95% CI 下界 >0。
+- MDE（偵測率首次 ≥80%）：三形態 × 三網路全部 NOT_REACHED（最高目標 IC 0.05 仍未達）。
+- real 圖偵測率（目標 IC 0.02 / 0.03 / 0.05）：momentum 7% / 9% / 31%；mean_reversion 9% / 11% / 53%；image_projection 6% / 8% / 14%。random 與 scramble 同量級或更低。
+- 目標 IC 0.05 時，real 圖 Ridge 實際還原的 IC（目標＋平均偏差）：momentum 0.013、mean_reversion 0.021、image_projection 0.008（約 16–41% 的植入訊號）。
+- Val IC 的 95% CI 中位寬度 0.037–0.038；IC=0 假陽性率 2% / 2% / 4%（real / random / scramble）。
+- Ridge α 撞上界（1e4）比例：54/54 配置皆 100%。
+- 判讀：Phase 5/6 的 DN 讀出管線對植入訊號（含影像的線性函數）還原率低，且 Val 樣本量只能分辨 IC ≳0.04；對 IC ≤0.05 的效應檢定力不足。Phase 5 FAIL 對 ≤0.05 的效應無資訊，不代表連接體表徵沒有資訊。
+- 檔案：outputs/v2/mde_injection.json、mde_injection.log。
 
 ## 未完成
-- MDE 標籤注入（校準設計修正後重跑；`research/REMOTE_TASK_P5C.md`）。
+- 無（市場命題封存）。
 
 ## 封存文件（research/archive/market_v1/）
 research.md、research_v2.md、PLAN_v2.md、SPEC.md、SPEC_v3.md、REMOTE_TASK.md、REMOTE_TASK_P1.md、REMOTE_TASK_P5.md、REMOTE_TASK_P6.md、PLAN_v3_direction.md（Codex 審查與兩輪交叉詰問）。程式註解中對這些文件的引用指向此目錄。
