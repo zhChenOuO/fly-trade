@@ -475,46 +475,89 @@ class PureNumpyRidge:
         return (X - self.mu_x) @ self.beta + self.mu_y
 
 
+def derive_purge_samples(
+    input_window_bars: int = 48,
+    max_prediction_horizon: int = 12,
+    sample_stride: int = 6,
+) -> int:
+    """Derive purge_samples from experiment specification.
+
+    Formula:
+        purge_bars = input_window_bars + max_prediction_horizon
+        purge_samples = ceil(purge_bars / sample_stride)
+
+    For input_window_bars=48, max_horizon=12, sample_stride=6:
+        purge_bars = 48 + 12 = 60 bars.
+        purge_samples = ceil(60 / 6) = 10 samples.
+    """
+    purge_bars = input_window_bars + max_prediction_horizon
+    return int(np.ceil(purge_bars / sample_stride))
+
+
 def select_ridge_alpha_timeseries_cv(
     X_train: np.ndarray,
     y_train: np.ndarray,
     alphas: tuple[float, ...] = (1e-3, 1e-2, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0),
     n_folds: int = 5,
-) -> float:
+    purge_samples: int = 0,
+    return_diagnostics: bool = False,
+) -> float | tuple[float, dict]:
     """Select best Ridge regularization alpha via chronological expanding-window CV on Train.
 
     Validation Rationale:
     CV is conducted exclusively on Train partitions. Expanding-window folds ensure that
     each evaluation fold is strictly in the chronological future of its training fold,
     preventing lookahead bias while keeping the Validation set completely pristine.
+
+    When purge_samples > 0, an embargo of `purge_samples` observations is placed between
+    train_end and eval_start to prevent overlapping feature windows or horizons from
+    leaking information into evaluation folds.
     """
     n_samples = len(X_train)
     fold_size = n_samples // (n_folds + 1)
 
     best_alpha = alphas[0]
     lowest_mse = float("inf")
+    cv_losses: dict[float, list[float]] = {alpha: [] for alpha in alphas}
 
     for alpha in alphas:
         mses = []
         for f in range(1, n_folds + 1):
             train_end = f * fold_size
-            eval_end = (f + 1) * fold_size
+            eval_start = train_end + purge_samples
+            eval_end = min((f + 1) * fold_size, n_samples)
+            if eval_start >= eval_end:
+                continue
 
             x_tr = X_train[:train_end]
             y_tr = y_train[:train_end]
-            x_ev = X_train[train_end:eval_end]
-            y_ev = y_train[train_end:eval_end]
+            x_ev = X_train[eval_start:eval_end]
+            y_ev = y_train[eval_start:eval_end]
 
             model = PureNumpyRidge(alpha=alpha).fit(x_tr, y_tr)
             pred = model.predict(x_ev)
-            mses.append(float(np.mean((pred - y_ev)**2)))
+            mse = float(np.mean((pred - y_ev)**2))
+            mses.append(mse)
+            cv_losses[alpha].append(mse)
 
-        mean_mse = float(np.mean(mses))
+        mean_mse = float(np.mean(mses)) if mses else float("inf")
         if mean_mse < lowest_mse:
             lowest_mse = mean_mse
             best_alpha = alpha
 
-    return best_alpha
+    if not return_diagnostics:
+        return best_alpha
+
+    diagnostics = {
+        "cv_losses_by_alpha": cv_losses,
+        "mean_cv_loss_by_alpha": {a: float(np.mean(losses)) if losses else float("inf") for a, losses in cv_losses.items()},
+        "best_alpha": float(best_alpha),
+        "best_alpha_hits_upper_bound": bool(best_alpha == max(alphas)),
+        "best_alpha_hits_lower_bound": bool(best_alpha == min(alphas)),
+        "purge_samples": int(purge_samples),
+        "n_folds": int(n_folds),
+    }
+    return best_alpha, diagnostics
 
 
 def fit_predict_b1a_ridge(
@@ -707,10 +750,11 @@ def run_baselines_v2(
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
-    # Read inputs
+    # Read inputs with split filters to ensure dev_test_v1 is never accessed
+    split_filters = [("split", "in", ["train", "val"])]
     raw = pd.read_parquet(data_dir / "raw_ohlcv.parquet")
-    samples = pd.read_parquet(data_dir / "samples.parquet")
-    labels = pd.read_parquet(data_dir / "labels_v2.parquet")
+    samples = pd.read_parquet(data_dir / "samples.parquet", filters=split_filters)
+    labels = pd.read_parquet(data_dir / "labels_v2.parquet", filters=split_filters)
 
     # Strict governance whitelist enforcement
     splits_present = set(labels["split"].unique())
