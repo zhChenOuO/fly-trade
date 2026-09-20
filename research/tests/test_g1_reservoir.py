@@ -122,6 +122,7 @@ def test_shift_register_delay_line_alignment_and_mc() -> None:
         leak=1.0,
         unscaled_rho=0.99,
         dtype=np.float64,
+        verify_spectral_radius=False,
     )
     # Manually ensure shift weight is exactly 1.0
     res.W_eff = W_delay.copy().astype(np.float64)
@@ -274,3 +275,103 @@ def test_cpu_vs_torch_state_alignment(n_neurons: int = 2000, seed: int = 42) -> 
     print(f"CPU vs Torch max readout error: {max_err:.2e}, max final state error: {max_final_err:.2e}")
     assert max_err <= 1e-4, f"CPU vs Torch discrepancy {max_err} exceeded 1e-4"
     assert max_final_err <= 1e-4, f"Final state discrepancy {max_final_err} exceeded 1e-4"
+
+
+def test_spectral_radius_rotation_matrix_and_fail_closed() -> None:
+    """Spectral radius must be 1.0 on 2D rotation matrix and fail closed on invalid scaling."""
+    # 2D 90-degree rotation matrix: eigenvalues are +i and -i, so rho = 1.0.
+    # A symmetric Rayleigh quotient v^T W v would be 0 for real v!
+    W_rot = sp.csr_matrix([[0.0, -1.0], [1.0, 0.0]])
+    rho, diag = compute_spectral_radius(W_rot, return_diagnostics=True)
+    np.testing.assert_allclose(rho, 1.0, atol=1e-8)
+    assert diag["converged"] is True
+
+    # Scaling to 0.95 must produce verified rho = 0.95
+    W_scaled, target, unscaled, factor, sdiag = scale_weights_to_spectral_radius(
+        W_rot, target_rho=0.95, verify=True, return_diagnostics=True
+    )
+    np.testing.assert_allclose(target, 0.95, atol=1e-8)
+    np.testing.assert_allclose(unscaled, 1.0, atol=1e-8)
+    np.testing.assert_allclose(sdiag["verified_rho"], 0.95, atol=1e-8)
+
+    # Scaling zero matrix must raise ValueError
+    W_zero = sp.csr_matrix((4, 4), dtype=np.float64)
+    with pytest.raises(ValueError, match="zero spectral radius"):
+        scale_weights_to_spectral_radius(W_zero, target_rho=0.95)
+
+
+def test_streaming_saturation_matches_offline_and_catches_non_finite() -> None:
+    """Streaming saturation accumulation must match full-state evaluation and catch NaN."""
+    N, B, T = 30, 2, 200
+    washout = 50
+    W = _create_synthetic_sparse_reservoir(n_neurons=N, seed=555)
+    sensory_idx = np.array([0, 1])
+    readout_idx = np.array([5, 10])
+
+    res = ScipyG1Reservoir(
+        weights=W,
+        sensory_idx=sensory_idx,
+        readout_idx=readout_idx,
+        target_rho=0.95,
+        leak=0.5,
+    )
+
+    rng = np.random.default_rng(123)
+    u = rng.uniform(0.0, 0.5, size=(B, T)).astype(np.float32)
+
+    # 1. Full states offline computation
+    full_states, _ = res.simulate(u, return_full_states=True)
+    post_washout = full_states[:, washout:, :]
+    # Non-sensory neurons: all except sensory_idx
+    non_sensory_mask = np.ones(N, dtype=bool)
+    non_sensory_mask[sensory_idx] = False
+
+    non_sensory_states = post_washout[:, :, non_sensory_mask]
+    offline_sat_count = int(np.sum(np.abs(non_sensory_states) > 0.90))
+    offline_total = int(non_sensory_states.size)
+    offline_ratio = offline_sat_count / offline_total
+
+    # 2. Streaming saturation computation
+    _, _, stream_summary = res.simulate(
+        u,
+        track_saturation=True,
+        washout=washout,
+        saturation_threshold=0.90,
+    )
+
+    assert stream_summary["saturated_points"] == offline_sat_count
+    assert stream_summary["total_non_sensory_points"] == offline_total
+    np.testing.assert_allclose(stream_summary["saturation_ratio"], offline_ratio, atol=1e-8)
+    assert stream_summary["passed"] == (offline_ratio < 0.05)
+    assert stream_summary["non_finite_count"] == 0
+
+    # 3. Non-finite injection must fail streaming gate
+    u_nan = u.copy()
+    u_nan[0, 100] = np.nan
+    _, _, nan_summary = res.simulate(u_nan, track_saturation=True, washout=washout)
+    assert nan_summary["passed"] is False
+    assert nan_summary["non_finite_count"] > 0
+
+
+def test_torch_device_dtype_and_require_cuda() -> None:
+    """TorchG1Reservoir must record actual_device and actual_dtype, and enforce require_cuda."""
+    if not HAS_TORCH:
+        pytest.skip("PyTorch not installed")
+
+    import torch
+
+    W = _create_synthetic_sparse_reservoir(n_neurons=20, seed=77)
+    sensory_idx = np.array([0, 1])
+
+    # CPU instantiation
+    res_cpu = TorchG1Reservoir(weights=W, sensory_idx=sensory_idx, device="cpu")
+    assert res_cpu.actual_device == "cpu"
+    assert res_cpu.actual_dtype == "torch.float32"
+
+    # require_cuda=True on non-CUDA system must raise RuntimeError
+    if not torch.cuda.is_available():
+        with pytest.raises(RuntimeError, match="require_cuda=True specified but CUDA is not available"):
+            TorchG1Reservoir(weights=W, sensory_idx=sensory_idx, require_cuda=True)
+    else:
+        res_cuda = TorchG1Reservoir(weights=W, sensory_idx=sensory_idx, device="cuda", require_cuda=True)
+        assert "cuda" in res_cuda.actual_device

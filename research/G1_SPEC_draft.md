@@ -2,6 +2,8 @@
 
 ## 修訂紀錄
 
+- 2026-09-20｜交叉詰問 IV：否決單獨以 `MC_DN/MC_random≥1` 作讀出充分性 gate（雙方接近零仍會通過）；改以固定 DN states 對 NARMA10 已知 delayed-product term 的 Train-only 5% positive-control recovery 作絕對任務 gate，並以 nested sequence CV 評估共用 rho 選擇器，只檢查外層選出的工作點；明定有效 gate 失敗結案、僅結果盲化的 run-invalidating 缺陷可另版重跑。
+- 2026-09-20｜Phase 5 市場 MDE 新證據：`mde_injection.json` 顯示相同 1,291 維 DN＋Ridge 對母體 IC=0.05 訊號僅還原約 16–41%，`image_projection` 約 16%，54/54 組 α 撞上界且 MDE 全為 NOT_REACHED。新增 Pilot 讀出充分性 gate 與失敗解讀；不把市場 IC 效果量移植為 G1 的 NMSE 門檻，不提供事後替代 readout。
 - 2026-09-20｜G1 引擎審查：將 alpha=0 從「端點 no-go」改為可接受的無正則化解；以固定的 float64 SVD 數值秩規則求解並回報有效秩、保留子空間條件數，避免把合法 OLS 選擇誤判為網格失敗，也避免目前 Gram 絕對特徵值 cutoff 的尺度依賴。
 - 2026-09-20｜G1 引擎審查：新增第 9 節的放行前約束，處理 spectral-radius fallback、R1-6 輸入索引、washout／非有限狀態 gate、MC 選點偏差、Test 封存與完整 gate 工作量；現有 helper 與 timed pilot 尚未滿足者明列為開跑阻擋，不宣稱程式已修好。
 
@@ -12,6 +14,10 @@
 主要問題：在單一固定 FlyWire v783 connectome、固定 input map、固定 DN readout 與預註冊 dynamics 下，真實連接圖在 NARMA10 上是否比事先指定的隨機／拓樸／權重 controls 有至少 5% 的 NMSE 改善？
 
 陽性結果最多支持「這個指定 FlyWire 圖作為固定 stateful reservoir，在此合成 benchmark 下勝過指定 controls」。不支持「果蠅在生物上實際執行 NARMA10」、其他 FlyWire 個體具相同表現，或任何市場預測／交易結論。G1 不讀取、不需要任何市場 split 或市場 label。
+
+若 Pilot 的 DN 任務特定讀出 gate 失敗，G1 必須在解封 Test 前 no-go，並將結果寫為「固定 DN readout 未能在 Train-only positive control 中可靠恢復本研究預先指定的 NARMA10 delayed-product 訊號；拓樸對比不可識別」；不得稱為拓樸無關、無 reservoir 資訊或陰性生物學結論。gate 通過只支持此固定讀出能恢復該校準訊號，不證明保留所有 NARMA10 結構或其他有用資訊；若 Test 未達主要門檻，結論限於「在本規格的固定 input/readout、動力學與樣本下，未證實至少 5% 的拓樸對比效果」。
+
+Phase 5 的市場標籤注入結果（摘要見 `research/RESULTS_market_v1.md`，原始結果見 `research/outputs/v2/mde_injection.json`）是提高讀出瓶頸先驗的跨任務警訊，不是 G1 NARMA10 的效果量：市場 IC 與 G1 NMSE 的 estimand 不同，不能據此改動 G1 的 5% NMSE 最小效果量。
 
 ## 2. 任務及序列
 
@@ -108,7 +114,9 @@ Primary control family 在解封 Test 前，用 Train 5-fold CV 的 mean NMSE �
 
 ### 5% MDE 校準
 
-在不屬於主 Test seeds 的獨立 synthetic calibration streams 上，加入一個固定 delay-line feature `q[t]=1.5u[t]u[t−9]` 作為 planted memory feature；只用 calibration Train 選其縮放係數，使預期 NMSE 優勢恰為 5%，係數鎖定後在 held-out calibration streams 重複；若無法維持此 5% effect，校準失敗並停止。以與主分析相同的 graph/sequence/block 層級推論做 1,000 個模擬 replicates。要求 5% planted effect 的檢出率 ≥80%，且 null 假陽性 ≤5%。若 5% effect 的 power <80%，G1 對 5% MDE 沒有足夠檢定力，停止並報告 inconclusive；不解封主 Test 後再加資料。80%、1,000 replicates 為事前規劃門檻，屬主觀設計，不是已完成的 power 結果。
+保留 primary endpoint 的最小效果量 `Δ≥0.05` 與 power≥80%；Phase 5 的母體 IC=0.05 與 G1 相對 NMSE 改善 5% 是不同 estimand，不可換算，故不依市場注入結果調高或降低門檻。原先把 `q[t]=1.5u[t]u[t−9]` 追加成第 1,292 個 feature 的正控制只能檢查 scorer，不得作為 G1 的 MDE／DN readout power 通過證據，因它繞過了固定 DN readout。
+
+MDE 必須校準 primary `Δ` 的推論力：使用獨立 synthetic calibration streams 與鎖定的 Train-only 選擇流程，在 calibration Train 上估計固定 DN／control 的 OOS residual 尺度，然後在 held-out calibration blocks 以固定標量縮放 real residual，使預期相對 control NMSE 改善恰為 5%；另以未縮放 residual 建立零效果 replicates。每個 replicate 重跑預註冊的 family selection、paired 500-step block／graph 階層區間與 primary 檢定；對真實 `Δ=0.05` 的 positive replicates，power 定義為 95% CI 下界 >0（拒絕 `Δ≤0`），null FPR≤5%。以 1,000 個 replicates 要求此檢定力≥80%；任何一項未達、或 calibration Train 無法鎖定所需縮放值，Pilot no-go/inconclusive，不能解封主 Test 後補樣本或改效果量。主 Test 的成功判定仍另須點估計 `Δ≥0.05`。在真值恰等於 5% 時，80% power 不代表有 80% 機率滿足這個點估計門檻；另須報告完整主判定的模擬通過率，不得把它稱為 80% power。此 residual injection 只校準統計推論，不代表 DN 能編碼訊號；該問題由第 9 節讀出 gate 判斷。80%、1,000 replicates 為事前規劃值，並非已完成結果。
 
 ## 7. G0/G1 gate 與停損
 
@@ -116,9 +124,9 @@ Primary control family 在解封 Test 前，用 Train 5-fold CV 的 mean NMSE �
 |---|---|---|
 | G0a：圖和 controls integrity | base graph / 每個 variant hash 與 metadata 完整；in/out degree、source positive/negative strength、weight multiset、loops、edge uniqueness、target rho 均符合對應 family；random endpoints 在 source index / neuron class 上無抽樣偏差。 | 任一統計不符、快取來源不明或未達 overlap≤5%，不跑 readout。 |
 | G0b：stateful engine / alignment | 同一小圖、同一 input 下，GPU Torch 與 CPU reference states 在 float32 tolerance 內一致（absolute state error ≤10⁻⁴）；跨時間狀態更新一次且只更新一次；oracle NMSE<10⁻⁶；錯配 input negative control 不通過主要改善 gate。 | 首工作日結束仍無法證明 state/time alignment，或 oracle/negative control 失敗，即終止 G1。不得用靜態 32-step replay 冒充 stateful。 |
-| G1a：Pilot | 1 real + 5 instances per null family 對同一 rho grid 完成 Train-only MC/穩定性 gate；找到一個四 family 共用合格 rho；5% MDE power≥80%、null FPR≤5%；全程預估 GPU≤8 h。 | 沒有共用 rho、5% MDE 無 80% power、假陽性>5%，或成本預估超 8 GPU h，no-go；不臨時改 input/noise/alpha/grid。 |
+| G1a：Pilot | 1 real + 5 instances per null family 以 Train-only nested sequence CV 選共同 rho；外層 held-out Train streams 的固定 DN readout 通過 NARMA delayed-product 5% positive-control gate；primary `Δ=0.05` 對 `Δ≤0` 的 power≥80%、null FPR≤5%；全程預估 GPU≤8 h。 | 任一外層 fold 無共用合格 rho、DN positive-control 的 `A_q` 未達 5%／CI 下界未大於 0／power 未達 80%／null FPR>5%、primary MDE power不足，或成本預估超 8 GPU h，no-go；不臨時改 readout/input/noise/alpha/grid。 |
 | G1b：鎖定主分析 | 凍結 source、graphs、seeds、weights hash、readout、rho、alpha 規則、primary family 選擇規則與 report schema 後，一次執行 61 graphs 的 Test。 | 任一 Test 讀取前後規格漂移、輸出缺檔或非有限值，整批結果標為 invalid；不得補跑後挑最好版本。 |
-| 最終判定 | primary Δ≥5% 且 paired 95% CI lower bound>0，所有 integrity gates 通過。 | 任一條件不滿足：G1 FAIL／inconclusive，終止 connectome market prediction 路徑；不得改做新 market split 以挽救 G1。 |
+| 最終判定 | primary Δ≥5% 且 paired 95% CI lower bound>0，所有 integrity gates 通過。 | 任一條件不滿足：G1 FAIL／inconclusive，終止本版 G1 confirmatory 路徑；不得用新設定或替代 readout 救援同一命題。 |
 
 主要門檻來源：5% NMSE 改善、500-step block、500-step washout、20 graph instances/family、Train/Val/Test 各自 10/3/10 sequence seeds、95% CI、2,000 bootstrap、80% power、5% FPR、8 GPU 小時與 4 工作天均為本計劃／使用者指定的研究規劃值或主觀門檻；FlyWire Phase 0 non-sensory saturation <5% 與 leak=0.5 為本專案實測規則。文獻來源只支援 NARMA10 benchmark 形式與 rho=0.99 候選，不支援本文件的效應量門檻。
 
@@ -158,6 +166,20 @@ Train-only 選擇階段必須使用且只使用凍結的 TRAIN_SEEDS；現有 va
 飽和比例只計 washout 後的 states；檢查前須先確認所有計入的 state 有限，空陣列、NaN 或 Inf 一律 gate 失敗。現有 check_saturation_gate 沒有 washout 參數、NaN 會被當作未飽和，且空陣列會以零比例通過；呼叫端未明確切除 washout 前，不可把其結果當作 gate。為避免完整狀態軌跡超出 GPU 記憶體，飽和計數須逐時間步／區塊累計 numerator、denominator 與非有限值數量，不得要求保留整段全腦 states。
 
 MC 僅以固定的 1,291 個 DN readout states 作為特徵，排除 washout；每個 lag 以 10 條 Train sequence 為 group 做 5-fold CV，fold 內擬合線性 readout、在 held-out sequences 計算 R²，負值依既定定義截為零，再依 lag 加總。序列內時間點不可跨邊界拼接成虛構 lag pair。現有 run_g1_pilot 雖然取 DN states，仍逐 sequence 在同一批 observations 上 fit 與 score；compute_memory_capacity_fast 的 QR 也未做 rank-revealing cutoff，常數／共線欄位可能增加虛假的投影方向。原 compute_memory_capacity 同樣是 in-sample 且不限制輸入特徵集合；這些 helper 均不能用於 rho 選擇。完成 rank-aware、out-of-sequence MC 與全流程 CPU/GPU 成本量測前，Pilot 不放行。
+
+### DN readout 任務特定 gate、rho 選擇與禁止替換
+
+單獨使用 `R = MC_DN / median(MC_random_projection) ≥1` 不足以證明讀出充分：若 DN 與隨機投影的 MC 都接近零，比例仍可能通過。因此 MC 比值若計算，只作固定 rho 的描述性診斷，不再是 go/no-go 條件，也不提供 readout fallback。絕對 gate 直接測試 NARMA10 的已知延遲非線性輸入項 `q[t]=1.5u[t]u[t−9]` 是否能由固定 DN states 線性讀出；q 只能進入校準 target，不得追加到 1,291 維 predictor。
+
+只用 10 條凍結 Train sequences，依既定 5-fold sequence-group CV 做 nested selection；每一外層 fold 留出 2 條完整 sequences，剩餘 8 條內層序列按既有飽和／遺忘 gates 與四家族等權 MC 規則選一個共用 rho。若任一外層 fold 沒有共用合格 rho，no-go。對每 fold 的真實圖，令 `r[t]=y[t+1]−q[t]`；inner Train 以固定 DN features 和既定 Ridge 規則擬合 `r`，解析校準單一 `β`，使 oracle `r̂+βq` 相對 `r̂` 在 calibration Train 的 NMSE 改善恰為 5%。β 在 outer fold 評分前凍結，並對所有 graph families 使用同一 β，不得逐圖或逐 family 調整。
+
+以相同 1,291 DN predictor、相同 fold-local standardization 與由 `r` 的 inner CV 選出的同一 alpha，分別訓練 `r` 與 `z=r+βq` 兩個 scalar targets；兩者只是已知 teacher term 的分解診斷，不增加 predictor 維度，也不是替代 readout。於 outer held-out Train sequences 計算 `A_q=(MSE(z,r̂)−MSE(z,ẑ))/MSE(z,r̂)`；分母非正或非有限即 no-go。以 paired sequence／500-step block 的 1,000 個 calibration replicates 檢查真 q 對齊與固定循環錯配 q（依 frozen TRAIN_SEEDS 順序將每條 state 序列配給下一條序列的 q）的 null。**pooled outer-fold `A_q` 點估計須 ≥0.05，單側 95% block-bootstrap 下界須 >0；在真 5% oracle q probe 下，`A_q>0` 檢出率須 ≥80%，錯配 q 的 FPR 須 ≤5%**；任一不滿即 no-go。此 5% 是沿用 G1 最小相對 NMSE 改善作任務 probe 的絕對工程門檻，不宣稱與 topology Δ 等價；readout probe 不代表拓樸效果本身有 80% power，後者仍由 §6 的 primary `Δ` MDE gate 校準。控制圖以同規則計算並報告，但 no-go specimen 是唯一真實 FlyWire 圖。
+
+readout gate 不要求三個未選 rho 全部通過。外層 held-out streams 只評估內層選出的 rho，故不會因未使用候選點表現較差而 no-go；q gate 結果不得反饋內層 rho、alpha 或 family selection。五個 outer folds 的 q gate 全部結束後，才依凍結的既有 Train-only 規則用完整 10 條 Train sequences 選最終共用 rho。若替代 readout 未列入本版，本版禁止在 gate 失敗後切換隨機投影、全狀態或按表現挑選的 DN 子集；未來研究須另立問題與版本，另有獨立 Test，不能作為本版失敗後的救援分析。
+
+### 停損範圍與無效執行例外
+
+硬停損適用於輸入／圖／程式按凍結規格正確執行後仍發生的科學 gate 失敗：本版立即結案，不得重選 readout、rho、輸入映射、alpha、效果門檻、seed 或追加分析。以下情況屬「run 無效」而非 gate 失敗，可另開新版本修復並重跑： (1) 可由獨立 fixture／參考實作證明、且不以主要結果發現的程式錯誤或索引／數值實作缺陷；(2) Test 未建立／解封且未查看結果前發生的外部硬體中斷、電源故障或環境損壞；OOM 僅限有紀錄可證明由本次工作負載之外的暫時資源占用造成，並須先排除該占用，再以原 hash、seed、設定與硬體重跑；(3) 在任何性能指標讀取前發現的規格矛盾、graph hash／資料版本錯誤或 split boundary 失效。可重現的 deterministic OOM 屬容量／實作限制，不是重跑例外；若證明為程式缺陷，依第 (1) 項另版修復，否則按成本／可行性 gate no-go。每個例外須保留原始 run 與 hash、記為 invalid、寫明證據／發現時間／是否已看過結果、變更檔案與新版本 hash；新版本需重新凍結，不能混併舊新輸出。已解封 Test 的版本不得再使用同一 Test 作確認性證據。有效的 no-go、成本超支、弱效果或 near-miss 均不屬例外；新研究只有在另有獨立問題、預註冊及未觸碰資料時才可提出。
 
 ### 完整 workload 才能估算硬體預算
 

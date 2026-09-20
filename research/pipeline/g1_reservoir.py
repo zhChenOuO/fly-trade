@@ -6,22 +6,24 @@ where:
     leak = 0.5
     recurrence gain = 1.0
     W_eff = W * (rho / rho(W)) scaled to target spectral radius rho
-    I_i[t] = u[t] - 0.25 for i in sensory_idx; 0.0 otherwise
+    I_i[t] = u[t] - 0.25 for i in sensory_idx (R1-6 only); 0.0 otherwise
     noise = 0.0
 
-Strict Governance:
+Strict Governance & Review Fixes (SPEC §3, §7, §9):
 - Pure scipy/numpy reference implementation (CPU).
 - Optional PyTorch implementation for GPU with identical sparse dynamics.
-- Stateful: preserves state across steps, updated exactly once per time step.
-- No 32-step static replay or windowed state reset.
-- Timed pilot CLI entrypoint for GPU runtime and VRAM extrapolation.
+- Fail-closed eigensolver: no Rayleigh quotient or power-iteration fallback; raises if eigs fails.
+- Scaled spectral radius independently verified.
+- Streaming saturation gate: online non-sensory saturation accumulation without 28 GiB full-state materialization.
+- Strict Torch device and dtype recording; require_cuda option.
+- Timed pilot benchmarks full streaming gate path with R1-6 selection and explicit graph cache path.
 """
 from __future__ import annotations
 
 import argparse
 import sys
 import time
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 import scipy.sparse as sp
@@ -35,47 +37,146 @@ except ImportError:
     HAS_TORCH = False
 
 
-def compute_spectral_radius(weights: sp.csr_matrix, k: int = 1, maxiter: int = 1000) -> float:
-    """Compute dominant eigenvalue magnitude of a CSR matrix using Arnoldi iteration."""
-    if weights.nnz == 0 or weights.shape[0] <= 1:
-        return 0.0
+def compute_spectral_radius(
+    weights: sp.csr_matrix,
+    k: int = 1,
+    maxiter: int = 1000,
+    ncv: int | None = None,
+    return_diagnostics: bool = False,
+) -> float | tuple[float, dict]:
+    """Compute dominant eigenvalue magnitude of a CSR matrix without Rayleigh fallback.
+
+    Per G1_SPEC §9:
+        Fail-closed eigensolver. If eigs fails to converge, retry with increased
+        ncv and maxiter; if convergence still fails, raise RuntimeError.
+        Never use Rayleigh quotient or power-iteration fallback, which is invalid
+        for non-symmetric matrices (e.g. 2D rotation).
+    """
+    n = weights.shape[0]
+    if weights.nnz == 0 or n <= 1:
+        diag = {"method": "trivial", "residual": 0.0, "converged": True}
+        return (0.0, diag) if return_diagnostics else 0.0
+
+    # Dense exact solver for small matrices (n <= 20) where eigs k >= n-1 constraint applies
+    if n <= 20:
+        vals, vecs = np.linalg.eig(weights.toarray())
+        order = np.argsort(np.abs(vals))[::-1]
+        dominant_val = vals[order[0]]
+        rho = float(np.abs(dominant_val))
+        v = vecs[:, order[0]]
+        v_norm = np.linalg.norm(v)
+        if v_norm > 1e-12:
+            res = float(np.linalg.norm(weights.dot(v) - dominant_val * v) / max(rho * v_norm, 1e-12))
+        else:
+            res = 0.0
+        diag = {
+            "method": "numpy.linalg.eig",
+            "residual": res,
+            "converged": True,
+            "eigenvalue": dominant_val,
+        }
+        return (rho, diag) if return_diagnostics else rho
+
+    # Sparse Arnoldi eigensolver for larger matrices
+    actual_ncv = ncv if ncv is not None else min(n - 1, max(2 * k + 1, 20))
+    vals = None
+    vecs = None
+
     try:
-        vals = scipy.sparse.linalg.eigs(weights.astype(np.float64), k=k, which="LM", maxiter=maxiter, return_eigenvectors=False)
-        return float(np.max(np.abs(vals)))
+        vals, vecs = scipy.sparse.linalg.eigs(
+            weights.astype(np.float64),
+            k=k,
+            which="LM",
+            maxiter=maxiter,
+            ncv=actual_ncv,
+            return_eigenvectors=True,
+        )
     except Exception:
-        # Fallback to power iteration for small or ill-conditioned matrices
-        n = weights.shape[0]
-        v = np.ones(n, dtype=np.float64) / np.sqrt(n)
-        for _ in range(50):
-            v_next = weights.dot(v)
-            norm = np.linalg.norm(v_next)
-            if norm < 1e-12:
-                return 0.0
-            v = v_next / norm
-        rayleigh = float(np.abs(v.dot(weights.dot(v))))
-        return rayleigh
+        # Retry once with increased ncv and maxiter
+        retry_ncv = min(n - 1, max(4 * k + 1, 40))
+        retry_maxiter = max(maxiter * 3, 3000)
+        try:
+            vals, vecs = scipy.sparse.linalg.eigs(
+                weights.astype(np.float64),
+                k=k,
+                which="LM",
+                maxiter=retry_maxiter,
+                ncv=retry_ncv,
+                return_eigenvectors=True,
+            )
+        except Exception as retry_e:
+            raise RuntimeError(
+                f"Spectral radius calculation failed to converge via scipy.sparse.linalg.eigs (n={n}, nnz={weights.nnz}): {retry_e}"
+            ) from retry_e
+
+    order = np.argsort(np.abs(vals))[::-1]
+    dominant_val = vals[order[0]]
+    rho = float(np.abs(dominant_val))
+    v = vecs[:, order[0]]
+    v_norm = np.linalg.norm(v)
+    if v_norm > 1e-12:
+        res = float(np.linalg.norm(weights.astype(np.float64).dot(v) - dominant_val * v) / max(rho * v_norm, 1e-12))
+    else:
+        res = 0.0
+
+    diag = {
+        "method": "scipy.sparse.linalg.eigs",
+        "residual": res,
+        "converged": True,
+        "eigenvalue": dominant_val,
+        "ncv": actual_ncv,
+        "maxiter": maxiter,
+    }
+    return (rho, diag) if return_diagnostics else rho
 
 
 def scale_weights_to_spectral_radius(
     weights: sp.csr_matrix,
     target_rho: float,
     current_rho: float | None = None,
-) -> tuple[sp.csr_matrix, float, float]:
-    """Scale CSR matrix so its dominant eigenvalue magnitude equals target_rho.
+    verify: bool = True,
+    tol: float = 1e-4,
+    return_diagnostics: bool = False,
+) -> tuple[sp.csr_matrix, float, float] | tuple[sp.csr_matrix, float, float, float, dict]:
+    """Scale CSR matrix so dominant eigenvalue magnitude equals target_rho.
 
-    Returns:
-        (W_eff, target_rho, unscaled_rho)
+    Per G1_SPEC §9:
+        Scaled matrix must be independently re-checked. If target and scaled rho
+        differ by more than tolerance, raise RuntimeError.
     """
     if current_rho is None:
-        unscaled_rho = compute_spectral_radius(weights)
+        unscaled_rho, unscaled_diag = compute_spectral_radius(weights, return_diagnostics=True)
     else:
         unscaled_rho = float(current_rho)
+        unscaled_diag = {"method": "precomputed", "residual": 0.0, "converged": True}
 
     if unscaled_rho <= 1e-12:
         raise ValueError(f"Cannot scale matrix with zero spectral radius (rho={unscaled_rho})")
 
-    scale_factor = target_rho / unscaled_rho
+    scale_factor = float(target_rho / unscaled_rho)
     w_scaled = (weights * scale_factor).tocsr()
+
+    verified_rho = float(target_rho)
+    scaled_diag = {}
+    if verify:
+        verified_rho, scaled_diag = compute_spectral_radius(w_scaled, return_diagnostics=True)
+        rel_diff = abs(verified_rho - target_rho) / max(1.0, target_rho)
+        if rel_diff > tol:
+            raise RuntimeError(
+                f"Spectral radius scaling verification failed: target_rho={target_rho}, verified_rho={verified_rho}, rel_diff={rel_diff:.2e} > tol {tol}"
+            )
+
+    diag = {
+        "unscaled_rho": unscaled_rho,
+        "target_rho": float(target_rho),
+        "verified_rho": verified_rho,
+        "scale_factor": scale_factor,
+        "unscaled_diagnostics": unscaled_diag,
+        "scaled_diagnostics": scaled_diag,
+    }
+
+    if return_diagnostics:
+        return w_scaled, float(target_rho), unscaled_rho, scale_factor, diag
     return w_scaled, float(target_rho), unscaled_rho
 
 
@@ -95,6 +196,7 @@ class ScipyG1Reservoir:
         leak: float = 0.5,
         unscaled_rho: float | None = None,
         dtype: np.dtype = np.float32,
+        verify_spectral_radius: bool = True,
     ):
         self.n_neurons = weights.shape[0]
         self.leak = float(leak)
@@ -106,11 +208,12 @@ class ScipyG1Reservoir:
         else:
             self.readout_idx = np.arange(self.n_neurons, dtype=np.int64)
 
-        # Scale weights to target spectral radius
+        # Scale weights to target spectral radius with verification
         self.W_eff, self.target_rho, self.unscaled_rho = scale_weights_to_spectral_radius(
             weights=weights,
             target_rho=target_rho,
             current_rho=unscaled_rho,
+            verify=verify_spectral_radius,
         )
         self.W_eff = self.W_eff.astype(self.dtype)
 
@@ -119,7 +222,12 @@ class ScipyG1Reservoir:
         u: np.ndarray,
         initial_state: np.ndarray | None = None,
         return_full_states: bool = False,
-    ) -> tuple[np.ndarray, np.ndarray]:
+        track_saturation: bool = False,
+        washout: int = 500,
+        saturation_threshold: float = 0.90,
+        max_saturation_ratio: float = 0.05,
+        non_sensory_mask: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, dict]:
         """Run stateful reservoir simulation over sequence(s) u.
 
         Args:
@@ -127,11 +235,12 @@ class ScipyG1Reservoir:
             initial_state: Optional initial state of shape (N,) or (N, B). Default is zero.
             return_full_states: If True, returns states for all N neurons; otherwise returns
                 states only for readout_idx.
-
-        Returns:
-            (states, final_state)
-            - states: shape (B, T, D_readout) or (B, T, N) if return_full_states=True.
-            - final_state: shape (N, B) full reservoir state at final time step.
+            track_saturation: If True, streams non-sensory saturation accumulation without
+                materializing full B x T x N state arrays (avoiding OOM).
+            washout: Steps to exclude from saturation accumulation (default 500).
+            saturation_threshold: State magnitude threshold for saturation (default 0.90).
+            max_saturation_ratio: Gate pass threshold (default 0.05).
+            non_sensory_mask: Optional boolean mask of shape (N,) indicating non-injected neurons.
         """
         u_arr = np.asarray(u, dtype=self.dtype)
         is_1d = (u_arr.ndim == 1)
@@ -152,6 +261,15 @@ class ScipyG1Reservoir:
         d_out = self.n_neurons if return_full_states else len(self.readout_idx)
         out_states = np.empty((B, T, d_out), dtype=self.dtype)
 
+        # Setup streaming saturation tracking
+        if track_saturation:
+            if non_sensory_mask is None:
+                sensory_set = set(int(i) for i in self.sensory_idx)
+                non_sensory_mask = np.array([i not in sensory_set for i in range(self.n_neurons)], dtype=bool)
+            sat_count = 0
+            non_finite_count = 0
+            total_eval_points = 0
+
         # Main stateful temporal loop: updated exactly once per time step
         leak_val = self.dtype(self.leak)
         decay_val = self.dtype(1.0 - self.leak)
@@ -167,11 +285,36 @@ class ScipyG1Reservoir:
             # 3. Leaky integration with tanh non-linearity
             X = decay_val * X + leak_val * np.tanh(S)
 
+            # Streaming saturation tracking for post-washout steps
+            if track_saturation and t >= washout:
+                X_ns = X[non_sensory_mask, :]
+                sat_count += int(np.sum(np.abs(X_ns) > saturation_threshold))
+                non_finite_count += int(np.sum(~np.isfinite(X_ns)))
+                total_eval_points += int(X_ns.size)
+
             # 4. Record readout state at time step t
             if return_full_states:
                 out_states[:, t, :] = X.T
             else:
                 out_states[:, t, :] = X[self.readout_idx, :].T
+
+        if track_saturation:
+            sat_ratio = float(sat_count / total_eval_points) if total_eval_points > 0 else 0.0
+            passed = bool(total_eval_points > 0 and non_finite_count == 0 and sat_ratio < max_saturation_ratio)
+            sat_summary = {
+                "gate": "saturation_gate",
+                "passed": passed,
+                "saturation_ratio": sat_ratio,
+                "saturated_points": int(sat_count),
+                "total_non_sensory_points": int(total_eval_points),
+                "non_finite_count": int(non_finite_count),
+                "threshold": float(saturation_threshold),
+                "max_allowed_ratio": float(max_saturation_ratio),
+                "washout_steps": int(washout),
+            }
+            if is_1d:
+                return out_states[0], X[:, 0], sat_summary
+            return out_states, X, sat_summary
 
         if is_1d:
             return out_states[0], X[:, 0]
@@ -193,13 +336,27 @@ class TorchG1Reservoir:
         leak: float = 0.5,
         unscaled_rho: float | None = None,
         device: str = "cuda",
+        require_cuda: bool = False,
     ):
         if not HAS_TORCH:
-            raise ImportError("PyTorch is required for TorchG1Reservoir but not installed in this environment.")
+            raise ImportError("PyTorch is required for TorchG1Reservoir.")
 
         self.n_neurons = weights.shape[0]
         self.leak = float(leak)
-        self.device = torch.device(device if torch.cuda.is_available() or device == "cpu" else "cpu")
+        self.require_cuda = require_cuda
+
+        # Strict device and dtype tracking (SPEC §8, §9)
+        if require_cuda and not torch.cuda.is_available():
+            raise RuntimeError("require_cuda=True specified but CUDA is not available on this system.")
+
+        if torch.cuda.is_available() and device != "cpu":
+            self.device = torch.device(device)
+            self.actual_device = str(self.device)
+        else:
+            self.device = torch.device("cpu")
+            self.actual_device = "cpu"
+
+        self.actual_dtype = "torch.float32"
 
         self.sensory_idx = np.asarray(sensory_idx, dtype=np.int64)
         if readout_idx is not None:
@@ -207,11 +364,12 @@ class TorchG1Reservoir:
         else:
             self.readout_idx = np.arange(self.n_neurons, dtype=np.int64)
 
-        # Scale weights in scipy
+        # Scale weights in scipy with independent verification
         w_scaled, self.target_rho, self.unscaled_rho = scale_weights_to_spectral_radius(
             weights=weights,
             target_rho=target_rho,
             current_rho=unscaled_rho,
+            verify=verify_spectral_radius,
         )
         w_scaled = w_scaled.astype(np.float32)
 
@@ -237,7 +395,12 @@ class TorchG1Reservoir:
         u: np.ndarray,
         initial_state: np.ndarray | None = None,
         return_full_states: bool = False,
-    ) -> tuple[np.ndarray, np.ndarray]:
+        track_saturation: bool = False,
+        washout: int = 500,
+        saturation_threshold: float = 0.90,
+        max_saturation_ratio: float = 0.05,
+        non_sensory_mask: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, dict]:
         """Execute stateful simulation with PyTorch."""
         u_arr = np.asarray(u, dtype=np.float32)
         is_1d = (u_arr.ndim == 1)
@@ -260,6 +423,16 @@ class TorchG1Reservoir:
         d_out = self.n_neurons if return_full_states else len(self.readout_idx)
         out_states = torch.empty((B, T, d_out), device=self.device, dtype=torch.float32)
 
+        if track_saturation:
+            if non_sensory_mask is None:
+                sensory_set = set(int(i) for i in self.sensory_idx)
+                non_sensory_mask = np.array([i not in sensory_set for i in range(self.n_neurons)], dtype=bool)
+            non_sensory_indices = np.where(non_sensory_mask)[0]
+            non_sensory_tensor = torch.from_numpy(non_sensory_indices).to(self.device, dtype=torch.int64)
+            sat_count = 0
+            non_finite_count = 0
+            total_eval_points = 0
+
         decay_val = 1.0 - self.leak
         leak_val = self.leak
 
@@ -269,6 +442,12 @@ class TorchG1Reservoir:
                 S[self.sensory_tensor, :] += (u_torch[:, t] - 0.25)
                 X = decay_val * X + leak_val * torch.tanh(S)
 
+                if track_saturation and t >= washout:
+                    X_ns = X[non_sensory_tensor, :]
+                    sat_count += int((torch.abs(X_ns) > saturation_threshold).sum().item())
+                    non_finite_count += int((~torch.isfinite(X_ns)).sum().item())
+                    total_eval_points += int(X_ns.numel())
+
                 if return_full_states:
                     out_states[:, t, :] = X.t()
                 else:
@@ -277,13 +456,31 @@ class TorchG1Reservoir:
         out_np = out_states.cpu().numpy()
         final_np = X.cpu().numpy()
 
+        if track_saturation:
+            sat_ratio = float(sat_count / total_eval_points) if total_eval_points > 0 else 0.0
+            passed = bool(total_eval_points > 0 and non_finite_count == 0 and sat_ratio < max_saturation_ratio)
+            sat_summary = {
+                "gate": "saturation_gate",
+                "passed": passed,
+                "saturation_ratio": sat_ratio,
+                "saturated_points": int(sat_count),
+                "total_non_sensory_points": int(total_eval_points),
+                "non_finite_count": int(non_finite_count),
+                "threshold": float(saturation_threshold),
+                "max_allowed_ratio": float(max_saturation_ratio),
+                "washout_steps": int(washout),
+            }
+            if is_1d:
+                return out_np[0], final_np[:, 0], sat_summary
+            return out_np, final_np, sat_summary
+
         if is_1d:
             return out_np[0], final_np[:, 0]
         return out_np, final_np
 
 
 # ==============================================================================
-# Timed Pilot CLI Entrypoint (SPEC §8)
+# Timed Pilot CLI Entrypoint (SPEC §8, §9)
 # ==============================================================================
 
 def run_timed_pilot(
@@ -292,37 +489,55 @@ def run_timed_pilot(
     batch_size: int = 10,
     target_rho: float = 0.95,
     device: str = "cuda",
+    require_cuda: bool = False,
 ) -> dict:
-    """Execute 1,000-step CUDA timed pilot and extrapolate total GPU time across 61 graphs x 3 rhos."""
-    if not HAS_TORCH or not torch.cuda.is_available():
-        msg = "CUDA / PyTorch not available. Timed pilot must be executed on a GPU machine with CUDA."
+    """Execute 1,000-step CUDA timed pilot measuring the full streaming gate path.
+
+    Per G1_SPEC §9:
+        - Actually loads graph_path.
+        - Selects R1-6 photoreceptor indices with finite coordinates (excludes R7/R8).
+        - Benchmarks full streaming gate path with track_saturation=True.
+        - Reports graph SHA-256, R1-6 summary, peak VRAM, and runtime extrapolation.
+    """
+    if not HAS_TORCH:
+        msg = "PyTorch not available."
         print(f"NOTICE: {msg}")
-        return {
-            "status": "SKIPPED_NO_CUDA",
-            "message": msg,
-        }
+        return {"status": "SKIPPED_NO_TORCH", "message": msg}
+
+    if require_cuda and not torch.cuda.is_available():
+        raise RuntimeError("require_cuda=True specified but CUDA is not available on this system.")
 
     from research.pipeline.flywire_graph import load_flywire_graph
+    from research.pipeline.graph_variants import compute_graph_sha256
+    from research.pipeline.g1_bench import select_r16_indices
 
-    print(f"Loading FlyWire graph from cache...")
+    print(f"Loading FlyWire graph from '{graph_path}'...")
     t0 = time.time()
-    graph = load_flywire_graph(use_cache=True)
+    graph = load_flywire_graph(use_cache=True, cache_path=graph_path)
     load_time = time.time() - t0
-    print(f"Loaded {graph.n_neurons:,} neurons, {graph.n_synapses:,} synapses in {load_time:.2f}s.")
+    graph_sha256 = graph.meta.get("sha256") or compute_graph_sha256(graph)
+    print(f"Loaded {graph.n_neurons:,} neurons, {graph.n_synapses:,} synapses in {load_time:.2f}s (SHA256: {graph_sha256[:12]}...).")
+
+    # Select R1-6 sensory indices
+    r16_indices, r16_summary = select_r16_indices(graph)
+    print(f"Selected {len(r16_indices)} R1-6 photoreceptors (out of {len(graph.sensory_idx)} sensory neurons).")
 
     # Initialize Torch reservoir
-    print(f"Initializing TorchG1Reservoir on {device} (rho={target_rho})...")
-    torch.cuda.reset_peak_memory_stats()
+    target_device = device if (torch.cuda.is_available() and device != "cpu") else "cpu"
+    print(f"Initializing TorchG1Reservoir on {target_device} (rho={target_rho})...")
+    if torch.cuda.is_available() and target_device != "cpu":
+        torch.cuda.reset_peak_memory_stats()
     t0 = time.time()
     res = TorchG1Reservoir(
         weights=graph.weights,
-        sensory_idx=graph.sensory_idx,
+        sensory_idx=r16_indices,
         readout_idx=graph.motor_idx,
         target_rho=target_rho,
-        device=device,
+        device=target_device,
+        require_cuda=require_cuda,
     )
     init_time = time.time() - t0
-    print(f"Reservoir initialized in {init_time:.2f}s.")
+    print(f"Reservoir initialized in {init_time:.2f}s (actual device: {res.actual_device}, dtype: {res.actual_dtype}).")
 
     # Generate synthetic input for pilot
     rng = np.random.default_rng(42)
@@ -331,20 +546,29 @@ def run_timed_pilot(
     # Warmup 50 steps
     print(f"Running 50 warmup steps...")
     _ = res.simulate(u_pilot[:, :50])
-    torch.cuda.synchronize()
+    if torch.cuda.is_available() and res.actual_device != "cpu":
+        torch.cuda.synchronize()
 
-    # Benchmark timed pilot
-    print(f"Benchmarking {steps} steps with batch_size={batch_size}...")
+    # Benchmark timed pilot with full streaming saturation gate
+    washout_pilot = min(500, steps // 2)
+    print(f"Benchmarking {steps} steps with batch_size={batch_size} (streaming saturation washout={washout_pilot})...")
     t0 = time.time()
-    _, final_state = res.simulate(u_pilot)
-    torch.cuda.synchronize()
+    _, final_state, sat_summary = res.simulate(
+        u_pilot,
+        track_saturation=True,
+        washout=washout_pilot,
+    )
+    if torch.cuda.is_available() and res.actual_device != "cpu":
+        torch.cuda.synchronize()
     elapsed = time.time() - t0
 
     # Metrics
     total_step_updates = steps * batch_size
     time_per_step_sec = elapsed / steps
     time_per_update_sec = elapsed / total_step_updates
-    peak_vram_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
+    peak_vram_mb = 0.0
+    if torch.cuda.is_available() and res.actual_device != "cpu":
+        peak_vram_mb = float(torch.cuda.max_memory_allocated() / (1024 * 1024))
 
     # Extrapolate for G1 full experiment:
     # 61 graphs (1 real + 60 controls) x 3 rho candidate grid
@@ -364,12 +588,18 @@ def run_timed_pilot(
 
     results = {
         "status": "COMPLETED",
+        "graph_path": graph_path,
+        "graph_sha256": graph_sha256,
+        "r16_summary": r16_summary,
+        "actual_device": res.actual_device,
+        "actual_dtype": res.actual_dtype,
         "benchmark_steps": steps,
         "batch_size": batch_size,
         "elapsed_seconds": elapsed,
         "time_per_step_seconds": time_per_step_sec,
         "time_per_state_update_seconds": time_per_update_sec,
         "peak_vram_mb": peak_vram_mb,
+        "streaming_saturation_summary": sat_summary,
         "total_g1_state_updates": total_g1_updates,
         "extrapolated_gpu_hours": extrapolated_gpu_hours,
         "budget_hours": budget_hours,
@@ -380,6 +610,7 @@ def run_timed_pilot(
     print(f"Elapsed time: {elapsed:.2f}s for {steps} steps x {batch_size} sequences.")
     print(f"Time per step: {time_per_step_sec*1000:.2f} ms ({time_per_update_sec*1000:.4f} ms per sequence update).")
     print(f"Peak VRAM: {peak_vram_mb:.1f} MB.")
+    print(f"Streaming saturation: ratio={sat_summary['saturation_ratio']:.4f}, passed={sat_summary['passed']}.")
     print(f"Total G1 updates: {total_g1_updates:,} (61 graphs x 3 rhos x 117,500 updates).")
     print(f"Extrapolated total GPU runtime: {extrapolated_gpu_hours:.2f} hours (Budget: {budget_hours} h).")
     print(f"Verdict: {'PASS (Within 8h budget)' if within_budget else 'FAIL (Over budget, STOP)'}.")
@@ -395,6 +626,7 @@ def main() -> None:
     parser.add_argument("--rho", type=float, default=0.95, help="Target spectral radius (default: 0.95).")
     parser.add_argument("--graph-path", type=str, default="research/data/flywire/graph_cache.npz", help="Path to FlyWire graph cache.")
     parser.add_argument("--device", type=str, default="cuda", help="Computation device: cuda or cpu.")
+    parser.add_argument("--require-cuda", action="store_true", help="Raise if CUDA is not available.")
     args = parser.parse_args()
 
     if args.timed_pilot:
@@ -404,6 +636,7 @@ def main() -> None:
             batch_size=args.batch_size,
             target_rho=args.rho,
             device=args.device,
+            require_cuda=args.require_cuda,
         )
     else:
         parser.print_help()
