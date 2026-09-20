@@ -117,7 +117,12 @@ class FlySimulator:
         """Reset the internal RNG to the initial seed."""
         self._rng = np.random.default_rng(self.seed)
 
-    def run(self, images: np.ndarray, return_readout: bool = False) -> dict[str, np.ndarray]:
+    def run(
+        self,
+        images: np.ndarray,
+        return_readout: bool = False,
+        return_activity_indices: np.ndarray | None = None,
+    ) -> dict[str, np.ndarray]:
         """Run reservoir simulation for a batch of 64x64x3 images or direct sensory currents.
 
         Parameters
@@ -129,6 +134,9 @@ class FlySimulator:
         return_readout: bool, default False
             If True, also return 'readout' containing the time-averaged activity vector
             for the readout neurons (buy_idx followed by sell_idx) with shape (B, n_readout).
+        return_activity_indices: optional 1-D neuron index array
+            If set with backend='torch', also return time-mean activity for those neurons
+            as 'neuron_activity_mean' with shape (B, len(return_activity_indices)).
 
         Returns
         -------
@@ -138,6 +146,16 @@ class FlySimulator:
         """
         img_arr = np.asarray(images)
 
+        if return_activity_indices is not None and self.backend != "torch":
+            raise ValueError("return_activity_indices requires backend='torch'")
+        activity_indices = (
+            None
+            if return_activity_indices is None
+            else np.asarray(return_activity_indices, dtype=np.int64)
+        )
+        if activity_indices is not None and activity_indices.ndim != 1:
+            raise ValueError("return_activity_indices must be one-dimensional")
+
         if img_arr.size == 0 or img_arr.shape[0] == 0:
             res = {
                 "buy_score": np.zeros(0, dtype=np.float64),
@@ -146,6 +164,10 @@ class FlySimulator:
             if return_readout:
                 n_readout = len(self._buy_cols) + len(self._sell_cols)
                 res["readout"] = np.zeros((0, n_readout), dtype=np.float32)
+            if activity_indices is not None:
+                res["neuron_activity_mean"] = np.zeros(
+                    (0, len(activity_indices)), dtype=np.float32
+                )
             return res
 
         n_sensory = len(self.graph.sensory_idx)
@@ -200,6 +222,7 @@ class FlySimulator:
 
         # 3-5. Temporal expansion, optional noise, and reservoir simulation.
         readout_parts = []
+        activity_parts = []
         if self.backend == "scipy":
             currents = np.repeat(
                 currents_1d[:, None, :], self.steps, axis=1
@@ -244,7 +267,9 @@ class FlySimulator:
             chunk_size = min(
                 500,
                 self.torch_reservoir.max_batch_size(
-                    steps=self.steps, n_sensory=n_sensory
+                    steps=self.steps,
+                    n_sensory=n_sensory,
+                    n_recorded=0 if activity_indices is None else len(activity_indices),
                 ),
             )
             buy_scores_list = []
@@ -260,9 +285,17 @@ class FlySimulator:
                 count = end_idx - start_idx
                 gain_chunk = np.full(count, self.gain, dtype=np.float32)
                 leak_chunk = np.full(count, self.leak, dtype=np.float32)
-                motor_trace = self.torch_reservoir.simulate_batch(
-                    current_chunk, gain_chunk, leak_chunk
+                sim_result = self.torch_reservoir.simulate_batch(
+                    current_chunk,
+                    gain_chunk,
+                    leak_chunk,
+                    record_activity_indices=activity_indices,
                 )
+                if activity_indices is not None:
+                    motor_trace, activity_mean = sim_result
+                    activity_parts.append(activity_mean)
+                else:
+                    motor_trace = sim_result
                 buy_scores_list.append(
                     motor_trace[:, :, self._buy_cols].sum(axis=(1, 2))
                 )
@@ -291,6 +324,8 @@ class FlySimulator:
         }
         if return_readout:
             result["readout"] = readout
+        if activity_indices is not None:
+            result["neuron_activity_mean"] = np.concatenate(activity_parts, axis=0)
         return result
 
     def extract_readout(self, images: np.ndarray) -> np.ndarray:
@@ -307,4 +342,3 @@ class FlySimulator:
             float32 array of shape (B, len(buy_motor_idx) + len(sell_motor_idx)).
         """
         return self.run(images, return_readout=True)["readout"]
-
