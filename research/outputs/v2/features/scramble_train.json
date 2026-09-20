@@ -1,0 +1,31 @@
+{
+  "variant": "scramble",
+  "split": "train",
+  "n_samples": 31556,
+  "feature_dim": 1291,
+  "readout_buy_neurons": 645,
+  "readout_sell_neurons": 646,
+  "sample_id_first": 0,
+  "sample_id_last": 31555,
+  "sample_ids_sha256": "a2c8bd234ab41977e5466cc92816257cd064873fbd06f903138f92f5d372d539",
+  "graph_spectral_radius": 2164.294921875,
+  "dynamics": {
+    "steps": 32,
+    "gain": 0.00043894245687583935,
+    "leak": 0.5,
+    "noise_std": 0.012225364148616791,
+    "seed": 0
+  },
+  "backend": "torch",
+  "train_mean_image_sha256": "0b23070b314d6949c55b70c2f3b6d93cf3772d7543d01e1769797dd38c7b6322",
+  "baseline_sha256": "50886c9e18227bb534dba796b8fea59dd6502c1afc252c83a7564730e12f1a83",
+  "features_file": "scramble_train.npy",
+  "features_sha256": "a3eaa3478827e8672dfeb8208d6306fd669b147266dc4b2ce44b5ba1d8a744aa",
+  "flat_feature_ratio": 0.0,
+  "consistency_check_passed": true,
+  "max_reconstruction_diff": 0.0,
+  "extraction_seconds": 259.19678393000504,
+  "samples_per_second": 121.74533773737548,
+  "git_commit": "b57cce7102e383dc2ae4c54620150aca47466085",
+  "generated_at": "2026-09-20T06:43:22.921893+00:00"
+}

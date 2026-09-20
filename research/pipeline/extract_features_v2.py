@@ -165,7 +165,10 @@ def extract_features(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Load samples and select split
-    samples = pd.read_parquet(DATA_DIR / "samples.parquet")
+    samples = pd.read_parquet(
+        DATA_DIR / "samples.parquet",
+        filters=[("split", "=", split)],
+    )
     split_samples = samples[samples["split"] == split].sort_values("sample_id").reset_index(drop=True)
     if limit is not None and limit > 0:
         split_samples = split_samples.iloc[:limit].copy()
