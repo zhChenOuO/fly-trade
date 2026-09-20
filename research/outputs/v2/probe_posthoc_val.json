@@ -1,0 +1,422 @@
+{
+  "metadata": {
+    "notice_1": "ORIGINAL_VERDICT: FAIL (unchanged; see probe_val.json)",
+    "notice_2": "THIS FILE IS EXPLORATORY_POST_HOC AND MUST NOT BE CITED AS PASS EVIDENCE",
+    "generated_at": "2026-09-20T13:01:32.605449+00:00",
+    "git_commit": "7f9590352da5fb9ae5e6b593379ed1989f604809",
+    "config_sha256": "6d1a41bcb5cc02352d46bb0319ea6e286b7493db114980c8654d74e64dc55580",
+    "feature_hashes": {
+      "real_train": "8c6bea83f186b5030253727b93881a9b259ce4b61963ed427690d0b0aa85a73f",
+      "real_val": "0963c08827896fa839fe4b572e6365185f0855038944e45f9d1dd98bab09d0aa",
+      "random_train": "b8dac25db7475ce76324f2b985e5effcdb8d27716f34da54bf7c41b574ec5954",
+      "random_val": "29f18df6e962e58e230ee63b5368265cda0013ed03b5f9a604439445bab92df2",
+      "scramble_train": "a3eaa3478827e8672dfeb8208d6306fd669b147266dc4b2ce44b5ba1d8a744aa",
+      "scramble_val": "138148ca9e1a934073eb3ac8303dadbe1e265da3cb28c480c7ee0fe145b71881"
+    },
+    "train_samples": 31556,
+    "val_samples": 10504,
+    "bootstrap_seed": 42,
+    "bootstrap_samples": 2000,
+    "block_size": 24,
+    "reproduction_verified": true
+  },
+  "model_summary": {
+    "spearman_ic": {
+      "real_ridge": 0.002427849228540037,
+      "real_logistic": 0.025414688050199676,
+      "random_ridge": 0.01137856856047712,
+      "random_logistic": 0.011852407801006744,
+      "scramble_ridge": -0.00018042653764381092,
+      "scramble_logistic": 0.012923845566276964,
+      "ohlcv_ridge": -0.0007304371183932733,
+      "ohlcv_logistic": 0.012952355023067914,
+      "nuisance_ridge": 0.0001875219435619477,
+      "nuisance_logistic": 0.004600410107645373
+    },
+    "logistic_balanced_accuracy": {
+      "real": 0.35680975427584594,
+      "random": 0.3532133671409223,
+      "scramble": 0.3492025357161152,
+      "ohlcv_b1b": 0.4146178307933042,
+      "nuisance_only": 0.41175467450672837
+    }
+  },
+  "pairwise_bootstrap_comparisons": {
+    "logistic": {
+      "real_vs_random": {
+        "observed_delta_ic": 0.013562280249192931,
+        "delta_ic_ci_95": [
+          -0.007481981638701243,
+          0.034278396653417094
+        ],
+        "p_value_two_tailed": 0.19490254872563717,
+        "p_value_holm_adjusted": 0.5847076461769115,
+        "p_value_global_holm_adjusted": 1.0
+      },
+      "real_vs_scramble": {
+        "observed_delta_ic": 0.012490842483922711,
+        "delta_ic_ci_95": [
+          -0.007469959922742348,
+          0.03364241007546037
+        ],
+        "p_value_two_tailed": 0.20389805097451275,
+        "p_value_holm_adjusted": 0.5847076461769115,
+        "p_value_global_holm_adjusted": 1.0
+      },
+      "real_vs_ohlcv_b1b": {
+        "observed_delta_ic": 0.012462333027131761,
+        "delta_ic_ci_95": [
+          -0.009210249681747669,
+          0.03422981772770759
+        ],
+        "p_value_two_tailed": 0.26486756621689156,
+        "p_value_holm_adjusted": 0.5847076461769115,
+        "p_value_global_holm_adjusted": 1.0
+      },
+      "real_vs_nuisance_only": {
+        "observed_delta_ic": 0.020814277942554305,
+        "delta_ic_ci_95": [
+          -0.0023065255383759265,
+          0.045298374933812294
+        ],
+        "p_value_two_tailed": 0.07796101949025487,
+        "p_value_holm_adjusted": 0.3118440779610195,
+        "p_value_global_holm_adjusted": 0.623688155922039
+      }
+    },
+    "ridge": {
+      "real_vs_random": {
+        "observed_delta_ic": -0.008950719331937083,
+        "delta_ic_ci_95": [
+          -0.030089405279555528,
+          0.012983574199673348
+        ],
+        "p_value_two_tailed": 0.4047976011994003,
+        "p_value_holm_adjusted": 1.0,
+        "p_value_global_holm_adjusted": 1.0
+      },
+      "real_vs_scramble": {
+        "observed_delta_ic": 0.002608275766183848,
+        "delta_ic_ci_95": [
+          -0.017831044949479128,
+          0.022856269176389953
+        ],
+        "p_value_two_tailed": 0.816591704147926,
+        "p_value_holm_adjusted": 1.0,
+        "p_value_global_holm_adjusted": 1.0
+      },
+      "real_vs_ohlcv_b1a": {
+        "observed_delta_ic": 0.00315828634693331,
+        "delta_ic_ci_95": [
+          -0.02331319990997698,
+          0.026409520797018048
+        ],
+        "p_value_two_tailed": 0.8185907046476761,
+        "p_value_holm_adjusted": 1.0,
+        "p_value_global_holm_adjusted": 1.0
+      },
+      "real_vs_nuisance_only": {
+        "observed_delta_ic": 0.002240327284978089,
+        "delta_ic_ci_95": [
+          -0.025189004221176748,
+          0.028914326131693174
+        ],
+        "p_value_two_tailed": 0.8735632183908046,
+        "p_value_holm_adjusted": 1.0,
+        "p_value_global_holm_adjusted": 1.0
+      }
+    }
+  },
+  "signal_redundancy_and_residual_ic": {
+    "correlations": {
+      "spearman_real_vs_ohlcv": 0.2784791608957653,
+      "spearman_real_vs_nuisance": 0.23426668150023705,
+      "spearman_ohlcv_vs_nuisance": 0.16978614836243613
+    },
+    "residual_ic_vs_ohlcv_only": {
+      "r2_explained_by_ohlcv": 0.07441891801720102,
+      "residual_spearman_ic": 0.023042871190967693,
+      "residual_ic_ci_95": [
+        0.004059462805538188,
+        0.04172061202609573
+      ]
+    },
+    "residual_ic_vs_nuisance_only": {
+      "r2_explained_by_nuisance": 0.047818345227606085,
+      "residual_spearman_ic": 0.025352029232828838,
+      "residual_ic_ci_95": [
+        0.0062041506660473035,
+        0.04435181119947371
+      ]
+    },
+    "residual_ic_joint_controls": {
+      "r2_explained_by_joint_controls": 0.10273823966654061,
+      "residual_spearman_ic": 0.023224125723992954,
+      "residual_ic_ci_95": [
+        0.0042443466408636395,
+        0.04244924431798359
+      ]
+    }
+  },
+  "temporal_stability_quarters": {
+    "logistic": {
+      "real": {
+        "quarterly_ic": [
+          0.019841583002030892,
+          0.019193462829217953,
+          0.039355346918587754,
+          0.01999980202741324
+        ],
+        "positive_quarter_count": 4,
+        "total_quarters": 4,
+        "all_positive": true,
+        "sign_agreement": 1.0
+      },
+      "random": {
+        "quarterly_ic": [
+          0.019485712781368764,
+          0.025564402242689792,
+          0.006891431709169822,
+          -0.005465432019050762
+        ],
+        "positive_quarter_count": 3,
+        "total_quarters": 4,
+        "all_positive": false,
+        "sign_agreement": 0.75
+      },
+      "scramble": {
+        "quarterly_ic": [
+          0.01682960321643819,
+          0.023413511430245497,
+          0.024616196717158926,
+          -0.01576959933786039
+        ],
+        "positive_quarter_count": 3,
+        "total_quarters": 4,
+        "all_positive": false,
+        "sign_agreement": 0.75
+      },
+      "ohlcv_b1b": {
+        "quarterly_ic": [
+          0.0013684100446930835,
+          0.011431783720167489,
+          0.030265486788705307,
+          0.003814031178694405
+        ],
+        "positive_quarter_count": 4,
+        "total_quarters": 4,
+        "all_positive": true,
+        "sign_agreement": 1.0
+      },
+      "nuisance_only": {
+        "quarterly_ic": [
+          -0.013471452707264185,
+          0.0058263862419489255,
+          0.018601849171644178,
+          0.004358813965284472
+        ],
+        "positive_quarter_count": 3,
+        "total_quarters": 4,
+        "all_positive": false,
+        "sign_agreement": 0.75
+      }
+    },
+    "ridge": {
+      "real": {
+        "quarterly_ic": [
+          0.010880662499254918,
+          -0.007822988319990135,
+          0.010484720637279557,
+          -0.006629854092132715
+        ],
+        "positive_quarter_count": 2,
+        "total_quarters": 4,
+        "all_positive": false,
+        "sign_agreement": 0.5
+      },
+      "random": {
+        "quarterly_ic": [
+          0.036338837791797016,
+          0.0037860234418594487,
+          0.011386462410866261,
+          -0.006481773247914651
+        ],
+        "positive_quarter_count": 3,
+        "total_quarters": 4,
+        "all_positive": false,
+        "sign_agreement": 0.75
+      },
+      "scramble": {
+        "quarterly_ic": [
+          0.006190579264258585,
+          -0.017804745601705578,
+          0.01964691315799948,
+          -0.011240955375943523
+        ],
+        "positive_quarter_count": 2,
+        "total_quarters": 4,
+        "all_positive": false,
+        "sign_agreement": 0.5
+      },
+      "ohlcv_b1a": {
+        "quarterly_ic": [
+          0.007360387185898851,
+          0.019829726511639775,
+          -0.0068256332420326285,
+          -0.01821540204359895
+        ],
+        "positive_quarter_count": 2,
+        "total_quarters": 4,
+        "all_positive": false,
+        "sign_agreement": 0.5
+      },
+      "nuisance_only": {
+        "quarterly_ic": [
+          0.009243303299220332,
+          0.017543146116566842,
+          0.010207646488221025,
+          -0.019405979028904702
+        ],
+        "positive_quarter_count": 3,
+        "total_quarters": 4,
+        "all_positive": false,
+        "sign_agreement": 0.75
+      }
+    }
+  },
+  "audited_pass_fail_presentation": {
+    "banner": {
+      "ORIGINAL_VERDICT": "FAIL (unchanged; see probe_val.json)",
+      "DISCLAIMER": "THIS FILE IS EXPLORATORY_POST_HOC AND MUST NOT BE CITED AS PASS EVIDENCE"
+    },
+    "table": [
+      {
+        "threshold_key": "primary_metric",
+        "description": "Validation set primary target Spearman IC minimum threshold",
+        "observed_value": 0.002427849228540037,
+        "required_value": ">= 0.02",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a78.1, \u00a710",
+        "passed": false,
+        "verdict_flag": "FAIL",
+        "audit_note": "Unchanged from original pre-registered evaluation."
+      },
+      {
+        "threshold_key": "min_practical_effect",
+        "description": "Minimum practical effect size (IC)",
+        "observed_value": 0.002427849228540037,
+        "required_value": ">= 0.02",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a78.3, \u00a712",
+        "passed": false,
+        "verdict_flag": "FAIL",
+        "audit_note": "Unchanged from original pre-registered evaluation."
+      },
+      {
+        "threshold_key": "min_practical_effect_balanced_acc",
+        "description": "Minimum practical effect for balanced accuracy over majority/random (delta >= 0.02)",
+        "observed_value": 0.02347642094251262,
+        "required_value": ">= 0.02",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a78.3, \u00a712",
+        "passed": false,
+        "observed_value_ridge": 0.3333333333333333,
+        "observed_value_logistic": 0.35680975427584594,
+        "control_nuisance_logistic": 0.41175467450672837,
+        "control_ohlcv_b1b_logistic": 0.4146178307933042,
+        "verdict_flag": "EXCEEDS_RANDOM_BUT_BELOW_CONTROLS",
+        "audit_note": "Real Logistic BA (0.3568) exceeds random (0.3333) by +0.0235, but is substantially lower than Nuisance-only (0.4118, delta=-0.0549) and OHLCV B1b (0.4146, delta=-0.0578)."
+      },
+      {
+        "threshold_key": "connectome_vs_matched_control_ic_delta_min (vs Random)",
+        "description": "Minimum Spearman IC increment of Connectome over Random control",
+        "observed_value": -0.008950719331937083,
+        "required_value": ">= 0.01",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a76 Phase 5, \u00a78.3, \u00a712",
+        "passed": false,
+        "verdict_flag": "FAIL",
+        "audit_note": "Unchanged from original pre-registered evaluation."
+      },
+      {
+        "threshold_key": "connectome_vs_matched_control_ic_delta_min (vs Scramble)",
+        "description": "Minimum Spearman IC increment of Connectome over Scramble control",
+        "observed_value": 0.002608275766183848,
+        "required_value": ">= 0.01",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a76 Phase 5, \u00a78.3, \u00a712",
+        "passed": false,
+        "verdict_flag": "FAIL",
+        "audit_note": "Unchanged from original pre-registered evaluation."
+      },
+      {
+        "threshold_key": "connectome_vs_matched_control_p_max",
+        "description": "Maximum p-value from permutation test",
+        "observed_value": 0.4245754245754246,
+        "required_value": "<= 0.01",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a76 Phase 5, \u00a78.3, \u00a712",
+        "passed": false,
+        "verdict_flag": "FAIL",
+        "audit_note": "Unchanged from original pre-registered evaluation."
+      },
+      {
+        "threshold_key": "connectome_vs_ohlcv_baseline_ic_delta_min",
+        "description": "Minimum Spearman IC increment of Connectome over OHLCV baseline",
+        "observed_value": -0.010524505794527877,
+        "required_value": ">= 0.01",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a76 Phase 4/5, \u00a712",
+        "passed": false,
+        "verdict_flag": "FAIL",
+        "audit_note": "Unchanged from original pre-registered evaluation."
+      },
+      {
+        "threshold_key": "renderer_shortcut_r2_max",
+        "description": "Maximum R^2 of margin explained by mean brightness, nonzero pixels, or renderer features",
+        "observed_value": 0.13264754200806894,
+        "required_value": "<= 0.05",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a75.3, \u00a712",
+        "passed": false,
+        "observed_value_original_ridge": 3.5164479317250294e-08,
+        "observed_value_corrected_logistic_r2": 0.13264754200806894,
+        "verdict_flag": "FAIL",
+        "audit_note": "Evaluated on active real Logistic score (variance=5.555391e-03) regressed on 7 renderer nuisance features. R^2=1.326475e-01 <= 0.05."
+      },
+      {
+        "threshold_key": "trading_net_return_min",
+        "description": "Minimum net return after cost (>= 0.0)",
+        "observed_value": 0.0,
+        "required_value": ">= 0.0",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a78.2, \u00a712",
+        "passed": false,
+        "verdict_flag": "N/A_NO_TRADES",
+        "audit_note": "Zero trades executed in simulation (passive cash position); vacuously passed zero-return / zero-drawdown thresholds in original table."
+      },
+      {
+        "threshold_key": "trading_sharpe_min",
+        "description": "Minimum strategy Sharpe ratio after cost",
+        "observed_value": 0.0,
+        "required_value": ">= 0.5",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a78.2, \u00a712",
+        "passed": false,
+        "verdict_flag": "N/A_NO_TRADES",
+        "audit_note": "Zero trades executed in simulation (passive cash position); vacuously passed zero-return / zero-drawdown thresholds in original table."
+      },
+      {
+        "threshold_key": "trading_max_drawdown_max",
+        "description": "Maximum allowable strategy drawdown (<= 15%)",
+        "observed_value": 0.0,
+        "required_value": "<= 0.15",
+        "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+        "spec_ref": "\u00a78.2, \u00a712",
+        "passed": false,
+        "verdict_flag": "N/A_NO_TRADES",
+        "audit_note": "Zero trades executed in simulation (passive cash position); vacuously passed zero-return / zero-drawdown thresholds in original table."
+      }
+    ]
+  }
+}
