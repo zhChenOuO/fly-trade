@@ -1,0 +1,276 @@
+"""Unit tests for G1 Stateful Reservoir Engine, Gates, and Alignment."""
+from __future__ import annotations
+
+import numpy as np
+import pytest
+import scipy.sparse as sp
+
+from research.pipeline.g1_bench import (
+    check_saturation_gate,
+    check_forgetting_gate,
+    compute_memory_capacity,
+)
+from research.pipeline.g1_reservoir import (
+    ScipyG1Reservoir,
+    TorchG1Reservoir,
+    HAS_TORCH,
+    compute_spectral_radius,
+    scale_weights_to_spectral_radius,
+)
+
+
+def _create_synthetic_sparse_reservoir(n_neurons: int = 50, density: float = 0.1, seed: int = 42) -> sp.csr_matrix:
+    """Helper to create a reproducible small random sparse connectome."""
+    rng = np.random.default_rng(seed)
+    W = sp.random(
+        n_neurons,
+        n_neurons,
+        density=density,
+        random_state=seed,
+        format="csr",
+        data_rvs=lambda s: rng.standard_normal(s),
+    )
+    # Exclude self loops
+    W.setdiag(0.0)
+    W.eliminate_zeros()
+    return W
+
+
+def test_scipy_stateful_chunking_alignment() -> None:
+    """Simulating a sequence in chunks with state carryover must produce bitwise identical states."""
+    N, B, T = 60, 4, 300
+    W = _create_synthetic_sparse_reservoir(n_neurons=N, seed=123)
+    sensory_idx = np.array([0, 1, 2, 3])
+    readout_idx = np.array([10, 20, 30, 40, 50])
+
+    res = ScipyG1Reservoir(
+        weights=W,
+        sensory_idx=sensory_idx,
+        readout_idx=readout_idx,
+        target_rho=0.95,
+        leak=0.5,
+        dtype=np.float32,
+    )
+
+    rng = np.random.default_rng(456)
+    u = rng.uniform(0.0, 0.5, size=(B, T)).astype(np.float32)
+
+    # 1. Full run
+    states_full, final_full = res.simulate(u)
+
+    # 2. Split run across T1 and T - T1
+    T1 = 117
+    states_part1, final_part1 = res.simulate(u[:, :T1])
+    states_part2, final_part2 = res.simulate(u[:, T1:], initial_state=final_part1)
+    states_split = np.concatenate([states_part1, states_part2], axis=1)
+
+    assert np.array_equal(states_full, states_split)
+    assert np.array_equal(final_full, final_part2)
+
+
+def test_batch_independent_sequences_no_crosstalk() -> None:
+    """Modifying sequence j in a batch must not alter trajectory of sequence i != j."""
+    N, B, T = 50, 3, 200
+    W = _create_synthetic_sparse_reservoir(n_neurons=N, seed=789)
+    sensory_idx = np.array([0, 5, 10])
+    readout_idx = np.array([15, 25, 35, 45])
+
+    res = ScipyG1Reservoir(
+        weights=W,
+        sensory_idx=sensory_idx,
+        readout_idx=readout_idx,
+        target_rho=0.95,
+        leak=0.5,
+        dtype=np.float32,
+    )
+
+    rng = np.random.default_rng(101)
+    u_batch1 = rng.uniform(0.0, 0.5, size=(B, T)).astype(np.float32)
+
+    # Alter sequence 2 in batch 2
+    u_batch2 = u_batch1.copy()
+    u_batch2[2] = rng.uniform(0.0, 0.5, size=T).astype(np.float32)
+
+    states1, _ = res.simulate(u_batch1)
+    states2, _ = res.simulate(u_batch2)
+
+    # Sequence 0 and 1 must remain bitwise identical
+    assert np.array_equal(states1[0], states2[0])
+    assert np.array_equal(states1[1], states2[1])
+    # Sequence 2 must differ
+    assert not np.array_equal(states1[2], states2[2])
+
+
+def test_shift_register_delay_line_alignment_and_mc() -> None:
+    """Shift-register delay line must preserve time alignment and yield expected Memory Capacity."""
+    K = 15  # Delay line of length 15
+    row = np.arange(1, K)
+    col = np.arange(0, K - 1)
+    data = np.ones(K - 1, dtype=np.float64)
+    W_delay = sp.csr_matrix((data, (row, col)), shape=(K, K))
+
+    sensory_idx = np.array([0])
+    readout_idx = np.arange(K)
+
+    # leak=1.0 makes x[t+1] = tanh(W x[t] + I[t])
+    # For small inputs, tanh(z) ≈ z, so node k exactly holds u[t-k]
+    res = ScipyG1Reservoir(
+        weights=W_delay,
+        sensory_idx=sensory_idx,
+        readout_idx=readout_idx,
+        target_rho=0.99,  # dummy scaling
+        leak=1.0,
+        unscaled_rho=0.99,
+        dtype=np.float64,
+    )
+    # Manually ensure shift weight is exactly 1.0
+    res.W_eff = W_delay.copy().astype(np.float64)
+
+    rng = np.random.default_rng(999)
+    T = 1500
+    u = rng.uniform(0.0, 0.5, size=T)
+
+    states, _ = res.simulate(u, return_full_states=True)
+
+    # Verify linear memory capacity on this delay line
+    mc_dict = compute_memory_capacity(states, u, max_lag=30)
+    # For k <= K-1, R^2 should be close to 1.0; total MC up to lag K-1 should be ~14
+    r2_early = sum(mc_dict["r2_by_lag"][: K - 1])
+    assert r2_early > 10.0, f"Delay line early MC {r2_early} too low"
+
+
+def test_saturation_gate_esn_pass_and_overdriven_fail() -> None:
+    """Saturation gate must pass for well-scaled ESN and fail when overdriven."""
+    N, B, T = 60, 2, 200
+    W = _create_synthetic_sparse_reservoir(n_neurons=N, seed=321)
+    sensory_idx = np.array([0, 1])
+
+    res = ScipyG1Reservoir(
+        weights=W,
+        sensory_idx=sensory_idx,
+        target_rho=0.90,
+        leak=0.5,
+        dtype=np.float32,
+    )
+
+    rng = np.random.default_rng(555)
+    # Normal moderate input
+    u_normal = rng.uniform(0.0, 0.5, size=(B, T)).astype(np.float32)
+    states_normal, _ = res.simulate(u_normal, return_full_states=True)
+    gate_normal = check_saturation_gate(states_normal, sensory_idx)
+    assert gate_normal["passed"] is True
+    assert gate_normal["saturation_ratio"] < 0.05
+
+    # Artificially overdriven reservoir states
+    states_sat = np.ones((B, T, N), dtype=np.float32) * 0.95
+    gate_sat = check_saturation_gate(states_sat, sensory_idx)
+    assert gate_sat["passed"] is False
+    assert gate_sat["saturation_ratio"] > 0.90
+
+
+def test_forgetting_gate_esn_pass_and_chaotic_fail() -> None:
+    """Forgetting gate must pass for stable ESN (rho=0.9) and fail for chaotic reservoir (rho=1.6)."""
+    N = 80
+    W = _create_synthetic_sparse_reservoir(n_neurons=N, density=0.15, seed=444)
+    sensory_idx = np.array([0, 1, 2, 3])
+
+    # 1. Stable ESN (target_rho=0.90)
+    res_stable = ScipyG1Reservoir(
+        weights=W,
+        sensory_idx=sensory_idx,
+        target_rho=0.90,
+        leak=0.5,
+        dtype=np.float32,
+    )
+
+    rng = np.random.default_rng(666)
+    train_u_seqs = [rng.uniform(0.0, 0.5, size=600).astype(np.float32) for _ in range(10)]
+
+    def sim_stable(u_sub, x0):
+        return res_stable.simulate(u_sub, initial_state=x0, return_full_states=True)
+
+    gate_res_stable = check_forgetting_gate(
+        sim_fn=sim_stable,
+        train_u_sequences=train_u_seqs,
+        n_neurons=N,
+        seed=42,
+        t_check=500,
+        d_rel_threshold=1e-3,
+        min_pass_pairs=38,
+    )
+    assert gate_res_stable["passed"] is True
+    assert gate_res_stable["n_passed_pairs"] == 40  # All 40 pairs converge
+
+    # 2. Chaotic regime (target_rho=1.6)
+    res_chaotic = ScipyG1Reservoir(
+        weights=W,
+        sensory_idx=sensory_idx,
+        target_rho=1.60,
+        leak=0.5,
+        dtype=np.float32,
+    )
+
+    def sim_chaotic(u_sub, x0):
+        return res_chaotic.simulate(u_sub, initial_state=x0, return_full_states=True)
+
+    gate_res_chaotic = check_forgetting_gate(
+        sim_fn=sim_chaotic,
+        train_u_sequences=train_u_seqs,
+        n_neurons=N,
+        seed=42,
+        t_check=500,
+        d_rel_threshold=1e-3,
+        min_pass_pairs=38,
+    )
+    assert gate_res_chaotic["passed"] is False
+
+
+def test_torch_reservoir_graceful_import_or_alignment() -> None:
+    """TorchG1Reservoir must raise ImportError without torch, or match Scipy within 1e-4 with torch."""
+    W = _create_synthetic_sparse_reservoir(n_neurons=30, seed=12)
+    sensory_idx = np.array([0, 1])
+    readout_idx = np.array([5, 10, 15])
+
+    if not HAS_TORCH:
+        with pytest.raises(ImportError, match="PyTorch is required"):
+            TorchG1Reservoir(weights=W, sensory_idx=sensory_idx, readout_idx=readout_idx)
+    else:
+        # If torch is available (e.g. on GPU machine)
+        res_cpu = ScipyG1Reservoir(weights=W, sensory_idx=sensory_idx, readout_idx=readout_idx, target_rho=0.95)
+        res_torch = TorchG1Reservoir(weights=W, sensory_idx=sensory_idx, readout_idx=readout_idx, target_rho=0.95, device="cpu")
+
+        rng = np.random.default_rng(888)
+        u = rng.uniform(0.0, 0.5, size=(2, 100)).astype(np.float32)
+
+        out_cpu, final_cpu = res_cpu.simulate(u)
+        out_torch, final_torch = res_torch.simulate(u)
+
+        max_err = float(np.max(np.abs(out_cpu - out_torch)))
+        assert max_err <= 1e-4, f"CPU vs Torch discrepancy {max_err} exceeded 1e-4"
+
+
+def test_cpu_vs_torch_state_alignment(n_neurons: int = 2000, seed: int = 42) -> None:
+    """Explicitly verify CPU Scipy vs GPU Torch step-by-step state agreement on a 2,000-node graph."""
+    if not HAS_TORCH:
+        pytest.skip("PyTorch not installed in this environment")
+
+    W = _create_synthetic_sparse_reservoir(n_neurons=n_neurons, density=0.01, seed=seed)
+    sensory_idx = np.arange(0, min(100, n_neurons))
+    readout_idx = np.arange(n_neurons - min(100, n_neurons), n_neurons)
+
+    res_cpu = ScipyG1Reservoir(weights=W, sensory_idx=sensory_idx, readout_idx=readout_idx, target_rho=0.95)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    res_torch = TorchG1Reservoir(weights=W, sensory_idx=sensory_idx, readout_idx=readout_idx, target_rho=0.95, device=device)
+
+    rng = np.random.default_rng(seed + 1)
+    B, T = 4, 100
+    u = rng.uniform(0.0, 0.5, size=(B, T)).astype(np.float32)
+
+    out_cpu, final_cpu = res_cpu.simulate(u)
+    out_torch, final_torch = res_torch.simulate(u)
+
+    max_err = float(np.max(np.abs(out_cpu - out_torch)))
+    max_final_err = float(np.max(np.abs(final_cpu - final_torch)))
+    print(f"CPU vs Torch max readout error: {max_err:.2e}, max final state error: {max_final_err:.2e}")
+    assert max_err <= 1e-4, f"CPU vs Torch discrepancy {max_err} exceeded 1e-4"
+    assert max_final_err <= 1e-4, f"Final state discrepancy {max_final_err} exceeded 1e-4"
