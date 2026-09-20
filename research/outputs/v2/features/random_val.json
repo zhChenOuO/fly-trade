@@ -1,0 +1,31 @@
+{
+  "variant": "random",
+  "split": "val",
+  "n_samples": 10504,
+  "feature_dim": 1291,
+  "readout_buy_neurons": 645,
+  "readout_sell_neurons": 646,
+  "sample_id_first": 31556,
+  "sample_id_last": 42059,
+  "sample_ids_sha256": "0b4385b021f880281c267055305d04c39ba255e6e1e1f2039835d18bd88c10a5",
+  "graph_spectral_radius": 2164.294921875,
+  "dynamics": {
+    "steps": 32,
+    "gain": 0.00043894245687583935,
+    "leak": 0.5,
+    "noise_std": 0.012225364148616791,
+    "seed": 0
+  },
+  "backend": "torch",
+  "train_mean_image_sha256": "0b23070b314d6949c55b70c2f3b6d93cf3772d7543d01e1769797dd38c7b6322",
+  "baseline_sha256": "50886c9e18227bb534dba796b8fea59dd6502c1afc252c83a7564730e12f1a83",
+  "features_file": "random_val.npy",
+  "features_sha256": "29f18df6e962e58e230ee63b5368265cda0013ed03b5f9a604439445bab92df2",
+  "flat_feature_ratio": 0.0,
+  "consistency_check_passed": true,
+  "max_reconstruction_diff": 0.0,
+  "extraction_seconds": 90.63447193199681,
+  "samples_per_second": 115.8940938926766,
+  "git_commit": "b57cce7102e383dc2ae4c54620150aca47466085",
+  "generated_at": "2026-09-20T06:38:40.096769+00:00"
+}

@@ -1,0 +1,695 @@
+{
+  "metadata": {
+    "generated_at": "2026-09-20T06:47:31.100180+00:00",
+    "git_commit": "b57cce7102e383dc2ae4c54620150aca47466085",
+    "config_sha256": "6d1a41bcb5cc02352d46bb0319ea6e286b7493db114980c8654d74e64dc55580",
+    "feature_hashes": {
+      "real_train": "8c6bea83f186b5030253727b93881a9b259ce4b61963ed427690d0b0aa85a73f",
+      "real_val": "0963c08827896fa839fe4b572e6365185f0855038944e45f9d1dd98bab09d0aa",
+      "random_train": "b8dac25db7475ce76324f2b985e5effcdb8d27716f34da54bf7c41b574ec5954",
+      "random_val": "29f18df6e962e58e230ee63b5368265cda0013ed03b5f9a604439445bab92df2",
+      "scramble_train": "a3eaa3478827e8672dfeb8208d6306fd669b147266dc4b2ce44b5ba1d8a744aa",
+      "scramble_val": "138148ca9e1a934073eb3ac8303dadbe1e265da3cb28c480c7ee0fe145b71881"
+    },
+    "train_samples": 31556,
+    "val_samples": 10504,
+    "dropped_nan_train": 0,
+    "dropped_nan_val": 0,
+    "cost_fee_per_side": 0.0004,
+    "cost_slippage": 0.0002,
+    "cost_threshold": 0.001
+  },
+  "models": {
+    "real": {
+      "normalization_sha256": "e555be51719576895df2f8efc63a3cd55e77c9f0c7d2b8d253670aa8a900ae0d",
+      "ridge": {
+        "best_alpha": 10000.0,
+        "continuous": {
+          "spearman_ic": 0.002427849228540037,
+          "mae": 0.002070282423538603,
+          "ic_ci_95": [
+            -0.01677132472780386,
+            0.021740212290319104
+          ]
+        },
+        "classification": {
+          "balanced_accuracy": 0.3333333333333333,
+          "mcc": 0.0,
+          "precision": {
+            "BUY": 0.0,
+            "HOLD": 0.4068926123381569,
+            "SELL": 0.0
+          },
+          "recall": {
+            "BUY": 0.0,
+            "HOLD": 1.0,
+            "SELL": 0.0
+          },
+          "predicted_counts": {
+            "BUY": 0,
+            "HOLD": 10504,
+            "SELL": 0
+          },
+          "predicted_ratios": {
+            "BUY": 0.0,
+            "HOLD": 1.0,
+            "SELL": 0.0
+          },
+          "confusion_matrix": [
+            [
+              0,
+              3092,
+              0
+            ],
+            [
+              0,
+              4274,
+              0
+            ],
+            [
+              0,
+              3138,
+              0
+            ]
+          ],
+          "balanced_accuracy_ci_95": [
+            0.3333333333333333,
+            0.3333333333333333
+          ]
+        },
+        "trading": {
+          "net_return": 0.0,
+          "buy_and_hold_return": -0.37767596992203,
+          "annualized_sharpe": 0.0,
+          "max_drawdown": 0.0,
+          "turnover": 0.0,
+          "trade_count": 0,
+          "market_coverage": 0.0,
+          "per_step_mean_return": 0.0,
+          "per_step_volatility": 0.0
+        }
+      },
+      "logistic": {
+        "continuous": {
+          "spearman_ic": 0.025414688050199676,
+          "mae": 0.05909741647639718,
+          "ic_ci_95": [
+            0.007018952614039459,
+            0.0430273255175058
+          ]
+        },
+        "classification": {
+          "balanced_accuracy": 0.35680975427584594,
+          "mcc": 0.03773778936183893,
+          "precision": {
+            "BUY": 0.3206026629292221,
+            "HOLD": 0.43333987826428433,
+            "SELL": 0.3167774736018772
+          },
+          "recall": {
+            "BUY": 0.2959249676584735,
+            "HOLD": 0.5163781001403838,
+            "SELL": 0.25812619502868067
+          },
+          "predicted_counts": {
+            "BUY": 2854,
+            "HOLD": 5093,
+            "SELL": 2557
+          },
+          "predicted_ratios": {
+            "BUY": 0.2717060167555217,
+            "HOLD": 0.48486290936785986,
+            "SELL": 0.24343107387661844
+          },
+          "confusion_matrix": [
+            [
+              915,
+              1420,
+              757
+            ],
+            [
+              1077,
+              2207,
+              990
+            ],
+            [
+              862,
+              1466,
+              810
+            ]
+          ],
+          "balanced_accuracy_ci_95": [
+            0.3481769043582612,
+            0.3655612273997702
+          ]
+        },
+        "trading": {
+          "net_return": -0.7580547015932007,
+          "buy_and_hold_return": -0.37767596992203,
+          "annualized_sharpe": -7.227625549610634,
+          "max_drawdown": 0.7679410503515742,
+          "turnover": 2239.0,
+          "trade_count": 2239,
+          "market_coverage": 0.5251332825590251,
+          "per_step_mean_return": -0.0001321538688432321,
+          "per_step_volatility": 0.0024210288689862133
+        }
+      }
+    },
+    "random": {
+      "normalization_sha256": "608c6365824994a04211e28dd6272478ae26cb36388d632b15e71535d38437f5",
+      "ridge": {
+        "best_alpha": 10000.0,
+        "continuous": {
+          "spearman_ic": 0.01137856856047712,
+          "mae": 0.002091618946166722,
+          "ic_ci_95": [
+            -0.008256349009032729,
+            0.030186616920117964
+          ]
+        },
+        "classification": {
+          "balanced_accuracy": 0.3328146390649573,
+          "mcc": -0.005794255473517638,
+          "precision": {
+            "BUY": 0.3064516129032258,
+            "HOLD": 0.40646584804297775,
+            "SELL": 0.16666666666666666
+          },
+          "recall": {
+            "BUY": 0.006144890038809832,
+            "HOLD": 0.9913430042115114,
+            "SELL": 0.0009560229445506692
+          },
+          "predicted_counts": {
+            "BUY": 62,
+            "HOLD": 10424,
+            "SELL": 18
+          },
+          "predicted_ratios": {
+            "BUY": 0.005902513328255902,
+            "HOLD": 0.9923838537699924,
+            "SELL": 0.0017136329017517135
+          },
+          "confusion_matrix": [
+            [
+              19,
+              3065,
+              8
+            ],
+            [
+              30,
+              4237,
+              7
+            ],
+            [
+              13,
+              3122,
+              3
+            ]
+          ],
+          "balanced_accuracy_ci_95": [
+            0.331445888473685,
+            0.3342676449451568
+          ]
+        },
+        "trading": {
+          "net_return": -0.33814090937673424,
+          "buy_and_hold_return": -0.37767596992203,
+          "annualized_sharpe": -1.6420304070028946,
+          "max_drawdown": 0.4568575430823613,
+          "turnover": 26.0,
+          "trade_count": 26,
+          "market_coverage": 0.7383853769992383,
+          "per_step_mean_return": -3.52466879399385e-05,
+          "per_step_volatility": 0.0028421883123916237
+        }
+      },
+      "logistic": {
+        "continuous": {
+          "spearman_ic": 0.011852407801006744,
+          "mae": 0.13407142391110372,
+          "ic_ci_95": [
+            -0.007715881859711323,
+            0.029955547067736694
+          ]
+        },
+        "classification": {
+          "balanced_accuracy": 0.3532133671409223,
+          "mcc": 0.03238598874186626,
+          "precision": {
+            "BUY": 0.3063583815028902,
+            "HOLD": 0.4399812074230679,
+            "SELL": 0.31351351351351353
+          },
+          "recall": {
+            "BUY": 0.3256791720569211,
+            "HOLD": 0.43823116518483857,
+            "SELL": 0.295729764181007
+          },
+          "predicted_counts": {
+            "BUY": 3287,
+            "HOLD": 4257,
+            "SELL": 2960
+          },
+          "predicted_ratios": {
+            "BUY": 0.31292840822543794,
+            "HOLD": 0.4052741812642803,
+            "SELL": 0.2817974105102818
+          },
+          "confusion_matrix": [
+            [
+              1007,
+              1192,
+              893
+            ],
+            [
+              1262,
+              1873,
+              1139
+            ],
+            [
+              1018,
+              1192,
+              928
+            ]
+          ],
+          "balanced_accuracy_ci_95": [
+            0.3437532967932844,
+            0.36286316592168244
+          ]
+        },
+        "trading": {
+          "net_return": -0.8572479858287636,
+          "buy_and_hold_return": -0.37767596992203,
+          "annualized_sharpe": -10.165979982905169,
+          "max_drawdown": 0.8626363179410426,
+          "turnover": 3026.0,
+          "trade_count": 3026,
+          "market_coverage": 0.5223724295506473,
+          "per_step_mean_return": -0.000182479759090518,
+          "per_step_volatility": 0.0023767372865344544
+        }
+      }
+    },
+    "scramble": {
+      "normalization_sha256": "57c9fc0b0e14001593bd60d95b070d2624ba59f7650cb6934adb766256f140aa",
+      "ridge": {
+        "best_alpha": 10000.0,
+        "continuous": {
+          "spearman_ic": -0.00018042653764381092,
+          "mae": 0.002087309664257241,
+          "ic_ci_95": [
+            -0.018215518380182375,
+            0.019263886607765127
+          ]
+        },
+        "classification": {
+          "balanced_accuracy": 0.3329662814740916,
+          "mcc": -0.006226813551787723,
+          "precision": {
+            "BUY": 0.2608695652173913,
+            "HOLD": 0.4067392134402444,
+            "SELL": 0.0
+          },
+          "recall": {
+            "BUY": 0.0019404915912031048,
+            "HOLD": 0.9969583528310716,
+            "SELL": 0.0
+          },
+          "predicted_counts": {
+            "BUY": 23,
+            "HOLD": 10476,
+            "SELL": 5
+          },
+          "predicted_ratios": {
+            "BUY": 0.0021896420411271897,
+            "HOLD": 0.9973343488194973,
+            "SELL": 0.000476009139375476
+          },
+          "confusion_matrix": [
+            [
+              6,
+              3084,
+              2
+            ],
+            [
+              10,
+              4261,
+              3
+            ],
+            [
+              7,
+              3131,
+              0
+            ]
+          ],
+          "balanced_accuracy_ci_95": [
+            0.3322203738403716,
+            0.33369783482484033
+          ]
+        },
+        "trading": {
+          "net_return": -0.3845537144272654,
+          "buy_and_hold_return": -0.37767596992203,
+          "annualized_sharpe": -2.0176611892895564,
+          "max_drawdown": 0.45372891243501545,
+          "turnover": 11.0,
+          "trade_count": 11,
+          "market_coverage": 0.7455255140898706,
+          "per_step_mean_return": -4.2346169177644425e-05,
+          "per_step_volatility": 0.0027789556694414307
+        }
+      },
+      "logistic": {
+        "continuous": {
+          "spearman_ic": 0.012923845566276964,
+          "mae": 0.1148424200701526,
+          "ic_ci_95": [
+            -0.0055145056566191075,
+            0.031434092163829704
+          ]
+        },
+        "classification": {
+          "balanced_accuracy": 0.3492025357161152,
+          "mcc": 0.026526030045484317,
+          "precision": {
+            "BUY": 0.3130699088145897,
+            "HOLD": 0.43660041124057575,
+            "SELL": 0.2957349312654212
+          },
+          "recall": {
+            "BUY": 0.333117723156533,
+            "HOLD": 0.44712213383247545,
+            "SELL": 0.26736775015933717
+          },
+          "predicted_counts": {
+            "BUY": 3290,
+            "HOLD": 4377,
+            "SELL": 2837
+          },
+          "predicted_ratios": {
+            "BUY": 0.3132140137090632,
+            "HOLD": 0.4166984006092917,
+            "SELL": 0.2700875856816451
+          },
+          "confusion_matrix": [
+            [
+              1030,
+              1196,
+              866
+            ],
+            [
+              1231,
+              1911,
+              1132
+            ],
+            [
+              1029,
+              1270,
+              839
+            ]
+          ],
+          "balanced_accuracy_ci_95": [
+            0.33962043718548185,
+            0.3578409804815037
+          ]
+        },
+        "trading": {
+          "net_return": -0.8574354043986275,
+          "buy_and_hold_return": -0.37767596992203,
+          "annualized_sharpe": -10.096144730238501,
+          "max_drawdown": 0.8589407846708942,
+          "turnover": 2977.0,
+          "trade_count": 2977,
+          "market_coverage": 0.5297029702970297,
+          "per_step_mean_return": -0.00018256287892803012,
+          "per_step_volatility": 0.0023942673262990245
+        }
+      }
+    },
+    "nuisance_only": {
+      "normalization_sha256": "660077391a3025e3790e84b0671f525fbcf3fd308bdff482f0148be90c5a4a23",
+      "ridge": {
+        "best_alpha": 10000.0,
+        "continuous": {
+          "spearman_ic": 0.0001875219435619477,
+          "mae": 0.00206412001183327,
+          "ic_ci_95": [
+            -0.019879217505159558,
+            0.021478268142607265
+          ]
+        },
+        "classification": {
+          "balanced_accuracy": 0.3333333333333333,
+          "mcc": 0.0,
+          "precision": {
+            "BUY": 0.0,
+            "HOLD": 0.4068926123381569,
+            "SELL": 0.0
+          },
+          "recall": {
+            "BUY": 0.0,
+            "HOLD": 1.0,
+            "SELL": 0.0
+          },
+          "predicted_counts": {
+            "BUY": 0,
+            "HOLD": 10504,
+            "SELL": 0
+          },
+          "predicted_ratios": {
+            "BUY": 0.0,
+            "HOLD": 1.0,
+            "SELL": 0.0
+          },
+          "confusion_matrix": [
+            [
+              0,
+              3092,
+              0
+            ],
+            [
+              0,
+              4274,
+              0
+            ],
+            [
+              0,
+              3138,
+              0
+            ]
+          ],
+          "balanced_accuracy_ci_95": [
+            0.3333333333333333,
+            0.3333333333333333
+          ]
+        },
+        "trading": {
+          "net_return": 0.0,
+          "buy_and_hold_return": -0.37767596992203,
+          "annualized_sharpe": 0.0,
+          "max_drawdown": 0.0,
+          "turnover": 0.0,
+          "trade_count": 0,
+          "market_coverage": 0.0,
+          "per_step_mean_return": 0.0,
+          "per_step_volatility": 0.0
+        }
+      },
+      "logistic": {
+        "continuous": {
+          "spearman_ic": 0.004600410107645373,
+          "mae": 0.021142210944624835,
+          "ic_ci_95": [
+            -0.014888970606548521,
+            0.02483144447352102
+          ]
+        },
+        "classification": {
+          "balanced_accuracy": 0.41175467450672837,
+          "mcc": 0.15006295246026402,
+          "precision": {
+            "BUY": 0.3909348441926346,
+            "HOLD": 0.4889014562420472,
+            "SELL": 0.371875
+          },
+          "recall": {
+            "BUY": 0.31241914618369987,
+            "HOLD": 0.8090781469349555,
+            "SELL": 0.11376673040152964
+          },
+          "predicted_counts": {
+            "BUY": 2471,
+            "HOLD": 7073,
+            "SELL": 960
+          },
+          "predicted_ratios": {
+            "BUY": 0.23524371667936025,
+            "HOLD": 0.6733625285605483,
+            "SELL": 0.0913937547600914
+          },
+          "confusion_matrix": [
+            [
+              966,
+              1765,
+              361
+            ],
+            [
+              574,
+              3458,
+              242
+            ],
+            [
+              931,
+              1850,
+              357
+            ]
+          ],
+          "balanced_accuracy_ci_95": [
+            0.40232942933055765,
+            0.4210984847708823
+          ]
+        },
+        "trading": {
+          "net_return": -0.48886162187561333,
+          "buy_and_hold_return": -0.37767596992203,
+          "annualized_sharpe": -2.8914172844822117,
+          "max_drawdown": 0.5576271907225355,
+          "turnover": 546.0,
+          "trade_count": 546,
+          "market_coverage": 0.642041127189642,
+          "per_step_mean_return": -6.009915637691154e-05,
+          "per_step_volatility": 0.0027521578153158134
+        }
+      }
+    },
+    "ohlcv_baselines": {
+      "B1a_ridge_ic": -0.0007304371183932733,
+      "B1b_logistic_ic": 0.012952355023067914,
+      "best_ohlcv_ic": 0.012952355023067914
+    }
+  },
+  "comparisons": {
+    "real_ic_permutation_p_value": 0.4245754245754246,
+    "delta_ic_vs_random": {
+      "delta_ic": -0.008950719331937083,
+      "delta_ic_ci_95": [
+        -0.02973013034372047,
+        0.013348714231018478
+      ]
+    },
+    "delta_ic_vs_scramble": {
+      "delta_ic": 0.002608275766183848,
+      "delta_ic_ci_95": [
+        -0.018654322414383164,
+        0.022761954456735737
+      ]
+    },
+    "delta_ic_vs_ohlcv_baseline": {
+      "delta_ic": -0.010524505794527877
+    }
+  },
+  "nuisance_shortcut_r2": 3.5164479317250294e-08,
+  "pass_fail_evaluation": [
+    {
+      "threshold_key": "primary_metric",
+      "description": "Validation set primary target Spearman IC minimum threshold",
+      "observed_value": 0.002427849228540037,
+      "required_value": ">= 0.02",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a78.1, \u00a710",
+      "passed": false
+    },
+    {
+      "threshold_key": "min_practical_effect",
+      "description": "Minimum practical effect size (IC)",
+      "observed_value": 0.002427849228540037,
+      "required_value": ">= 0.02",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a78.3, \u00a712",
+      "passed": false
+    },
+    {
+      "threshold_key": "min_practical_effect_balanced_acc",
+      "description": "Minimum practical effect for balanced accuracy over majority/random (delta >= 0.02)",
+      "observed_value": 0.02347642094251262,
+      "required_value": ">= 0.02",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a78.3, \u00a712",
+      "passed": true
+    },
+    {
+      "threshold_key": "connectome_vs_matched_control_ic_delta_min (vs Random)",
+      "description": "Minimum Spearman IC increment of Connectome over Random control",
+      "observed_value": -0.008950719331937083,
+      "required_value": ">= 0.01",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a76 Phase 5, \u00a78.3, \u00a712",
+      "passed": false
+    },
+    {
+      "threshold_key": "connectome_vs_matched_control_ic_delta_min (vs Scramble)",
+      "description": "Minimum Spearman IC increment of Connectome over Scramble control",
+      "observed_value": 0.002608275766183848,
+      "required_value": ">= 0.01",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a76 Phase 5, \u00a78.3, \u00a712",
+      "passed": false
+    },
+    {
+      "threshold_key": "connectome_vs_matched_control_p_max",
+      "description": "Maximum p-value from permutation test",
+      "observed_value": 0.4245754245754246,
+      "required_value": "<= 0.01",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a76 Phase 5, \u00a78.3, \u00a712",
+      "passed": false
+    },
+    {
+      "threshold_key": "connectome_vs_ohlcv_baseline_ic_delta_min",
+      "description": "Minimum Spearman IC increment of Connectome over OHLCV baseline",
+      "observed_value": -0.010524505794527877,
+      "required_value": ">= 0.01",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a76 Phase 4/5, \u00a712",
+      "passed": false
+    },
+    {
+      "threshold_key": "renderer_shortcut_r2_max",
+      "description": "Maximum R^2 of margin explained by mean brightness, nonzero pixels, or renderer features",
+      "observed_value": 3.5164479317250294e-08,
+      "required_value": "<= 0.05",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a75.3, \u00a712",
+      "passed": true
+    },
+    {
+      "threshold_key": "trading_net_return_min",
+      "description": "Minimum net return after cost (>= 0.0)",
+      "observed_value": 0.0,
+      "required_value": ">= 0.0",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a78.2, \u00a712",
+      "passed": true
+    },
+    {
+      "threshold_key": "trading_sharpe_min",
+      "description": "Minimum strategy Sharpe ratio after cost",
+      "observed_value": 0.0,
+      "required_value": ">= 0.5",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a78.2, \u00a712",
+      "passed": false
+    },
+    {
+      "threshold_key": "trading_max_drawdown_max",
+      "description": "Maximum allowable strategy drawdown (<= 15%)",
+      "observed_value": 0.0,
+      "required_value": "<= 0.15",
+      "status": "PROPOSED_NEEDS_USER_CONFIRMATION",
+      "spec_ref": "\u00a78.2, \u00a712",
+      "passed": true
+    }
+  ]
+}
