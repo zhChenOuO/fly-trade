@@ -11,3 +11,5 @@ research/data/flywire/graph_cache.npz
 research/data/flywire/Supplemental_file1_neuron_annotations.tsv
 research/outputs/**/decisions.parquet
 research/outputs/v2/features/*.npy
+research/outputs/v2/phase6_upstream/*.npy
+research/data/flywire/*_seed*_cache.npz

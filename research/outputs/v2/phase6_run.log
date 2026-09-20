@@ -1,0 +1,101 @@
+PHASE6_OVERRIDE_EXPLORATORY: NOT CONFIRMATORY EVIDENCE
+start=2026-09-20T09:18:39.528588+00:00 branch=remote/phase6 base=1daa40ffbea21d0ba425a4d01a3b66c89cc75d73
+feature gate real_train: sha256 PASS, shape=(31556, 1291), dtype=float32
+feature gate real_val: sha256 PASS, shape=(10504, 1291), dtype=float32
+feature gate random_train: sha256 PASS, shape=(31556, 1291), dtype=float32
+feature gate random_val: sha256 PASS, shape=(10504, 1291), dtype=float32
+feature gate scramble_train: sha256 PASS, shape=(31556, 1291), dtype=float32
+feature gate scramble_val: sha256 PASS, shape=(10504, 1291), dtype=float32
+graph gate real: sha256=d8f67923d359103e405a04138aee93a7d854054daed9be51efda1f8af314ca5a; rho=2164.294921875 (Phase 5=2164.294921875); candidate_edges=20474
+Loading cached random graph from /var/home/zh/Documents/github/fly-trade/.worktrees/phase6/research/data/flywire/random_seed0_cache.npz...
+graph gate random: sha256=b4a2ce8ba7cd4f90973093a1fd5189297c42d904966e6459c5824bea0fdb319c; rho=2164.294921875 (Phase 5=2164.294921875); candidate_edges=20656
+Loading cached scramble graph from /var/home/zh/Documents/github/fly-trade/.worktrees/phase6/research/data/flywire/scramble_seed0_cache.npz...
+graph gate scramble: sha256=b1a27398a566d4581479bd6ed1469d7990c86f47727d3c07fe2dea37ffd60ff8; rho=2164.294921875 (Phase 5=2164.294921875); candidate_edges=20474
+upstream real/train: 256/31556 samples, elapsed=4.8s
+upstream real/train: 5120/31556 samples, elapsed=57.5s
+upstream real/train: 10240/31556 samples, elapsed=110.1s
+upstream real/train: 15360/31556 samples, elapsed=161.9s
+upstream real/train: 20480/31556 samples, elapsed=212.9s
+upstream real/train: 25600/31556 samples, elapsed=262.9s
+upstream real/train: 30720/31556 samples, elapsed=311.4s
+upstream real/train: 31556/31556 samples, elapsed=319.5s
+upstream gate real/train: rows=31556, sources=11378, sha256=d025f3b2276f1b685766205b42a4be52f6cb71aa0c11ddd08ff8ae11c8d26ac8
+upstream collapse 6B_real: 1483/6380 (0.232445)
+upstream collapse 6B_null: 2576/9609 (0.268082)
+upstream real/val: 256/10504 samples, elapsed=2.4s
+upstream real/val: 5120/10504 samples, elapsed=51.0s
+upstream real/val: 10240/10504 samples, elapsed=100.9s
+upstream real/val: 10504/10504 samples, elapsed=103.7s
+upstream gate real/val: rows=10504, sources=11378, sha256=8d6b8d9c5bdef36bdb078ee0b18e1a4607697b0dc7aff38fd662e96fe7daa80a
+Loading cached random graph from /var/home/zh/Documents/github/fly-trade/.worktrees/phase6/research/data/flywire/random_seed0_cache.npz...
+upstream random/train: 256/31556 samples, elapsed=2.5s
+upstream random/train: 5120/31556 samples, elapsed=49.2s
+upstream random/train: 10240/31556 samples, elapsed=95.8s
+upstream random/train: 15360/31556 samples, elapsed=142.8s
+upstream random/train: 20480/31556 samples, elapsed=188.9s
+upstream random/train: 25600/31556 samples, elapsed=229.2s
+upstream random/train: 30720/31556 samples, elapsed=268.5s
+upstream random/train: 31556/31556 samples, elapsed=275.0s
+upstream gate random/train: rows=31556, sources=19019, sha256=66c1ae95a5dcf3eeb8cbe92b52e475da80d3f3a51f14028846369a48bbf7276c
+upstream collapse 6B_random: 0/19019 (0.000000)
+Loading cached random graph from /var/home/zh/Documents/github/fly-trade/.worktrees/phase6/research/data/flywire/random_seed0_cache.npz...
+upstream random/val: 256/10504 samples, elapsed=2.0s
+upstream random/val: 5120/10504 samples, elapsed=39.3s
+upstream random/val: 10240/10504 samples, elapsed=81.4s
+upstream random/val: 10504/10504 samples, elapsed=84.0s
+upstream gate random/val: rows=10504, sources=19019, sha256=ab33662fd28f706a84ad694404f9bbb9159916a9dffcbdecc016d4bc36878f22
+Loading cached scramble graph from /var/home/zh/Documents/github/fly-trade/.worktrees/phase6/research/data/flywire/scramble_seed0_cache.npz...
+upstream scramble/train: 256/31556 samples, elapsed=3.2s
+upstream scramble/train: 5120/31556 samples, elapsed=47.8s
+upstream scramble/train: 10240/31556 samples, elapsed=92.5s
+upstream scramble/train: 15360/31556 samples, elapsed=136.6s
+upstream scramble/train: 20480/31556 samples, elapsed=179.4s
+upstream scramble/train: 25600/31556 samples, elapsed=221.6s
+upstream scramble/train: 30720/31556 samples, elapsed=263.9s
+upstream scramble/train: 31556/31556 samples, elapsed=270.7s
+upstream gate scramble/train: rows=31556, sources=8151, sha256=0fca26c4daf5d93cc87fc711607d1e303da413059fc9faee68ecd22f371fe63e
+upstream collapse 6B_scramble: 88/8151 (0.010796)
+Loading cached scramble graph from /var/home/zh/Documents/github/fly-trade/.worktrees/phase6/research/data/flywire/scramble_seed0_cache.npz...
+upstream scramble/val: 256/10504 samples, elapsed=2.2s
+upstream scramble/val: 5120/10504 samples, elapsed=44.2s
+upstream scramble/val: 10240/10504 samples, elapsed=88.1s
+upstream scramble/val: 10504/10504 samples, elapsed=90.4s
+upstream gate scramble/val: rows=10504, sources=8151, sha256=ede2d2415522ff8f3eb8f63180faf57f5d6654b4d8241589a18497112f45552c
+6B initial consistency (diagnostic, first 100 Val): flattened Pearson r=0.2613799273967743
+trained 6A_real seed=0: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=4 inner_loss=1.3868987
+trained 6A_real seed=1: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=3 inner_loss=1.3873917
+trained 6A_real seed=2: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=4 inner_loss=1.3854612
+trained 6A_real seed=3: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=2 inner_loss=1.3891481
+trained 6A_real seed=4: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=2 inner_loss=1.3872643
+trained 6A_random seed=0: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=3 inner_loss=1.393226
+trained 6A_random seed=1: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=3 inner_loss=1.3941513
+trained 6A_random seed=2: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=3 inner_loss=1.3929403
+trained 6A_random seed=3: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=2 inner_loss=1.3964508
+trained 6A_random seed=4: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=2 inner_loss=1.3939432
+trained 6A_scramble seed=0: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=3 inner_loss=1.3987098
+trained 6A_scramble seed=1: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=2 inner_loss=1.3968036
+trained 6A_scramble seed=2: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=4 inner_loss=1.3938112
+trained 6A_scramble seed=3: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=2 inner_loss=1.395045
+trained 6A_scramble seed=4: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=2 inner_loss=1.3916138
+trained 6B_real seed=0: hparams={'lr': 0.001, 'weight_decay': 0.0001} best_epoch=12 inner_loss=1.3822201
+trained 6B_real seed=1: hparams={'lr': 0.001, 'weight_decay': 0.01} best_epoch=23 inner_loss=1.3821261
+trained 6B_real seed=2: hparams={'lr': 0.001, 'weight_decay': 0.0001} best_epoch=11 inner_loss=1.3822354
+trained 6B_real seed=3: hparams={'lr': 0.001, 'weight_decay': 0.01} best_epoch=23 inner_loss=1.3821029
+trained 6B_real seed=4: hparams={'lr': 0.001, 'weight_decay': 0.01} best_epoch=30 inner_loss=1.3820873
+trained 6B_random seed=0: hparams={'lr': 0.0003, 'weight_decay': 0.01} best_epoch=47 inner_loss=2.1618833
+trained 6B_random seed=1: hparams={'lr': 0.0003, 'weight_decay': 0.01} best_epoch=37 inner_loss=2.3724656
+trained 6B_random seed=2: hparams={'lr': 0.0003, 'weight_decay': 0.01} best_epoch=47 inner_loss=2.1145868
+trained 6B_random seed=3: hparams={'lr': 0.0003, 'weight_decay': 0.01} best_epoch=46 inner_loss=2.2188616
+trained 6B_random seed=4: hparams={'lr': 0.0003, 'weight_decay': 0.01} best_epoch=49 inner_loss=2.1924306
+trained 6B_scramble seed=0: hparams={'lr': 0.0003, 'weight_decay': 0.01} best_epoch=11 inner_loss=1.3833976
+trained 6B_scramble seed=1: hparams={'lr': 0.0003, 'weight_decay': 0.01} best_epoch=7 inner_loss=1.383177
+trained 6B_scramble seed=2: hparams={'lr': 0.0003, 'weight_decay': 0.01} best_epoch=8 inner_loss=1.3834143
+trained 6B_scramble seed=3: hparams={'lr': 0.0003, 'weight_decay': 0.0001} best_epoch=6 inner_loss=1.3831581
+trained 6B_scramble seed=4: hparams={'lr': 0.001, 'weight_decay': 0.0001} best_epoch=3 inner_loss=1.3830626
+trained 6B_null seed=0: hparams={'lr': 0.001, 'weight_decay': 0.01} best_epoch=12 inner_loss=1.3825578
+trained 6B_null seed=1: hparams={'lr': 0.001, 'weight_decay': 0.01} best_epoch=11 inner_loss=1.3825756
+trained 6B_null seed=2: hparams={'lr': 0.001, 'weight_decay': 0.01} best_epoch=7 inner_loss=1.3825351
+trained 6B_null seed=3: hparams={'lr': 0.001, 'weight_decay': 0.01} best_epoch=17 inner_loss=1.382554
+trained 6B_null seed=4: hparams={'lr': 0.001, 'weight_decay': 0.01} best_epoch=8 inner_loss=1.3825884
+saved research/outputs/v2/phase6_val.json
+overall=FAIL elapsed_seconds=7813.07
