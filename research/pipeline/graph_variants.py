@@ -9,6 +9,7 @@ Contract (from research/SPEC.md & research.md §4 Step 4 / §6 Level 3):
 """
 from __future__ import annotations
 
+import hashlib
 import time
 
 import numpy as np
@@ -477,3 +478,369 @@ def normalize_graph_spectral_radius(
             "spectral_scaling_factor": scale,
         },
     )
+
+
+def compute_graph_sha256(graph: ConnectomeGraph) -> str:
+    """Compute deterministic SHA-256 hex digest of CSR indptr, indices, and data arrays."""
+    csr = graph.weights.tocsr()
+    if not csr.has_sorted_indices:
+        csr = csr.copy()
+        csr.sort_indices()
+    h = hashlib.sha256()
+    h.update(csr.indptr.tobytes())
+    h.update(csr.indices.tobytes())
+    h.update(csr.data.tobytes())
+    return h.hexdigest()
+
+
+def sample_uniform_edges_no_replacement(
+    n_neurons: int,
+    E: int,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Uniformly sample E distinct directed edges without self-loops without sorting truncation.
+
+    Uses rejection sampling:
+    1. Generates E uniform non-self-loop candidate pairs (src != dst).
+    2. Deduplicates candidates.
+    3. If collisions occurred, supplementary uniform candidate batches are generated
+       and non-colliding edges are accepted in the order they appear until exactly E
+       unique edges are collected.
+    4. The collected pairs are randomly shuffled, completely avoiding any sorting-induced
+       truncation bias on node degrees.
+    """
+    max_edges = n_neurons * (n_neurons - 1)
+    if E > max_edges:
+        raise ValueError(
+            f"Requested {E} edges exceeds maximum possible non-self-loop edges {max_edges}."
+        )
+    if E == 0:
+        return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
+
+    # Round 1: Draw E candidate pairs with src != dst
+    src = rng.integers(0, n_neurons, size=E, dtype=np.int64)
+    shift = rng.integers(1, n_neurons, size=E, dtype=np.int64)
+    dst = (src + shift) % n_neurons
+    packed = (src << 32) | dst
+
+    # Deduplicate round 1
+    u_packed = np.unique(packed)
+    collected = [u_packed]
+    n_collected = len(u_packed)
+
+    # Rejection sampling to fill the missing edges without sorting truncation bias
+    while n_collected < E:
+        missing = E - n_collected
+        batch_size = max(missing * 2, 1000)
+        s_supp = rng.integers(0, n_neurons, size=batch_size, dtype=np.int64)
+        shift_supp = rng.integers(1, n_neurons, size=batch_size, dtype=np.int64)
+        d_supp = (s_supp + shift_supp) % n_neurons
+        p_supp = (s_supp << 32) | d_supp
+
+        # Check against existing sorted u_packed via binary search
+        idx = np.searchsorted(u_packed, p_supp)
+        idx = np.clip(idx, 0, len(u_packed) - 1)
+        not_in_u = (u_packed[idx] != p_supp)
+
+        valid = p_supp[not_in_u]
+        if len(valid) == 0:
+            continue
+
+        # Deduplicate candidates preserving stream arrival order
+        _, first_idx = np.unique(valid, return_index=True)
+        valid_u = valid[np.sort(first_idx)]
+
+        needed = valid_u[:missing]
+        collected.append(needed)
+        n_collected += len(needed)
+        if n_collected < E:
+            u_packed = np.unique(np.concatenate(collected))
+
+    all_packed = np.concatenate(collected)
+    if len(all_packed) > E:
+        all_packed = all_packed[:E]
+
+    # Shuffle to eliminate block ordering
+    rng.shuffle(all_packed)
+
+    final_src = (all_packed >> 32).astype(np.int64)
+    final_dst = (all_packed & 0xFFFFFFFF).astype(np.int64)
+    return final_src, final_dst
+
+
+def random_endpoint_graph(
+    graph: ConnectomeGraph,
+    seed: int = 0,
+    return_diagnostics: bool = False,
+) -> ConnectomeGraph | tuple[ConnectomeGraph, dict]:
+    """Generate an unbiased uniform random-endpoint graph matched to the connectome.
+
+    Preserves:
+    - Number of neurons (nodes)
+    - Number of directed edges (synapses)
+    - Sensory and motor neuron indices and metadata
+    - Exact multiset of signed edge weights (permuted across edges)
+
+    Randomizes:
+    - Directed connection endpoints sampled uniformly without replacement from all
+      N*(N-1) non-self-loop pairs, without sorting truncation bias.
+    """
+    t0 = time.time()
+    n_neurons = graph.n_neurons
+    E = graph.weights.nnz
+    rng = np.random.default_rng(seed)
+
+    # Permute edge weights to preserve the exact empirical weight multiset and sign balance
+    val_shuffled = rng.permutation(graph.weights.data.copy())
+
+    # Sample endpoints uniformly without replacement and without self-loops
+    final_src, final_dst = sample_uniform_edges_no_replacement(n_neurons, E, rng)
+
+    new_W = sp.coo_matrix(
+        (val_shuffled, (final_dst, final_src)), shape=(n_neurons, n_neurons)
+    ).tocsr()
+    new_W.sort_indices()
+
+    elapsed = float(time.time() - t0)
+    diag = {
+        "variant": "random_endpoint",
+        "seed": int(seed),
+        "n_neurons": int(n_neurons),
+        "edge_count": int(E),
+        "self_loops": int(np.count_nonzero(new_W.diagonal())),
+        "is_canonical_csr": bool(new_W.has_sorted_indices and new_W.has_canonical_format),
+        "weights_multiset_preserved": bool(
+            np.array_equal(np.sort(graph.weights.data), np.sort(new_W.data))
+        ),
+        "elapsed_seconds": elapsed,
+    }
+
+    out_g = ConnectomeGraph(
+        weights=new_W,
+        neuron_ids=list(graph.neuron_ids),
+        neuron_types=list(graph.neuron_types),
+        sensory_idx=graph.sensory_idx.copy(),
+        motor_idx=graph.motor_idx.copy(),
+        meta={
+            **graph.meta,
+            "variant": "random_endpoint",
+            "seed": seed,
+            "spectral_radius": None,
+            "random_endpoint_diagnostics": diag,
+        },
+    )
+    if return_diagnostics:
+        return out_g, diag
+    return out_g
+
+
+def source_wise_weight_shuffle(
+    graph: ConnectomeGraph,
+    seed: int = 0,
+    return_diagnostics: bool = False,
+) -> ConnectomeGraph | tuple[ConnectomeGraph, dict]:
+    """Permute weights on outgoing edges per source neuron, stratified by edge sign.
+
+    Graph convention: W[post, pre], so source = pre = matrix column.
+    For each source neuron j (column of W), its outgoing positive edge weights
+    are permuted among themselves, and its outgoing negative edge weights are
+    permuted among themselves.
+
+    Preserves:
+    - Exact graph topology (indices, indptr, shape identical to original).
+    - Excitatory/inhibitory sign of every directed edge (Dale's principle).
+    - Exact positive out-strength of every source neuron.
+    - Exact negative out-strength of every source neuron.
+    - Global empirical synaptic weight multiset.
+    """
+    t0 = time.time()
+    rng = np.random.default_rng(seed)
+    csc = graph.weights.tocsc()
+    data = csc.data.copy()
+    indptr = csc.indptr
+    n_neurons = graph.n_neurons
+
+    for j in range(n_neurons):
+        start, end = indptr[j], indptr[j + 1]
+        if end - start <= 1:
+            continue
+        col_data = data[start:end]
+        pos_idx = np.where(col_data > 0)[0]
+        if len(pos_idx) > 1:
+            col_data[pos_idx] = rng.permutation(col_data[pos_idx])
+        neg_idx = np.where(col_data < 0)[0]
+        if len(neg_idx) > 1:
+            col_data[neg_idx] = rng.permutation(col_data[neg_idx])
+        data[start:end] = col_data
+
+    new_W = sp.csc_matrix((data, csc.indices.copy(), indptr.copy()), shape=csc.shape).tocsr()
+    new_W.sort_indices()
+
+    elapsed = float(time.time() - t0)
+    diag = {
+        "variant": "weight_shuffle_source",
+        "seed": int(seed),
+        "topology_preserved": True,
+        "edge_signs_preserved": True,
+        "weights_identical_multiset": bool(
+            np.array_equal(np.sort(graph.weights.data), np.sort(new_W.data))
+        ),
+        "elapsed_seconds": elapsed,
+    }
+
+    out_g = ConnectomeGraph(
+        weights=new_W,
+        neuron_ids=list(graph.neuron_ids),
+        neuron_types=list(graph.neuron_types),
+        sensory_idx=graph.sensory_idx.copy(),
+        motor_idx=graph.motor_idx.copy(),
+        meta={
+            **graph.meta,
+            "variant": "weight_shuffle_source",
+            "seed": seed,
+            "spectral_radius": None,
+            "source_wise_shuffle_diagnostics": diag,
+        },
+    )
+    if return_diagnostics:
+        return out_g, diag
+    return out_g
+
+
+def graph_integrity_report(
+    graph: ConnectomeGraph,
+    base: ConnectomeGraph | None = None,
+) -> dict:
+    """Compute comprehensive graph integrity and provenance statistics.
+
+    Parameters
+    ----------
+    graph : ConnectomeGraph
+        Graph to evaluate.
+    base : ConnectomeGraph | None
+        Optional reference (base) graph to compare against.
+
+    Returns
+    -------
+    dict
+        Integrity statistics and comparison results.
+    """
+    csr = graph.weights.tocsr()
+    if not csr.has_sorted_indices:
+        csr = csr.copy()
+        csr.sort_indices()
+
+    N = int(graph.n_neurons)
+    nnz = int(csr.nnz)
+    diag_vals = csr.diagonal()
+    self_loops = int(np.count_nonzero(diag_vals))
+    is_canonical = bool(csr.has_sorted_indices and csr.has_canonical_format)
+
+    data = csr.data
+    pos_mask = data > 0
+    neg_mask = data < 0
+    pos_edge_count = int(np.sum(pos_mask))
+    neg_edge_count = int(np.sum(neg_mask))
+    pos_weight_sum = float(np.sum(data[pos_mask])) if pos_edge_count > 0 else 0.0
+    neg_weight_sum = float(np.sum(data[neg_mask])) if neg_edge_count > 0 else 0.0
+
+    rho = None
+    if "spectral_radius" in graph.meta and graph.meta["spectral_radius"] is not None:
+        rho = float(graph.meta["spectral_radius"])
+
+    g_sha = compute_graph_sha256(graph)
+
+    report = {
+        "n_neurons": N,
+        "nnz": nnz,
+        "self_loops": self_loops,
+        "is_canonical_csr": is_canonical,
+        "pos_edge_count": pos_edge_count,
+        "neg_edge_count": neg_edge_count,
+        "pos_weight_sum": pos_weight_sum,
+        "neg_weight_sum": neg_weight_sum,
+        "spectral_radius": rho,
+        "graph_sha256": g_sha,
+    }
+
+    if base is not None:
+        base_csr = base.weights.tocsr()
+        if not base_csr.has_sorted_indices:
+            base_csr = base_csr.copy()
+            base_csr.sort_indices()
+
+        report["base_sha256"] = compute_graph_sha256(base)
+
+        # 1. In-degree and Out-degree per node
+        # Destination = row (in-degree), Source = column (out-degree)
+        in_deg = np.diff(csr.indptr)
+        base_in_deg = np.diff(base_csr.indptr)
+        in_deg_ok = bool(np.array_equal(in_deg, base_in_deg))
+
+        out_deg = np.bincount(csr.indices, minlength=N)
+        base_out_deg = np.bincount(base_csr.indices, minlength=N)
+        out_deg_ok = bool(np.array_equal(out_deg, base_out_deg))
+
+        report["in_degree_equal"] = in_deg_ok
+        report["out_degree_equal"] = out_deg_ok
+        report["degree_equal"] = bool(in_deg_ok and out_deg_ok)
+
+        # 2. Source-wise positive and negative out-strength
+        # W[post, pre] -> column j is source j
+        W_pos = sp.csr_matrix((np.maximum(data, 0.0), csr.indices, csr.indptr), shape=csr.shape)
+        base_pos_data = np.maximum(base_csr.data, 0.0)
+        base_W_pos = sp.csr_matrix((base_pos_data, base_csr.indices, base_csr.indptr), shape=base_csr.shape)
+
+        pos_out = np.asarray(W_pos.sum(axis=0), dtype=np.float64).ravel()
+        base_pos_out = np.asarray(base_W_pos.sum(axis=0), dtype=np.float64).ravel()
+        delta_pos = np.abs(pos_out - base_pos_out)
+        max_delta_pos = float(np.max(delta_pos)) if len(delta_pos) > 0 else 0.0
+        pos_out_ok = bool(np.allclose(pos_out, base_pos_out, atol=1e-5, rtol=1e-5))
+
+        W_neg = sp.csr_matrix((np.minimum(data, 0.0), csr.indices, csr.indptr), shape=csr.shape)
+        base_neg_data = np.minimum(base_csr.data, 0.0)
+        base_W_neg = sp.csr_matrix((base_neg_data, base_csr.indices, base_csr.indptr), shape=base_csr.shape)
+
+        neg_out = np.asarray(W_neg.sum(axis=0), dtype=np.float64).ravel()
+        base_neg_out = np.asarray(base_W_neg.sum(axis=0), dtype=np.float64).ravel()
+        delta_neg = np.abs(neg_out - base_neg_out)
+        max_delta_neg = float(np.max(delta_neg)) if len(delta_neg) > 0 else 0.0
+        neg_out_ok = bool(np.allclose(neg_out, base_neg_out, atol=1e-5, rtol=1e-5))
+
+        report["source_pos_out_strength_equal"] = pos_out_ok
+        report["source_neg_out_strength_equal"] = neg_out_ok
+        report["source_out_strength_equal"] = bool(pos_out_ok and neg_out_ok)
+        report["max_diff_pos_out_strength"] = max_delta_pos
+        report["max_diff_neg_out_strength"] = max_delta_neg
+        report["max_diff_out_strength"] = max(max_delta_pos, max_delta_neg)
+
+        # 3. Edge overlap ratio
+        if np.array_equal(csr.indptr, base_csr.indptr) and np.array_equal(csr.indices, base_csr.indices):
+            overlap_count = nnz
+            overlap_ratio = 1.0
+        else:
+            dst = np.repeat(np.arange(N, dtype=np.int64), np.diff(csr.indptr))
+            src = csr.indices.astype(np.int64)
+            packed = (src << 32) | dst
+
+            base_dst = np.repeat(np.arange(N, dtype=np.int64), np.diff(base_csr.indptr))
+            base_src = base_csr.indices.astype(np.int64)
+            base_packed = (base_src << 32) | base_dst
+
+            common = np.intersect1d(packed, base_packed, assume_unique=True)
+            overlap_count = int(len(common))
+            overlap_ratio = float(overlap_count / max(nnz, 1))
+
+        report["edge_overlap_count"] = overlap_count
+        report["edge_overlap_ratio"] = overlap_ratio
+
+        # 4. Weights multiset equality
+        s_data = np.sort(data)
+        s_base_data = np.sort(base_csr.data)
+        multiset_equal = bool(
+            len(s_data) == len(s_base_data) and np.allclose(s_data, s_base_data, atol=1e-6, rtol=1e-5)
+        )
+        report["weights_multiset_equal"] = multiset_equal
+
+    return report
+
