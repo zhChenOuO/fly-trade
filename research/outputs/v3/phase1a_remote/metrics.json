@@ -1,0 +1,570 @@
+{
+  "spec": "SPEC_v3 Phase 1a, frozen Level 1-2 thresholds",
+  "data_status": "development; test split is development_test_v1, not sealed holdout evidence",
+  "test_split_status": "development_test_v1: opened once on 2026-09-19 under INVALID_INPUT_MAPPING (see outputs/v1_INVALID). Debug use only; NOT valid as formal Level 4 evidence. Formal evidence requires sealed_holdout_v2.",
+  "groups": [
+    "fly_intact",
+    "matched_random",
+    "input_shuffled",
+    "constant_input"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29
+  ],
+  "thresholds": {
+    "min_minority_action_ratio": 0.05,
+    "min_margin_range": 0.0,
+    "min_consistency": 0.8,
+    "min_between_within_ratio": 3.0,
+    "min_delta_margin_effect": 0.2,
+    "max_nuisance_r2": 0.5,
+    "min_seed_agreement": 0.8,
+    "min_effect": 0.005,
+    "min_ba_ci_lower": 0.5,
+    "min_mcc_ci_lower": 0.0,
+    "alpha": 0.05,
+    "confidence": 0.95
+  },
+  "global_gate": {
+    "passed": true,
+    "criteria": {
+      "val_minority_action_ratio": {
+        "passed": true,
+        "value": 0.36200812388931203,
+        "threshold": 0.05
+      },
+      "val_margin": {
+        "passed": true,
+        "finite": true,
+        "value": 9.375264402478933,
+        "threshold": 0.0
+      },
+      "test_minority_action_ratio": {
+        "passed": true,
+        "value": 0.36304899720741307,
+        "threshold": 0.05
+      },
+      "test_margin": {
+        "passed": true,
+        "finite": true,
+        "value": 9.469664633274078,
+        "threshold": 0.0
+      }
+    }
+  },
+  "validation_buy_ratio": 0.36200812388931203,
+  "sample_counts": {
+    "train": 31556,
+    "val": 10504,
+    "test_development": 10504,
+    "A_samples_per_seed": 21008
+  },
+  "market_state": {
+    "states": 6,
+    "train_position_tercile_cutpoints": [
+      0.3709980584304279,
+      0.6888157196744394
+    ],
+    "counts": {
+      "0": 16157,
+      "1": 7966,
+      "2": 1427,
+      "3": 1849,
+      "4": 9323,
+      "5": 15842
+    },
+    "rule": "sign(close[-1]/close[0]-1) x Train-tercile of last close position in [min low,max high]"
+  },
+  "nuisance": {
+    "r2": 0.12072485822430257,
+    "features": [
+      "mean_brightness",
+      "nonzero_pixel_ratio",
+      "total_pixel_energy",
+      "price_vertical_range",
+      "n_up_candles",
+      "n_down_candles",
+      "volatility"
+    ],
+    "margin": "per-sample mean across A seeds 0..29 on Val"
+  },
+  "repeat_summary": {
+    "consistency": 0.99905
+  },
+  "level_1": {
+    "passed": true,
+    "criteria": {
+      "global_gate": {
+        "passed": true
+      },
+      "consistency": {
+        "passed": true,
+        "value": 0.99905,
+        "threshold": 0.8
+      },
+      "input_variation": {
+        "passed": true,
+        "score_range": 9.36593508347869,
+        "action_varies": true,
+        "threshold": 0.0
+      },
+      "between_within_variance": {
+        "passed": true,
+        "value": 20072.044657256392,
+        "unbounded": false,
+        "threshold": 3.0
+      },
+      "perturbation_effect": {
+        "passed": true,
+        "effects": {
+          "flip_price": {
+            "passed": true,
+            "value": 1.2301144079775965
+          },
+          "shuffle_time": {
+            "passed": true,
+            "value": 0.9247647894058955
+          },
+          "mask_recent25": {
+            "passed": true,
+            "value": 0.7560110956309355
+          },
+          "black": {
+            "passed": true,
+            "value": 0.8233288890488895
+          },
+          "mean_image": {
+            "passed": true,
+            "value": 0.8675863375188015
+          }
+        },
+        "threshold": 0.2
+      },
+      "constant_input": {
+        "passed": true,
+        "p_value": 0.0,
+        "alpha": 0.05
+      }
+    }
+  },
+  "level_2": {
+    "passed": true,
+    "criteria": {
+      "level_1": {
+        "passed": true
+      },
+      "input_shuffle": {
+        "passed": true,
+        "p_value": 0.000999000999000999,
+        "effect": 0.09720803794913596,
+        "alpha": 0.05
+      },
+      "seed_direction": {
+        "passed": true,
+        "value": 1.0,
+        "agreement": 1.0,
+        "effects_by_seed": [
+          0.09694304888688961,
+          0.09732614019401714,
+          0.09725920909251569,
+          0.09755594683483873,
+          0.09740075209326746,
+          0.09668123954282874,
+          0.09796349256226279,
+          0.096622897637257,
+          0.0968039024651379,
+          0.09751250654168547,
+          0.09731630828883102,
+          0.097368218129672,
+          0.09641993345381575,
+          0.09720752151928168,
+          0.0971891991053884,
+          0.09736037895579618,
+          0.09682633109052481,
+          0.09699613167000841,
+          0.09683160797484323,
+          0.09690792839117261,
+          0.09788139086917254,
+          0.09735691407562659,
+          0.09735605005186032,
+          0.09654833617112205,
+          0.09739247377702465,
+          0.09718378765097149,
+          0.09753272439633999,
+          0.09732708318692315,
+          0.0978167109405458,
+          0.09735297292445745
+        ],
+        "threshold": 0.8
+      },
+      "beyond_fixed_bias": {
+        "passed": true,
+        "validation_buy_ratio": 0.36200812388931203,
+        "bias_preserved_by_shuffle": true
+      },
+      "nuisance_robustness": {
+        "passed": true,
+        "value": 0.12072485822430257,
+        "threshold": 0.5
+      }
+    }
+  },
+  "level_3": {
+    "passed": false,
+    "reason": "degree_scramble (D) is reserved for Phase 1b and is absent from this Phase 1a run."
+  },
+  "level_4": {
+    "passed": false,
+    "reason": "the test split is development_test_v1, not sealed_holdout_v2; no Level 4 evidence is claimed."
+  },
+  "per_seed_effects": [
+    {
+      "seed": 0,
+      "A_val_buy_ratio": 0.36243335872048743,
+      "A_val_mean_margin": 0.01026506031559436,
+      "B_val_buy_ratio": 0.3641469916222391,
+      "C_val_buy_ratio": 0.3596725057121097,
+      "E_val_buy_ratio": 0.5202779893373953,
+      "level_2_input_shuffle_effect": 0.09694304888688961
+    },
+    {
+      "seed": 1,
+      "A_val_buy_ratio": 0.36214775323686216,
+      "A_val_mean_margin": 0.010217295820959454,
+      "B_val_buy_ratio": 0.36205255140898707,
+      "C_val_buy_ratio": 0.36624143183549124,
+      "E_val_buy_ratio": 0.5206587966488957,
+      "level_2_input_shuffle_effect": 0.09732614019401714
+    },
+    {
+      "seed": 2,
+      "A_val_buy_ratio": 0.36233815689261234,
+      "A_val_mean_margin": 0.010300304998682609,
+      "B_val_buy_ratio": 0.3657654226961158,
+      "C_val_buy_ratio": 0.36843107387661844,
+      "E_val_buy_ratio": 0.5270373191165271,
+      "level_2_input_shuffle_effect": 0.09725920909251569
+    },
+    {
+      "seed": 3,
+      "A_val_buy_ratio": 0.3618621477532369,
+      "A_val_mean_margin": 0.010240107649389001,
+      "B_val_buy_ratio": 0.36205255140898707,
+      "C_val_buy_ratio": 0.36690784463061693,
+      "E_val_buy_ratio": 0.5202779893373953,
+      "level_2_input_shuffle_effect": 0.09755594683483873
+    },
+    {
+      "seed": 4,
+      "A_val_buy_ratio": 0.36205255140898707,
+      "A_val_mean_margin": 0.01031256005312162,
+      "B_val_buy_ratio": 0.3689070830159939,
+      "C_val_buy_ratio": 0.3612909367859863,
+      "E_val_buy_ratio": 0.5238004569687738,
+      "level_2_input_shuffle_effect": 0.09740075209326746
+    },
+    {
+      "seed": 5,
+      "A_val_buy_ratio": 0.3618621477532369,
+      "A_val_mean_margin": 0.01029433761618622,
+      "B_val_buy_ratio": 0.3611005331302361,
+      "C_val_buy_ratio": 0.3593869002284844,
+      "E_val_buy_ratio": 0.523990860624524,
+      "level_2_input_shuffle_effect": 0.09668123954282874
+    },
+    {
+      "seed": 6,
+      "A_val_buy_ratio": 0.36167174409748665,
+      "A_val_mean_margin": 0.010369109866097084,
+      "B_val_buy_ratio": 0.3656702208682407,
+      "C_val_buy_ratio": 0.36005331302361004,
+      "E_val_buy_ratio": 0.5303693830921554,
+      "level_2_input_shuffle_effect": 0.09796349256226279
+    },
+    {
+      "seed": 7,
+      "A_val_buy_ratio": 0.3627189642041127,
+      "A_val_mean_margin": 0.010289034196298143,
+      "B_val_buy_ratio": 0.3571972581873572,
+      "C_val_buy_ratio": 0.3611005331302361,
+      "E_val_buy_ratio": 0.5262757044935262,
+      "level_2_input_shuffle_effect": 0.096622897637257
+    },
+    {
+      "seed": 8,
+      "A_val_buy_ratio": 0.361957349581112,
+      "A_val_mean_margin": 0.010174231107322398,
+      "B_val_buy_ratio": 0.3704303122619954,
+      "C_val_buy_ratio": 0.36367098248286367,
+      "E_val_buy_ratio": 0.5223724295506473,
+      "level_2_input_shuffle_effect": 0.0968039024651379
+    },
+    {
+      "seed": 9,
+      "A_val_buy_ratio": 0.3612909367859863,
+      "A_val_mean_margin": 0.010194369391549342,
+      "B_val_buy_ratio": 0.36205255140898707,
+      "C_val_buy_ratio": 0.36233815689261234,
+      "E_val_buy_ratio": 0.5198019801980198,
+      "level_2_input_shuffle_effect": 0.09751250654168547
+    },
+    {
+      "seed": 10,
+      "A_val_buy_ratio": 0.36233815689261234,
+      "A_val_mean_margin": 0.010201673018775646,
+      "B_val_buy_ratio": 0.3534843869002285,
+      "C_val_buy_ratio": 0.3603389185072353,
+      "E_val_buy_ratio": 0.5178027418126429,
+      "level_2_input_shuffle_effect": 0.09731630828883102
+    },
+    {
+      "seed": 11,
+      "A_val_buy_ratio": 0.36233815689261234,
+      "A_val_mean_margin": 0.01008186821846542,
+      "B_val_buy_ratio": 0.3666222391469916,
+      "C_val_buy_ratio": 0.361957349581112,
+      "E_val_buy_ratio": 0.5125666412795126,
+      "level_2_input_shuffle_effect": 0.097368218129672
+    },
+    {
+      "seed": 12,
+      "A_val_buy_ratio": 0.3618621477532369,
+      "A_val_mean_margin": 0.010280731651600691,
+      "B_val_buy_ratio": 0.3656702208682407,
+      "C_val_buy_ratio": 0.3566260472201066,
+      "E_val_buy_ratio": 0.5253236862147753,
+      "level_2_input_shuffle_effect": 0.09641993345381575
+    },
+    {
+      "seed": 13,
+      "A_val_buy_ratio": 0.3617669459253618,
+      "A_val_mean_margin": 0.01019740663225186,
+      "B_val_buy_ratio": 0.3688118811881188,
+      "C_val_buy_ratio": 0.3594821020563595,
+      "E_val_buy_ratio": 0.5214204112718964,
+      "level_2_input_shuffle_effect": 0.09720752151928168
+    },
+    {
+      "seed": 14,
+      "A_val_buy_ratio": 0.3612909367859863,
+      "A_val_mean_margin": 0.010246739284206767,
+      "B_val_buy_ratio": 0.36405178979436403,
+      "C_val_buy_ratio": 0.36462300076161464,
+      "E_val_buy_ratio": 0.5203731911652704,
+      "level_2_input_shuffle_effect": 0.0971891991053884
+    },
+    {
+      "seed": 15,
+      "A_val_buy_ratio": 0.36148134044173647,
+      "A_val_mean_margin": 0.010335238216448031,
+      "B_val_buy_ratio": 0.3651942117288652,
+      "C_val_buy_ratio": 0.35843488194973344,
+      "E_val_buy_ratio": 0.5218964204112719,
+      "level_2_input_shuffle_effect": 0.09736037895579618
+    },
+    {
+      "seed": 16,
+      "A_val_buy_ratio": 0.3626237623762376,
+      "A_val_mean_margin": 0.01023639126888828,
+      "B_val_buy_ratio": 0.3625285605483625,
+      "C_val_buy_ratio": 0.36605102817974106,
+      "E_val_buy_ratio": 0.5202779893373953,
+      "level_2_input_shuffle_effect": 0.09682633109052481
+    },
+    {
+      "seed": 17,
+      "A_val_buy_ratio": 0.36148134044173647,
+      "A_val_mean_margin": 0.010218410493587696,
+      "B_val_buy_ratio": 0.3586252856054836,
+      "C_val_buy_ratio": 0.36014851485148514,
+      "E_val_buy_ratio": 0.5206587966488957,
+      "level_2_input_shuffle_effect": 0.09699613167000841
+    },
+    {
+      "seed": 18,
+      "A_val_buy_ratio": 0.36233815689261234,
+      "A_val_mean_margin": 0.010258190840212546,
+      "B_val_buy_ratio": 0.3586252856054836,
+      "C_val_buy_ratio": 0.3625285605483625,
+      "E_val_buy_ratio": 0.5178979436405179,
+      "level_2_input_shuffle_effect": 0.09683160797484323
+    },
+    {
+      "seed": 19,
+      "A_val_buy_ratio": 0.36205255140898707,
+      "A_val_mean_margin": 0.010423008752163768,
+      "B_val_buy_ratio": 0.3573876618431074,
+      "C_val_buy_ratio": 0.3592916984006093,
+      "E_val_buy_ratio": 0.5306549885757806,
+      "level_2_input_shuffle_effect": 0.09690792839117261
+    },
+    {
+      "seed": 20,
+      "A_val_buy_ratio": 0.36243335872048743,
+      "A_val_mean_margin": 0.010364982381672895,
+      "B_val_buy_ratio": 0.35757806549885757,
+      "C_val_buy_ratio": 0.3628141660319878,
+      "E_val_buy_ratio": 0.5296077684691546,
+      "level_2_input_shuffle_effect": 0.09788139086917254
+    },
+    {
+      "seed": 21,
+      "A_val_buy_ratio": 0.36233815689261234,
+      "A_val_mean_margin": 0.010362531439859483,
+      "B_val_buy_ratio": 0.3526275704493526,
+      "C_val_buy_ratio": 0.36690784463061693,
+      "E_val_buy_ratio": 0.5270373191165271,
+      "level_2_input_shuffle_effect": 0.09735691407562659
+    },
+    {
+      "seed": 22,
+      "A_val_buy_ratio": 0.3617669459253618,
+      "A_val_mean_margin": 0.010209917647756691,
+      "B_val_buy_ratio": 0.35833968012185835,
+      "C_val_buy_ratio": 0.363004569687738,
+      "E_val_buy_ratio": 0.5218012185833968,
+      "level_2_input_shuffle_effect": 0.09735605005186032
+    },
+    {
+      "seed": 23,
+      "A_val_buy_ratio": 0.36167174409748665,
+      "A_val_mean_margin": 0.01032415170680523,
+      "B_val_buy_ratio": 0.3526275704493526,
+      "C_val_buy_ratio": 0.36395658796648894,
+      "E_val_buy_ratio": 0.5203731911652704,
+      "level_2_input_shuffle_effect": 0.09654833617112205
+    },
+    {
+      "seed": 24,
+      "A_val_buy_ratio": 0.36205255140898707,
+      "A_val_mean_margin": 0.01030135925480636,
+      "B_val_buy_ratio": 0.3549124143183549,
+      "C_val_buy_ratio": 0.3591012947448591,
+      "E_val_buy_ratio": 0.5281797410510282,
+      "level_2_input_shuffle_effect": 0.09739247377702465
+    },
+    {
+      "seed": 25,
+      "A_val_buy_ratio": 0.36224295506473725,
+      "A_val_mean_margin": 0.010493703428921078,
+      "B_val_buy_ratio": 0.35833968012185835,
+      "C_val_buy_ratio": 0.36547981721249045,
+      "E_val_buy_ratio": 0.5314166031987814,
+      "level_2_input_shuffle_effect": 0.09718378765097149
+    },
+    {
+      "seed": 26,
+      "A_val_buy_ratio": 0.3618621477532369,
+      "A_val_mean_margin": 0.010340120682701001,
+      "B_val_buy_ratio": 0.3589108910891089,
+      "C_val_buy_ratio": 0.36376618431073876,
+      "E_val_buy_ratio": 0.5284653465346535,
+      "level_2_input_shuffle_effect": 0.09753272439633999
+    },
+    {
+      "seed": 27,
+      "A_val_buy_ratio": 0.3617669459253618,
+      "A_val_mean_margin": 0.010198716069998236,
+      "B_val_buy_ratio": 0.36367098248286367,
+      "C_val_buy_ratio": 0.36167174409748665,
+      "E_val_buy_ratio": 0.5168507235338918,
+      "level_2_input_shuffle_effect": 0.09732708318692315
+    },
+    {
+      "seed": 28,
+      "A_val_buy_ratio": 0.36233815689261234,
+      "A_val_mean_margin": 0.010369462341964437,
+      "B_val_buy_ratio": 0.3596725057121097,
+      "C_val_buy_ratio": 0.36633663366336633,
+      "E_val_buy_ratio": 0.531035795887281,
+      "level_2_input_shuffle_effect": 0.0978167109405458
+    },
+    {
+      "seed": 29,
+      "A_val_buy_ratio": 0.3618621477532369,
+      "A_val_mean_margin": 0.010167074940540704,
+      "B_val_buy_ratio": 0.36205255140898707,
+      "C_val_buy_ratio": 0.363004569687738,
+      "E_val_buy_ratio": 0.5190403655750191,
+      "level_2_input_shuffle_effect": 0.09735297292445745
+    }
+  ],
+  "runtime": {
+    "simulated_images": 1386420,
+    "simulator_seconds": 10277.772406435999,
+    "throughput_images_per_second": 134.8949894173387,
+    "by_stage": {
+      "train_margin_sd": {
+        "images": 2000,
+        "seconds": 5.287945107000269
+      },
+      "baseline_calibration": {
+        "images": 2000,
+        "seconds": 5.5212202399998205
+      },
+      "preflight20": {
+        "images": 20,
+        "seconds": 0.08626624600037758
+      },
+      "seed_reproducibility": {
+        "images": 1920,
+        "seconds": 15.375079870000263
+      },
+      "A_fly_intact": {
+        "images": 630240,
+        "seconds": 4990.774640535004
+      },
+      "E_constant_input": {
+        "images": 630240,
+        "seconds": 4353.093997741997
+      },
+      "repeat_and_perturbation": {
+        "images": 120000,
+        "seconds": 907.6332566959973
+      }
+    },
+    "evaluate_levels_seconds": 36.10235631999967,
+    "total_seconds": 10395.836982739998,
+    "decision_A_seconds": 4990.838952706999,
+    "repeat_sensitivity_seconds": 908.0719501540007,
+    "train_margin_latency_ms": 2.6439725535001344
+  },
+  "memory": {
+    "peak_allocated_bytes": 1286032896,
+    "peak_reserved_bytes": 1310720000,
+    "total_vram_bytes": 12343050240,
+    "peak_device_used_bytes": 2970288128,
+    "peak_device_used_fraction": 0.2406445789529574,
+    "reserved_fraction": 0.10619093129446745,
+    "batch_policy": "TorchReservoir dynamically caps batches to <=80% total VRAM"
+  }
+}

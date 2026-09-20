@@ -1,0 +1,424 @@
+[2026-09-19 23:12:02] Phase 1a start; output=/var/home/zh/Documents/github/fly-trade/.worktrees/phase1a/research/outputs/v3/phase1a_remote
+[2026-09-19 23:12:02] GPU=NVIDIA GeForce RTX 5070; VRAM=11.50 GiB; torch=2.14.0+cu130; CUDA=13.0
+[2026-09-19 23:12:03] label-free data loaded: train=31,556, val=10,504, test=10,504
+[2026-09-19 23:12:13] Train baseline frozen from 2000 spaced images; margin_sd=1.29540401
+[2026-09-19 23:12:14] 20-image Val preflight: passed=True, minority=0.1, margin_range=2.742576450109482
+[2026-09-19 23:12:18] image alignment verified 5,120/52,564
+[2026-09-19 23:12:22] image alignment verified 10,240/52,564
+[2026-09-19 23:12:26] image alignment verified 15,104/52,564
+[2026-09-19 23:12:30] image alignment verified 20,224/52,564
+[2026-09-19 23:12:34] image alignment verified 25,088/52,564
+[2026-09-19 23:12:38] image alignment verified 30,208/52,564
+[2026-09-19 23:12:42] image alignment verified 35,072/52,564
+[2026-09-19 23:12:47] image alignment verified 40,192/52,564
+[2026-09-19 23:12:51] image alignment verified 45,056/52,564
+[2026-09-19 23:12:55] image alignment verified 50,176/52,564
+[2026-09-19 23:12:57] image alignment verified 52,564/52,564
+[2026-09-19 23:12:57] exact image alignment passed for all 52,564 samples
+[2026-09-19 23:13:12] fixed-seed reproducibility passed for all 30 seeds
+[2026-09-19 23:13:12] A fly_intact seed 0/29 start
+[2026-09-19 23:13:57] A seed 0: 5,120/21,008 images
+[2026-09-19 23:14:41] A seed 0: 10,240/21,008 images
+[2026-09-19 23:15:25] A seed 0: 15,360/21,008 images
+[2026-09-19 23:16:09] A seed 0: 20,480/21,008 images
+[2026-09-19 23:16:13] A seed 0: 21,008/21,008 images
+[2026-09-19 23:16:13] A fly_intact seed 0 complete; 21,008 decisions at 116.09 images/s
+[2026-09-19 23:16:13] A fly_intact seed 1/29 start
+[2026-09-19 23:16:57] A seed 1: 5,120/21,008 images
+[2026-09-19 23:17:41] A seed 1: 10,240/21,008 images
+[2026-09-19 23:18:25] A seed 1: 15,360/21,008 images
+[2026-09-19 23:19:09] A seed 1: 20,480/21,008 images
+[2026-09-19 23:19:14] A seed 1: 21,008/21,008 images
+[2026-09-19 23:19:14] A fly_intact seed 1 complete; 21,008 decisions at 116.20 images/s
+[2026-09-19 23:19:14] A fly_intact seed 2/29 start
+[2026-09-19 23:19:58] A seed 2: 5,120/21,008 images
+[2026-09-19 23:20:42] A seed 2: 10,240/21,008 images
+[2026-09-19 23:21:26] A seed 2: 15,360/21,008 images
+[2026-09-19 23:22:10] A seed 2: 20,480/21,008 images
+[2026-09-19 23:22:14] A seed 2: 21,008/21,008 images
+[2026-09-19 23:22:14] A fly_intact seed 2 complete; 21,008 decisions at 116.57 images/s
+[2026-09-19 23:22:14] A fly_intact seed 3/29 start
+[2026-09-19 23:22:57] A seed 3: 5,120/21,008 images
+[2026-09-19 23:23:41] A seed 3: 10,240/21,008 images
+[2026-09-19 23:24:24] A seed 3: 15,360/21,008 images
+[2026-09-19 23:25:08] A seed 3: 20,480/21,008 images
+[2026-09-19 23:25:12] A seed 3: 21,008/21,008 images
+[2026-09-19 23:25:12] A fly_intact seed 3 complete; 21,008 decisions at 117.93 images/s
+[2026-09-19 23:25:12] A fly_intact seed 4/29 start
+[2026-09-19 23:25:55] A seed 4: 5,120/21,008 images
+[2026-09-19 23:26:37] A seed 4: 10,240/21,008 images
+[2026-09-19 23:27:20] A seed 4: 15,360/21,008 images
+[2026-09-19 23:28:03] A seed 4: 20,480/21,008 images
+[2026-09-19 23:28:07] A seed 4: 21,008/21,008 images
+[2026-09-19 23:28:07] A fly_intact seed 4 complete; 21,008 decisions at 120.32 images/s
+[2026-09-19 23:28:07] A fly_intact seed 5/29 start
+[2026-09-19 23:28:49] A seed 5: 5,120/21,008 images
+[2026-09-19 23:29:32] A seed 5: 10,240/21,008 images
+[2026-09-19 23:30:15] A seed 5: 15,360/21,008 images
+[2026-09-19 23:30:58] A seed 5: 20,480/21,008 images
+[2026-09-19 23:31:02] A seed 5: 21,008/21,008 images
+[2026-09-19 23:31:02] A fly_intact seed 5 complete; 21,008 decisions at 119.96 images/s
+[2026-09-19 23:31:02] A fly_intact seed 6/29 start
+[2026-09-19 23:31:45] A seed 6: 5,120/21,008 images
+[2026-09-19 23:32:27] A seed 6: 10,240/21,008 images
+[2026-09-19 23:33:09] A seed 6: 15,360/21,008 images
+[2026-09-19 23:33:52] A seed 6: 20,480/21,008 images
+[2026-09-19 23:33:56] A seed 6: 21,008/21,008 images
+[2026-09-19 23:33:56] A fly_intact seed 6 complete; 21,008 decisions at 120.62 images/s
+[2026-09-19 23:33:56] A fly_intact seed 7/29 start
+[2026-09-19 23:34:39] A seed 7: 5,120/21,008 images
+[2026-09-19 23:35:22] A seed 7: 10,240/21,008 images
+[2026-09-19 23:36:04] A seed 7: 15,360/21,008 images
+[2026-09-19 23:36:47] A seed 7: 20,480/21,008 images
+[2026-09-19 23:36:52] A seed 7: 21,008/21,008 images
+[2026-09-19 23:36:52] A fly_intact seed 7 complete; 21,008 decisions at 119.78 images/s
+[2026-09-19 23:36:52] A fly_intact seed 8/29 start
+[2026-09-19 23:37:34] A seed 8: 5,120/21,008 images
+[2026-09-19 23:38:17] A seed 8: 10,240/21,008 images
+[2026-09-19 23:39:00] A seed 8: 15,360/21,008 images
+[2026-09-19 23:39:42] A seed 8: 20,480/21,008 images
+[2026-09-19 23:39:47] A seed 8: 21,008/21,008 images
+[2026-09-19 23:39:47] A fly_intact seed 8 complete; 21,008 decisions at 119.85 images/s
+[2026-09-19 23:39:47] A fly_intact seed 9/29 start
+[2026-09-19 23:40:30] A seed 9: 5,120/21,008 images
+[2026-09-19 23:41:13] A seed 9: 10,240/21,008 images
+[2026-09-19 23:41:56] A seed 9: 15,360/21,008 images
+[2026-09-19 23:42:39] A seed 9: 20,480/21,008 images
+[2026-09-19 23:42:44] A seed 9: 21,008/21,008 images
+[2026-09-19 23:42:44] A fly_intact seed 9 complete; 21,008 decisions at 118.93 images/s
+[2026-09-19 23:42:44] A fly_intact seed 10/29 start
+[2026-09-19 23:43:26] A seed 10: 5,120/21,008 images
+[2026-09-19 23:44:10] A seed 10: 10,240/21,008 images
+[2026-09-19 23:44:52] A seed 10: 15,360/21,008 images
+[2026-09-19 23:45:36] A seed 10: 20,480/21,008 images
+[2026-09-19 23:45:40] A seed 10: 21,008/21,008 images
+[2026-09-19 23:45:40] A fly_intact seed 10 complete; 21,008 decisions at 118.96 images/s
+[2026-09-19 23:45:40] A fly_intact seed 11/29 start
+[2026-09-19 23:46:24] A seed 11: 5,120/21,008 images
+[2026-09-19 23:47:07] A seed 11: 10,240/21,008 images
+[2026-09-19 23:47:51] A seed 11: 15,360/21,008 images
+[2026-09-19 23:48:34] A seed 11: 20,480/21,008 images
+[2026-09-19 23:48:39] A seed 11: 21,008/21,008 images
+[2026-09-19 23:48:39] A fly_intact seed 11 complete; 21,008 decisions at 117.60 images/s
+[2026-09-19 23:48:39] A fly_intact seed 12/29 start
+[2026-09-19 23:49:22] A seed 12: 5,120/21,008 images
+[2026-09-19 23:50:05] A seed 12: 10,240/21,008 images
+[2026-09-19 23:50:48] A seed 12: 15,360/21,008 images
+[2026-09-19 23:51:30] A seed 12: 20,480/21,008 images
+[2026-09-19 23:51:34] A seed 12: 21,008/21,008 images
+[2026-09-19 23:51:34] A fly_intact seed 12 complete; 21,008 decisions at 119.81 images/s
+[2026-09-19 23:51:34] A fly_intact seed 13/29 start
+[2026-09-19 23:52:16] A seed 13: 5,120/21,008 images
+[2026-09-19 23:52:59] A seed 13: 10,240/21,008 images
+[2026-09-19 23:53:41] A seed 13: 15,360/21,008 images
+[2026-09-19 23:54:24] A seed 13: 20,480/21,008 images
+[2026-09-19 23:54:28] A seed 13: 21,008/21,008 images
+[2026-09-19 23:54:28] A fly_intact seed 13 complete; 21,008 decisions at 120.89 images/s
+[2026-09-19 23:54:28] A fly_intact seed 14/29 start
+[2026-09-19 23:55:11] A seed 14: 5,120/21,008 images
+[2026-09-19 23:55:53] A seed 14: 10,240/21,008 images
+[2026-09-19 23:56:36] A seed 14: 15,360/21,008 images
+[2026-09-19 23:57:19] A seed 14: 20,480/21,008 images
+[2026-09-19 23:57:24] A seed 14: 21,008/21,008 images
+[2026-09-19 23:57:24] A fly_intact seed 14 complete; 21,008 decisions at 119.59 images/s
+[2026-09-19 23:57:24] A fly_intact seed 15/29 start
+[2026-09-19 23:58:06] A seed 15: 5,120/21,008 images
+[2026-09-19 23:58:48] A seed 15: 10,240/21,008 images
+[2026-09-19 23:59:31] A seed 15: 15,360/21,008 images
+[2026-09-20 00:00:13] A seed 15: 20,480/21,008 images
+[2026-09-20 00:00:18] A seed 15: 21,008/21,008 images
+[2026-09-20 00:00:18] A fly_intact seed 15 complete; 21,008 decisions at 120.70 images/s
+[2026-09-20 00:00:18] A fly_intact seed 16/29 start
+[2026-09-20 00:01:00] A seed 16: 5,120/21,008 images
+[2026-09-20 00:01:42] A seed 16: 10,240/21,008 images
+[2026-09-20 00:02:24] A seed 16: 15,360/21,008 images
+[2026-09-20 00:03:07] A seed 16: 20,480/21,008 images
+[2026-09-20 00:03:11] A seed 16: 21,008/21,008 images
+[2026-09-20 00:03:11] A fly_intact seed 16 complete; 21,008 decisions at 121.13 images/s
+[2026-09-20 00:03:11] A fly_intact seed 17/29 start
+[2026-09-20 00:03:53] A seed 17: 5,120/21,008 images
+[2026-09-20 00:04:37] A seed 17: 10,240/21,008 images
+[2026-09-20 00:05:18] A seed 17: 15,360/21,008 images
+[2026-09-20 00:05:55] A seed 17: 20,480/21,008 images
+[2026-09-20 00:05:59] A seed 17: 21,008/21,008 images
+[2026-09-20 00:05:59] A fly_intact seed 17 complete; 21,008 decisions at 125.28 images/s
+[2026-09-20 00:05:59] A fly_intact seed 18/29 start
+[2026-09-20 00:06:36] A seed 18: 5,120/21,008 images
+[2026-09-20 00:07:13] A seed 18: 10,240/21,008 images
+[2026-09-20 00:07:50] A seed 18: 15,360/21,008 images
+[2026-09-20 00:08:27] A seed 18: 20,480/21,008 images
+[2026-09-20 00:08:31] A seed 18: 21,008/21,008 images
+[2026-09-20 00:08:31] A fly_intact seed 18 complete; 21,008 decisions at 137.87 images/s
+[2026-09-20 00:08:31] A fly_intact seed 19/29 start
+[2026-09-20 00:09:08] A seed 19: 5,120/21,008 images
+[2026-09-20 00:09:45] A seed 19: 10,240/21,008 images
+[2026-09-20 00:10:21] A seed 19: 15,360/21,008 images
+[2026-09-20 00:10:58] A seed 19: 20,480/21,008 images
+[2026-09-20 00:11:02] A seed 19: 21,008/21,008 images
+[2026-09-20 00:11:02] A fly_intact seed 19 complete; 21,008 decisions at 139.28 images/s
+[2026-09-20 00:11:02] A fly_intact seed 20/29 start
+[2026-09-20 00:11:39] A seed 20: 5,120/21,008 images
+[2026-09-20 00:12:16] A seed 20: 10,240/21,008 images
+[2026-09-20 00:12:53] A seed 20: 15,360/21,008 images
+[2026-09-20 00:13:31] A seed 20: 20,480/21,008 images
+[2026-09-20 00:13:34] A seed 20: 21,008/21,008 images
+[2026-09-20 00:13:34] A fly_intact seed 20 complete; 21,008 decisions at 137.80 images/s
+[2026-09-20 00:13:34] A fly_intact seed 21/29 start
+[2026-09-20 00:14:11] A seed 21: 5,120/21,008 images
+[2026-09-20 00:14:48] A seed 21: 10,240/21,008 images
+[2026-09-20 00:15:25] A seed 21: 15,360/21,008 images
+[2026-09-20 00:16:02] A seed 21: 20,480/21,008 images
+[2026-09-20 00:16:05] A seed 21: 21,008/21,008 images
+[2026-09-20 00:16:05] A fly_intact seed 21 complete; 21,008 decisions at 139.18 images/s
+[2026-09-20 00:16:05] A fly_intact seed 22/29 start
+[2026-09-20 00:16:42] A seed 22: 5,120/21,008 images
+[2026-09-20 00:17:19] A seed 22: 10,240/21,008 images
+[2026-09-20 00:17:56] A seed 22: 15,360/21,008 images
+[2026-09-20 00:18:34] A seed 22: 20,480/21,008 images
+[2026-09-20 00:18:37] A seed 22: 21,008/21,008 images
+[2026-09-20 00:18:37] A fly_intact seed 22 complete; 21,008 decisions at 138.21 images/s
+[2026-09-20 00:18:37] A fly_intact seed 23/29 start
+[2026-09-20 00:19:15] A seed 23: 5,120/21,008 images
+[2026-09-20 00:19:52] A seed 23: 10,240/21,008 images
+[2026-09-20 00:20:30] A seed 23: 15,360/21,008 images
+[2026-09-20 00:21:08] A seed 23: 20,480/21,008 images
+[2026-09-20 00:21:11] A seed 23: 21,008/21,008 images
+[2026-09-20 00:21:11] A fly_intact seed 23 complete; 21,008 decisions at 136.37 images/s
+[2026-09-20 00:21:11] A fly_intact seed 24/29 start
+[2026-09-20 00:21:48] A seed 24: 5,120/21,008 images
+[2026-09-20 00:22:25] A seed 24: 10,240/21,008 images
+[2026-09-20 00:23:02] A seed 24: 15,360/21,008 images
+[2026-09-20 00:23:39] A seed 24: 20,480/21,008 images
+[2026-09-20 00:23:43] A seed 24: 21,008/21,008 images
+[2026-09-20 00:23:43] A fly_intact seed 24 complete; 21,008 decisions at 139.03 images/s
+[2026-09-20 00:23:43] A fly_intact seed 25/29 start
+[2026-09-20 00:24:20] A seed 25: 5,120/21,008 images
+[2026-09-20 00:24:57] A seed 25: 10,240/21,008 images
+[2026-09-20 00:25:35] A seed 25: 15,360/21,008 images
+[2026-09-20 00:26:12] A seed 25: 20,480/21,008 images
+[2026-09-20 00:26:16] A seed 25: 21,008/21,008 images
+[2026-09-20 00:26:16] A fly_intact seed 25 complete; 21,008 decisions at 136.82 images/s
+[2026-09-20 00:26:16] A fly_intact seed 26/29 start
+[2026-09-20 00:26:53] A seed 26: 5,120/21,008 images
+[2026-09-20 00:27:30] A seed 26: 10,240/21,008 images
+[2026-09-20 00:28:07] A seed 26: 15,360/21,008 images
+[2026-09-20 00:28:43] A seed 26: 20,480/21,008 images
+[2026-09-20 00:28:47] A seed 26: 21,008/21,008 images
+[2026-09-20 00:28:47] A fly_intact seed 26 complete; 21,008 decisions at 138.93 images/s
+[2026-09-20 00:28:47] A fly_intact seed 27/29 start
+[2026-09-20 00:29:24] A seed 27: 5,120/21,008 images
+[2026-09-20 00:30:02] A seed 27: 10,240/21,008 images
+[2026-09-20 00:30:39] A seed 27: 15,360/21,008 images
+[2026-09-20 00:31:16] A seed 27: 20,480/21,008 images
+[2026-09-20 00:31:20] A seed 27: 21,008/21,008 images
+[2026-09-20 00:31:20] A fly_intact seed 27 complete; 21,008 decisions at 137.71 images/s
+[2026-09-20 00:31:20] A fly_intact seed 28/29 start
+[2026-09-20 00:31:57] A seed 28: 5,120/21,008 images
+[2026-09-20 00:32:33] A seed 28: 10,240/21,008 images
+[2026-09-20 00:33:10] A seed 28: 15,360/21,008 images
+[2026-09-20 00:33:47] A seed 28: 20,480/21,008 images
+[2026-09-20 00:33:51] A seed 28: 21,008/21,008 images
+[2026-09-20 00:33:51] A fly_intact seed 28 complete; 21,008 decisions at 139.15 images/s
+[2026-09-20 00:33:51] A fly_intact seed 29/29 start
+[2026-09-20 00:34:28] A seed 29: 5,120/21,008 images
+[2026-09-20 00:35:05] A seed 29: 10,240/21,008 images
+[2026-09-20 00:35:42] A seed 29: 15,360/21,008 images
+[2026-09-20 00:36:19] A seed 29: 20,480/21,008 images
+[2026-09-20 00:36:23] A seed 29: 21,008/21,008 images
+[2026-09-20 00:36:23] A fly_intact seed 29 complete; 21,008 decisions at 138.03 images/s
+[2026-09-20 00:36:23] A completed in 4990.8s; matched-random BUY probability=0.36200812
+[2026-09-20 00:36:58] E seed 0: 5,120/21,008 images
+[2026-09-20 00:37:34] E seed 0: 10,240/21,008 images
+[2026-09-20 00:38:09] E seed 0: 15,360/21,008 images
+[2026-09-20 00:38:44] E seed 0: 20,480/21,008 images
+[2026-09-20 00:38:48] E seed 0: 21,008/21,008 images
+[2026-09-20 00:38:48] B/C/E controls seed 0 complete
+[2026-09-20 00:39:23] E seed 1: 5,120/21,008 images
+[2026-09-20 00:39:59] E seed 1: 10,240/21,008 images
+[2026-09-20 00:40:34] E seed 1: 15,360/21,008 images
+[2026-09-20 00:41:09] E seed 1: 20,480/21,008 images
+[2026-09-20 00:41:13] E seed 1: 21,008/21,008 images
+[2026-09-20 00:41:13] B/C/E controls seed 1 complete
+[2026-09-20 00:41:48] E seed 2: 5,120/21,008 images
+[2026-09-20 00:42:24] E seed 2: 10,240/21,008 images
+[2026-09-20 00:42:59] E seed 2: 15,360/21,008 images
+[2026-09-20 00:43:34] E seed 2: 20,480/21,008 images
+[2026-09-20 00:43:38] E seed 2: 21,008/21,008 images
+[2026-09-20 00:43:38] B/C/E controls seed 2 complete
+[2026-09-20 00:44:13] E seed 3: 5,120/21,008 images
+[2026-09-20 00:44:49] E seed 3: 10,240/21,008 images
+[2026-09-20 00:45:24] E seed 3: 15,360/21,008 images
+[2026-09-20 00:45:59] E seed 3: 20,480/21,008 images
+[2026-09-20 00:46:03] E seed 3: 21,008/21,008 images
+[2026-09-20 00:46:03] B/C/E controls seed 3 complete
+[2026-09-20 00:46:38] E seed 4: 5,120/21,008 images
+[2026-09-20 00:47:14] E seed 4: 10,240/21,008 images
+[2026-09-20 00:47:49] E seed 4: 15,360/21,008 images
+[2026-09-20 00:48:24] E seed 4: 20,480/21,008 images
+[2026-09-20 00:48:28] E seed 4: 21,008/21,008 images
+[2026-09-20 00:48:28] B/C/E controls seed 4 complete
+[2026-09-20 00:49:03] E seed 5: 5,120/21,008 images
+[2026-09-20 00:49:39] E seed 5: 10,240/21,008 images
+[2026-09-20 00:50:14] E seed 5: 15,360/21,008 images
+[2026-09-20 00:50:49] E seed 5: 20,480/21,008 images
+[2026-09-20 00:50:53] E seed 5: 21,008/21,008 images
+[2026-09-20 00:50:53] B/C/E controls seed 5 complete
+[2026-09-20 00:51:28] E seed 6: 5,120/21,008 images
+[2026-09-20 00:52:04] E seed 6: 10,240/21,008 images
+[2026-09-20 00:52:39] E seed 6: 15,360/21,008 images
+[2026-09-20 00:53:14] E seed 6: 20,480/21,008 images
+[2026-09-20 00:53:18] E seed 6: 21,008/21,008 images
+[2026-09-20 00:53:18] B/C/E controls seed 6 complete
+[2026-09-20 00:53:53] E seed 7: 5,120/21,008 images
+[2026-09-20 00:54:29] E seed 7: 10,240/21,008 images
+[2026-09-20 00:55:04] E seed 7: 15,360/21,008 images
+[2026-09-20 00:55:39] E seed 7: 20,480/21,008 images
+[2026-09-20 00:55:43] E seed 7: 21,008/21,008 images
+[2026-09-20 00:55:43] B/C/E controls seed 7 complete
+[2026-09-20 00:56:18] E seed 8: 5,120/21,008 images
+[2026-09-20 00:56:54] E seed 8: 10,240/21,008 images
+[2026-09-20 00:57:29] E seed 8: 15,360/21,008 images
+[2026-09-20 00:58:04] E seed 8: 20,480/21,008 images
+[2026-09-20 00:58:08] E seed 8: 21,008/21,008 images
+[2026-09-20 00:58:08] B/C/E controls seed 8 complete
+[2026-09-20 00:58:43] E seed 9: 5,120/21,008 images
+[2026-09-20 00:59:19] E seed 9: 10,240/21,008 images
+[2026-09-20 00:59:54] E seed 9: 15,360/21,008 images
+[2026-09-20 01:00:30] E seed 9: 20,480/21,008 images
+[2026-09-20 01:00:33] E seed 9: 21,008/21,008 images
+[2026-09-20 01:00:33] B/C/E controls seed 9 complete
+[2026-09-20 01:01:08] E seed 10: 5,120/21,008 images
+[2026-09-20 01:01:44] E seed 10: 10,240/21,008 images
+[2026-09-20 01:02:19] E seed 10: 15,360/21,008 images
+[2026-09-20 01:02:54] E seed 10: 20,480/21,008 images
+[2026-09-20 01:02:58] E seed 10: 21,008/21,008 images
+[2026-09-20 01:02:58] B/C/E controls seed 10 complete
+[2026-09-20 01:03:33] E seed 11: 5,120/21,008 images
+[2026-09-20 01:04:09] E seed 11: 10,240/21,008 images
+[2026-09-20 01:04:46] E seed 11: 15,360/21,008 images
+[2026-09-20 01:05:22] E seed 11: 20,480/21,008 images
+[2026-09-20 01:05:25] E seed 11: 21,008/21,008 images
+[2026-09-20 01:05:25] B/C/E controls seed 11 complete
+[2026-09-20 01:06:01] E seed 12: 5,120/21,008 images
+[2026-09-20 01:06:36] E seed 12: 10,240/21,008 images
+[2026-09-20 01:07:11] E seed 12: 15,360/21,008 images
+[2026-09-20 01:07:47] E seed 12: 20,480/21,008 images
+[2026-09-20 01:07:50] E seed 12: 21,008/21,008 images
+[2026-09-20 01:07:50] B/C/E controls seed 12 complete
+[2026-09-20 01:08:26] E seed 13: 5,120/21,008 images
+[2026-09-20 01:09:01] E seed 13: 10,240/21,008 images
+[2026-09-20 01:09:36] E seed 13: 15,360/21,008 images
+[2026-09-20 01:10:12] E seed 13: 20,480/21,008 images
+[2026-09-20 01:10:15] E seed 13: 21,008/21,008 images
+[2026-09-20 01:10:15] B/C/E controls seed 13 complete
+[2026-09-20 01:10:51] E seed 14: 5,120/21,008 images
+[2026-09-20 01:11:26] E seed 14: 10,240/21,008 images
+[2026-09-20 01:12:01] E seed 14: 15,360/21,008 images
+[2026-09-20 01:12:37] E seed 14: 20,480/21,008 images
+[2026-09-20 01:12:40] E seed 14: 21,008/21,008 images
+[2026-09-20 01:12:40] B/C/E controls seed 14 complete
+[2026-09-20 01:13:16] E seed 15: 5,120/21,008 images
+[2026-09-20 01:13:51] E seed 15: 10,240/21,008 images
+[2026-09-20 01:14:26] E seed 15: 15,360/21,008 images
+[2026-09-20 01:15:02] E seed 15: 20,480/21,008 images
+[2026-09-20 01:15:05] E seed 15: 21,008/21,008 images
+[2026-09-20 01:15:05] B/C/E controls seed 15 complete
+[2026-09-20 01:15:41] E seed 16: 5,120/21,008 images
+[2026-09-20 01:16:16] E seed 16: 10,240/21,008 images
+[2026-09-20 01:16:51] E seed 16: 15,360/21,008 images
+[2026-09-20 01:17:27] E seed 16: 20,480/21,008 images
+[2026-09-20 01:17:31] E seed 16: 21,008/21,008 images
+[2026-09-20 01:17:31] B/C/E controls seed 16 complete
+[2026-09-20 01:18:06] E seed 17: 5,120/21,008 images
+[2026-09-20 01:18:41] E seed 17: 10,240/21,008 images
+[2026-09-20 01:19:17] E seed 17: 15,360/21,008 images
+[2026-09-20 01:19:52] E seed 17: 20,480/21,008 images
+[2026-09-20 01:19:56] E seed 17: 21,008/21,008 images
+[2026-09-20 01:19:56] B/C/E controls seed 17 complete
+[2026-09-20 01:20:31] E seed 18: 5,120/21,008 images
+[2026-09-20 01:21:06] E seed 18: 10,240/21,008 images
+[2026-09-20 01:21:42] E seed 18: 15,360/21,008 images
+[2026-09-20 01:22:17] E seed 18: 20,480/21,008 images
+[2026-09-20 01:22:21] E seed 18: 21,008/21,008 images
+[2026-09-20 01:22:21] B/C/E controls seed 18 complete
+[2026-09-20 01:22:56] E seed 19: 5,120/21,008 images
+[2026-09-20 01:23:31] E seed 19: 10,240/21,008 images
+[2026-09-20 01:24:07] E seed 19: 15,360/21,008 images
+[2026-09-20 01:24:42] E seed 19: 20,480/21,008 images
+[2026-09-20 01:24:46] E seed 19: 21,008/21,008 images
+[2026-09-20 01:24:46] B/C/E controls seed 19 complete
+[2026-09-20 01:25:21] E seed 20: 5,120/21,008 images
+[2026-09-20 01:25:56] E seed 20: 10,240/21,008 images
+[2026-09-20 01:26:32] E seed 20: 15,360/21,008 images
+[2026-09-20 01:27:07] E seed 20: 20,480/21,008 images
+[2026-09-20 01:27:11] E seed 20: 21,008/21,008 images
+[2026-09-20 01:27:11] B/C/E controls seed 20 complete
+[2026-09-20 01:27:46] E seed 21: 5,120/21,008 images
+[2026-09-20 01:28:22] E seed 21: 10,240/21,008 images
+[2026-09-20 01:28:57] E seed 21: 15,360/21,008 images
+[2026-09-20 01:29:32] E seed 21: 20,480/21,008 images
+[2026-09-20 01:29:36] E seed 21: 21,008/21,008 images
+[2026-09-20 01:29:36] B/C/E controls seed 21 complete
+[2026-09-20 01:30:11] E seed 22: 5,120/21,008 images
+[2026-09-20 01:30:46] E seed 22: 10,240/21,008 images
+[2026-09-20 01:31:22] E seed 22: 15,360/21,008 images
+[2026-09-20 01:31:57] E seed 22: 20,480/21,008 images
+[2026-09-20 01:32:01] E seed 22: 21,008/21,008 images
+[2026-09-20 01:32:01] B/C/E controls seed 22 complete
+[2026-09-20 01:32:36] E seed 23: 5,120/21,008 images
+[2026-09-20 01:33:11] E seed 23: 10,240/21,008 images
+[2026-09-20 01:33:47] E seed 23: 15,360/21,008 images
+[2026-09-20 01:34:22] E seed 23: 20,480/21,008 images
+[2026-09-20 01:34:26] E seed 23: 21,008/21,008 images
+[2026-09-20 01:34:26] B/C/E controls seed 23 complete
+[2026-09-20 01:35:01] E seed 24: 5,120/21,008 images
+[2026-09-20 01:35:36] E seed 24: 10,240/21,008 images
+[2026-09-20 01:36:12] E seed 24: 15,360/21,008 images
+[2026-09-20 01:36:47] E seed 24: 20,480/21,008 images
+[2026-09-20 01:36:51] E seed 24: 21,008/21,008 images
+[2026-09-20 01:36:51] B/C/E controls seed 24 complete
+[2026-09-20 01:37:26] E seed 25: 5,120/21,008 images
+[2026-09-20 01:38:01] E seed 25: 10,240/21,008 images
+[2026-09-20 01:38:37] E seed 25: 15,360/21,008 images
+[2026-09-20 01:39:12] E seed 25: 20,480/21,008 images
+[2026-09-20 01:39:16] E seed 25: 21,008/21,008 images
+[2026-09-20 01:39:16] B/C/E controls seed 25 complete
+[2026-09-20 01:39:51] E seed 26: 5,120/21,008 images
+[2026-09-20 01:40:26] E seed 26: 10,240/21,008 images
+[2026-09-20 01:41:02] E seed 26: 15,360/21,008 images
+[2026-09-20 01:41:37] E seed 26: 20,480/21,008 images
+[2026-09-20 01:41:41] E seed 26: 21,008/21,008 images
+[2026-09-20 01:41:41] B/C/E controls seed 26 complete
+[2026-09-20 01:42:16] E seed 27: 5,120/21,008 images
+[2026-09-20 01:42:51] E seed 27: 10,240/21,008 images
+[2026-09-20 01:43:27] E seed 27: 15,360/21,008 images
+[2026-09-20 01:44:02] E seed 27: 20,480/21,008 images
+[2026-09-20 01:44:06] E seed 27: 21,008/21,008 images
+[2026-09-20 01:44:06] B/C/E controls seed 27 complete
+[2026-09-20 01:44:41] E seed 28: 5,120/21,008 images
+[2026-09-20 01:45:17] E seed 28: 10,240/21,008 images
+[2026-09-20 01:45:52] E seed 28: 15,360/21,008 images
+[2026-09-20 01:46:27] E seed 28: 20,480/21,008 images
+[2026-09-20 01:46:31] E seed 28: 21,008/21,008 images
+[2026-09-20 01:46:31] B/C/E controls seed 28 complete
+[2026-09-20 01:47:06] E seed 29: 5,120/21,008 images
+[2026-09-20 01:47:42] E seed 29: 10,240/21,008 images
+[2026-09-20 01:48:17] E seed 29: 15,360/21,008 images
+[2026-09-20 01:48:53] E seed 29: 20,480/21,008 images
+[2026-09-20 01:48:56] E seed 29: 21,008/21,008 images
+[2026-09-20 01:48:56] B/C/E controls seed 29 complete
+[2026-09-20 01:48:57] saved 2,520,960 decision rows to ignored /var/home/zh/Documents/github/fly-trade/.worktrees/phase1a/research/outputs/v3/phase1a_remote/decisions.parquet
+[2026-09-20 01:50:28] repeat/sensitivity 10/100 seeds complete
+[2026-09-20 01:51:59] repeat/sensitivity 20/100 seeds complete
+[2026-09-20 01:53:31] repeat/sensitivity 30/100 seeds complete
+[2026-09-20 01:55:02] repeat/sensitivity 40/100 seeds complete
+[2026-09-20 01:56:33] repeat/sensitivity 50/100 seeds complete
+[2026-09-20 01:58:03] repeat/sensitivity 60/100 seeds complete
+[2026-09-20 01:59:34] repeat/sensitivity 70/100 seeds complete
+[2026-09-20 02:01:04] repeat/sensitivity 80/100 seeds complete
+[2026-09-20 02:02:35] repeat/sensitivity 90/100 seeds complete
+[2026-09-20 02:04:05] repeat/sensitivity 100/100 seeds complete
+[2026-09-20 02:04:05] repeat and sensitivity calculations complete in 908.1s
+[2026-09-20 02:04:42] label-free market_state and nuisance calculation complete; nuisance_r2=0.12072486
+[2026-09-20 02:05:18] statistics complete in 36.1s; Level 1=True, Level 2=True
+[2026-09-20 02:05:18] Phase 1a complete in 10395.8s

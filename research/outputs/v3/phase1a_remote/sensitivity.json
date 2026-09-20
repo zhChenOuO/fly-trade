@@ -1,0 +1,2739 @@
+{
+  "n_inputs": 200,
+  "n_repeats": 100,
+  "input_sample_ids": [
+    36374,
+    38476,
+    36475,
+    33398,
+    33344,
+    34010,
+    41455,
+    37775,
+    35366,
+    36203,
+    32005,
+    37200,
+    32643,
+    36338,
+    34531,
+    37497,
+    40399,
+    38095,
+    36077,
+    37983,
+    41920,
+    34606,
+    40874,
+    38901,
+    41583,
+    37450,
+    34403,
+    35429,
+    41664,
+    33819,
+    37883,
+    31732,
+    41571,
+    33709,
+    34140,
+    41060,
+    37847,
+    40810,
+    34199,
+    33022,
+    41731,
+    38419,
+    36038,
+    33680,
+    38117,
+    32915,
+    34091,
+    32476,
+    35684,
+    41748,
+    31680,
+    35949,
+    34173,
+    40795,
+    40924,
+    33631,
+    33210,
+    36923,
+    36053,
+    41596,
+    32395,
+    41297,
+    40933,
+    33282,
+    37162,
+    38981,
+    36704,
+    33430,
+    32084,
+    33697,
+    38573,
+    36059,
+    39921,
+    36826,
+    36318,
+    35213,
+    32959,
+    33110,
+    36618,
+    35091,
+    33126,
+    35642,
+    37022,
+    37101,
+    38201,
+    40719,
+    40527,
+    35335,
+    39404,
+    37795,
+    34915,
+    34504,
+    37644,
+    38331,
+    34736,
+    36313,
+    33443,
+    36964,
+    41094,
+    36199,
+    39115,
+    40191,
+    36931,
+    33932,
+    37617,
+    37181,
+    31776,
+    35943,
+    38031,
+    40246,
+    34642,
+    36643,
+    41602,
+    37727,
+    31809,
+    37856,
+    40214,
+    37506,
+    39764,
+    33153,
+    41611,
+    38646,
+    34202,
+    32714,
+    34220,
+    37952,
+    32086,
+    34595,
+    40047,
+    34722,
+    37714,
+    36574,
+    40069,
+    41159,
+    37877,
+    39352,
+    41802,
+    40169,
+    38108,
+    38860,
+    36458,
+    39092,
+    33449,
+    33123,
+    32047,
+    40037,
+    37056,
+    34514,
+    38032,
+    33212,
+    41170,
+    39621,
+    32938,
+    36035,
+    41468,
+    39038,
+    33317,
+    36104,
+    40277,
+    36750,
+    36379,
+    37321,
+    39315,
+    35531,
+    34696,
+    33861,
+    31715,
+    40333,
+    35272,
+    33586,
+    38199,
+    34523,
+    33940,
+    38097,
+    35275,
+    37495,
+    32111,
+    38722,
+    38996,
+    32578,
+    32776,
+    38415,
+    34021,
+    36655,
+    39288,
+    38437,
+    41489,
+    37115,
+    36485,
+    32726,
+    34763,
+    36839,
+    37215,
+    34809,
+    41520,
+    37730,
+    31689,
+    39093,
+    32654,
+    34958
+  ],
+  "train_margin_sd": 1.295404013715729,
+  "variants": {
+    "flip_price": {
+      "mean_margin_effect": 1.2301144097608376,
+      "mean_action_change_rate": 0.59,
+      "per_seed": [
+        {
+          "seed": 50000,
+          "margin_effect": 1.230060338973999,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50001,
+          "margin_effect": 1.2301104068756104,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50002,
+          "margin_effect": 1.2301400899887085,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50003,
+          "margin_effect": 1.2301666736602783,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50004,
+          "margin_effect": 1.2300900220870972,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50005,
+          "margin_effect": 1.2301744222640991,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50006,
+          "margin_effect": 1.2300068140029907,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50007,
+          "margin_effect": 1.230007529258728,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50008,
+          "margin_effect": 1.229994297027588,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50009,
+          "margin_effect": 1.230189561843872,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50010,
+          "margin_effect": 1.2304333448410034,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50011,
+          "margin_effect": 1.2301479578018188,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50012,
+          "margin_effect": 1.2302271127700806,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50013,
+          "margin_effect": 1.230286955833435,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50014,
+          "margin_effect": 1.2298924922943115,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50015,
+          "margin_effect": 1.2300866842269897,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50016,
+          "margin_effect": 1.2300142049789429,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50017,
+          "margin_effect": 1.2299686670303345,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50018,
+          "margin_effect": 1.2302287817001343,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50019,
+          "margin_effect": 1.2301291227340698,
+          "action_change_rate": 0.58
+        },
+        {
+          "seed": 50020,
+          "margin_effect": 1.2298072576522827,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50021,
+          "margin_effect": 1.2298567295074463,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50022,
+          "margin_effect": 1.230255126953125,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50023,
+          "margin_effect": 1.2301746606826782,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50024,
+          "margin_effect": 1.2298890352249146,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50025,
+          "margin_effect": 1.2301920652389526,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50026,
+          "margin_effect": 1.2301805019378662,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50027,
+          "margin_effect": 1.2302945852279663,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50028,
+          "margin_effect": 1.2302240133285522,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50029,
+          "margin_effect": 1.2302316427230835,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50030,
+          "margin_effect": 1.2299846410751343,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50031,
+          "margin_effect": 1.2301216125488281,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50032,
+          "margin_effect": 1.230223536491394,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50033,
+          "margin_effect": 1.2300046682357788,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50034,
+          "margin_effect": 1.2299814224243164,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50035,
+          "margin_effect": 1.2300044298171997,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50036,
+          "margin_effect": 1.2301366329193115,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50037,
+          "margin_effect": 1.2300574779510498,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50038,
+          "margin_effect": 1.2302560806274414,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50039,
+          "margin_effect": 1.2300094366073608,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50040,
+          "margin_effect": 1.2301509380340576,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50041,
+          "margin_effect": 1.2299830913543701,
+          "action_change_rate": 0.58
+        },
+        {
+          "seed": 50042,
+          "margin_effect": 1.2302075624465942,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50043,
+          "margin_effect": 1.2301584482192993,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50044,
+          "margin_effect": 1.230137586593628,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50045,
+          "margin_effect": 1.2303199768066406,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50046,
+          "margin_effect": 1.2301216125488281,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50047,
+          "margin_effect": 1.2304987907409668,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50048,
+          "margin_effect": 1.2299989461898804,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50049,
+          "margin_effect": 1.2300671339035034,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50050,
+          "margin_effect": 1.2302541732788086,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50051,
+          "margin_effect": 1.23020339012146,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50052,
+          "margin_effect": 1.2300299406051636,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50053,
+          "margin_effect": 1.2302758693695068,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50054,
+          "margin_effect": 1.2304298877716064,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50055,
+          "margin_effect": 1.230204701423645,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50056,
+          "margin_effect": 1.2302311658859253,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50057,
+          "margin_effect": 1.2300536632537842,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50058,
+          "margin_effect": 1.2302368879318237,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50059,
+          "margin_effect": 1.2300299406051636,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50060,
+          "margin_effect": 1.2300270795822144,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50061,
+          "margin_effect": 1.230223536491394,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50062,
+          "margin_effect": 1.2302857637405396,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50063,
+          "margin_effect": 1.229957103729248,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50064,
+          "margin_effect": 1.2301104068756104,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50065,
+          "margin_effect": 1.2300742864608765,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50066,
+          "margin_effect": 1.2300512790679932,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50067,
+          "margin_effect": 1.2299401760101318,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50068,
+          "margin_effect": 1.2301579713821411,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50069,
+          "margin_effect": 1.2301865816116333,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50070,
+          "margin_effect": 1.2303271293640137,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50071,
+          "margin_effect": 1.2301288843154907,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50072,
+          "margin_effect": 1.2300547361373901,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50073,
+          "margin_effect": 1.229965329170227,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50074,
+          "margin_effect": 1.2299636602401733,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50075,
+          "margin_effect": 1.2300524711608887,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50076,
+          "margin_effect": 1.2301965951919556,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50077,
+          "margin_effect": 1.2299822568893433,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50078,
+          "margin_effect": 1.2302043437957764,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50079,
+          "margin_effect": 1.229964017868042,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50080,
+          "margin_effect": 1.2302136421203613,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50081,
+          "margin_effect": 1.230248212814331,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50082,
+          "margin_effect": 1.2300976514816284,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50083,
+          "margin_effect": 1.2300958633422852,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50084,
+          "margin_effect": 1.2301138639450073,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50085,
+          "margin_effect": 1.230087161064148,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50086,
+          "margin_effect": 1.2299250364303589,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50087,
+          "margin_effect": 1.2300448417663574,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50088,
+          "margin_effect": 1.2301180362701416,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50089,
+          "margin_effect": 1.2298812866210938,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50090,
+          "margin_effect": 1.2301138639450073,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50091,
+          "margin_effect": 1.2301958799362183,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50092,
+          "margin_effect": 1.2299928665161133,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50093,
+          "margin_effect": 1.2297953367233276,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50094,
+          "margin_effect": 1.2302546501159668,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50095,
+          "margin_effect": 1.2303053140640259,
+          "action_change_rate": 0.585
+        },
+        {
+          "seed": 50096,
+          "margin_effect": 1.2302216291427612,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50097,
+          "margin_effect": 1.2299549579620361,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50098,
+          "margin_effect": 1.229872465133667,
+          "action_change_rate": 0.59
+        },
+        {
+          "seed": 50099,
+          "margin_effect": 1.2302252054214478,
+          "action_change_rate": 0.59
+        }
+      ]
+    },
+    "shuffle_time": {
+      "mean_margin_effect": 0.9247647995819327,
+      "mean_action_change_rate": 0.4332,
+      "per_seed": [
+        {
+          "seed": 50000,
+          "margin_effect": 0.9248477816581726,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50001,
+          "margin_effect": 0.9246093034744263,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50002,
+          "margin_effect": 0.9247807860374451,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50003,
+          "margin_effect": 0.9248026013374329,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50004,
+          "margin_effect": 0.9247126579284668,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50005,
+          "margin_effect": 0.924743115901947,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50006,
+          "margin_effect": 0.9246230125427246,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50007,
+          "margin_effect": 0.924609899520874,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50008,
+          "margin_effect": 0.9244737029075623,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50009,
+          "margin_effect": 0.9246946573257446,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50010,
+          "margin_effect": 0.924876868724823,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50011,
+          "margin_effect": 0.9247755408287048,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50012,
+          "margin_effect": 0.9248045086860657,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50013,
+          "margin_effect": 0.9249958992004395,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50014,
+          "margin_effect": 0.9246524572372437,
+          "action_change_rate": 0.44
+        },
+        {
+          "seed": 50015,
+          "margin_effect": 0.924975574016571,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50016,
+          "margin_effect": 0.9248026013374329,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50017,
+          "margin_effect": 0.9246403574943542,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50018,
+          "margin_effect": 0.924803614616394,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50019,
+          "margin_effect": 0.924640417098999,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50020,
+          "margin_effect": 0.9249073266983032,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50021,
+          "margin_effect": 0.9246913194656372,
+          "action_change_rate": 0.445
+        },
+        {
+          "seed": 50022,
+          "margin_effect": 0.9249727129936218,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50023,
+          "margin_effect": 0.924710750579834,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50024,
+          "margin_effect": 0.9246413707733154,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50025,
+          "margin_effect": 0.9247099161148071,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50026,
+          "margin_effect": 0.924832284450531,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50027,
+          "margin_effect": 0.9250229597091675,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50028,
+          "margin_effect": 0.9247357845306396,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50029,
+          "margin_effect": 0.9247075319290161,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50030,
+          "margin_effect": 0.9247464537620544,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50031,
+          "margin_effect": 0.9248381853103638,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50032,
+          "margin_effect": 0.9247686862945557,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50033,
+          "margin_effect": 0.9246305823326111,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50034,
+          "margin_effect": 0.9246801733970642,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50035,
+          "margin_effect": 0.9247185587882996,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50036,
+          "margin_effect": 0.9247406721115112,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50037,
+          "margin_effect": 0.9247617125511169,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50038,
+          "margin_effect": 0.9250073432922363,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50039,
+          "margin_effect": 0.9246389865875244,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50040,
+          "margin_effect": 0.9247521758079529,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50041,
+          "margin_effect": 0.9248026609420776,
+          "action_change_rate": 0.44
+        },
+        {
+          "seed": 50042,
+          "margin_effect": 0.9247578382492065,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50043,
+          "margin_effect": 0.9248766303062439,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50044,
+          "margin_effect": 0.9247755408287048,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50045,
+          "margin_effect": 0.924968957901001,
+          "action_change_rate": 0.44
+        },
+        {
+          "seed": 50046,
+          "margin_effect": 0.9248855710029602,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50047,
+          "margin_effect": 0.9250703454017639,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50048,
+          "margin_effect": 0.9246073961257935,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50049,
+          "margin_effect": 0.9247689843177795,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50050,
+          "margin_effect": 0.9246684908866882,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50051,
+          "margin_effect": 0.92490553855896,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50052,
+          "margin_effect": 0.9246696829795837,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50053,
+          "margin_effect": 0.9247575998306274,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50054,
+          "margin_effect": 0.924954354763031,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50055,
+          "margin_effect": 0.9250262975692749,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50056,
+          "margin_effect": 0.924712598323822,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50057,
+          "margin_effect": 0.9247577786445618,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50058,
+          "margin_effect": 0.9249012470245361,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50059,
+          "margin_effect": 0.9246569275856018,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50060,
+          "margin_effect": 0.9246752262115479,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50061,
+          "margin_effect": 0.9247657060623169,
+          "action_change_rate": 0.445
+        },
+        {
+          "seed": 50062,
+          "margin_effect": 0.924932599067688,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50063,
+          "margin_effect": 0.9245779514312744,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50064,
+          "margin_effect": 0.9248918294906616,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50065,
+          "margin_effect": 0.9245285391807556,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50066,
+          "margin_effect": 0.9249288439750671,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50067,
+          "margin_effect": 0.9246063828468323,
+          "action_change_rate": 0.445
+        },
+        {
+          "seed": 50068,
+          "margin_effect": 0.9247553944587708,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50069,
+          "margin_effect": 0.9248843789100647,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50070,
+          "margin_effect": 0.9248489737510681,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50071,
+          "margin_effect": 0.9247509241104126,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50072,
+          "margin_effect": 0.924686074256897,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50073,
+          "margin_effect": 0.9246053695678711,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50074,
+          "margin_effect": 0.924806535243988,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50075,
+          "margin_effect": 0.9248179197311401,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50076,
+          "margin_effect": 0.9247164726257324,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50077,
+          "margin_effect": 0.9246892333030701,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50078,
+          "margin_effect": 0.9248288869857788,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50079,
+          "margin_effect": 0.9245355129241943,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50080,
+          "margin_effect": 0.9248785972595215,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50081,
+          "margin_effect": 0.9248163104057312,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50082,
+          "margin_effect": 0.9248246550559998,
+          "action_change_rate": 0.44
+        },
+        {
+          "seed": 50083,
+          "margin_effect": 0.924622118473053,
+          "action_change_rate": 0.44
+        },
+        {
+          "seed": 50084,
+          "margin_effect": 0.9247701168060303,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50085,
+          "margin_effect": 0.9246751070022583,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50086,
+          "margin_effect": 0.9246419072151184,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50087,
+          "margin_effect": 0.9247081875801086,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50088,
+          "margin_effect": 0.9248165488243103,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50089,
+          "margin_effect": 0.924750566482544,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50090,
+          "margin_effect": 0.9249667525291443,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50091,
+          "margin_effect": 0.9248746633529663,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50092,
+          "margin_effect": 0.9245449304580688,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50093,
+          "margin_effect": 0.9245395660400391,
+          "action_change_rate": 0.425
+        },
+        {
+          "seed": 50094,
+          "margin_effect": 0.9248177409172058,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50095,
+          "margin_effect": 0.924879789352417,
+          "action_change_rate": 0.44
+        },
+        {
+          "seed": 50096,
+          "margin_effect": 0.9247837066650391,
+          "action_change_rate": 0.435
+        },
+        {
+          "seed": 50097,
+          "margin_effect": 0.9247508645057678,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50098,
+          "margin_effect": 0.9245144724845886,
+          "action_change_rate": 0.43
+        },
+        {
+          "seed": 50099,
+          "margin_effect": 0.924868106842041,
+          "action_change_rate": 0.435
+        }
+      ]
+    },
+    "mask_recent25": {
+      "mean_margin_effect": 0.7560110980553215,
+      "mean_action_change_rate": 0.3206,
+      "per_seed": [
+        {
+          "seed": 50000,
+          "margin_effect": 0.7558695077896118,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50001,
+          "margin_effect": 0.7560027241706848,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50002,
+          "margin_effect": 0.7560117840766907,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50003,
+          "margin_effect": 0.7560102939605713,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50004,
+          "margin_effect": 0.7561723589897156,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50005,
+          "margin_effect": 0.7559437155723572,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50006,
+          "margin_effect": 0.7559950351715088,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50007,
+          "margin_effect": 0.7559584379196167,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50008,
+          "margin_effect": 0.7560588717460632,
+          "action_change_rate": 0.31
+        },
+        {
+          "seed": 50009,
+          "margin_effect": 0.7560470104217529,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50010,
+          "margin_effect": 0.755900502204895,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50011,
+          "margin_effect": 0.7558532357215881,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50012,
+          "margin_effect": 0.7560740113258362,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50013,
+          "margin_effect": 0.7561832666397095,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50014,
+          "margin_effect": 0.755979597568512,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50015,
+          "margin_effect": 0.7560265064239502,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50016,
+          "margin_effect": 0.756104588508606,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50017,
+          "margin_effect": 0.755894124507904,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50018,
+          "margin_effect": 0.7560678124427795,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50019,
+          "margin_effect": 0.7560616135597229,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50020,
+          "margin_effect": 0.7560283541679382,
+          "action_change_rate": 0.335
+        },
+        {
+          "seed": 50021,
+          "margin_effect": 0.7559592723846436,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50022,
+          "margin_effect": 0.7560105323791504,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50023,
+          "margin_effect": 0.7560073137283325,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50024,
+          "margin_effect": 0.7560529708862305,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50025,
+          "margin_effect": 0.7560206055641174,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50026,
+          "margin_effect": 0.7560961246490479,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50027,
+          "margin_effect": 0.7560529112815857,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50028,
+          "margin_effect": 0.7558436989784241,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50029,
+          "margin_effect": 0.7560818791389465,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50030,
+          "margin_effect": 0.7561245560646057,
+          "action_change_rate": 0.31
+        },
+        {
+          "seed": 50031,
+          "margin_effect": 0.755936861038208,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50032,
+          "margin_effect": 0.7562861442565918,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50033,
+          "margin_effect": 0.7559844255447388,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50034,
+          "margin_effect": 0.7559707760810852,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50035,
+          "margin_effect": 0.7560862302780151,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50036,
+          "margin_effect": 0.7560430765151978,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50037,
+          "margin_effect": 0.75605309009552,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50038,
+          "margin_effect": 0.7559677362442017,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50039,
+          "margin_effect": 0.7558611631393433,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50040,
+          "margin_effect": 0.7558775544166565,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50041,
+          "margin_effect": 0.7559279799461365,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50042,
+          "margin_effect": 0.7559762001037598,
+          "action_change_rate": 0.31
+        },
+        {
+          "seed": 50043,
+          "margin_effect": 0.7559974193572998,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50044,
+          "margin_effect": 0.7560619711875916,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50045,
+          "margin_effect": 0.7560408115386963,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50046,
+          "margin_effect": 0.755942165851593,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50047,
+          "margin_effect": 0.7560074329376221,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50048,
+          "margin_effect": 0.7559678554534912,
+          "action_change_rate": 0.31
+        },
+        {
+          "seed": 50049,
+          "margin_effect": 0.7561703324317932,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50050,
+          "margin_effect": 0.7560561895370483,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50051,
+          "margin_effect": 0.7559112310409546,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50052,
+          "margin_effect": 0.756028413772583,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50053,
+          "margin_effect": 0.7560316920280457,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50054,
+          "margin_effect": 0.7560086250305176,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50055,
+          "margin_effect": 0.7562030553817749,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50056,
+          "margin_effect": 0.7560575604438782,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50057,
+          "margin_effect": 0.7558581233024597,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50058,
+          "margin_effect": 0.7560258507728577,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50059,
+          "margin_effect": 0.7560843825340271,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50060,
+          "margin_effect": 0.755932092666626,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50061,
+          "margin_effect": 0.755929708480835,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50062,
+          "margin_effect": 0.7559853196144104,
+          "action_change_rate": 0.31
+        },
+        {
+          "seed": 50063,
+          "margin_effect": 0.7560024261474609,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50064,
+          "margin_effect": 0.7560569643974304,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50065,
+          "margin_effect": 0.7559514045715332,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50066,
+          "margin_effect": 0.756122887134552,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50067,
+          "margin_effect": 0.7560194134712219,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50068,
+          "margin_effect": 0.7561178207397461,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50069,
+          "margin_effect": 0.7561501264572144,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50070,
+          "margin_effect": 0.7559878826141357,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50071,
+          "margin_effect": 0.7560835480690002,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50072,
+          "margin_effect": 0.7559340000152588,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50073,
+          "margin_effect": 0.7560092210769653,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50074,
+          "margin_effect": 0.7559592127799988,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50075,
+          "margin_effect": 0.7560577392578125,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50076,
+          "margin_effect": 0.7561130523681641,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50077,
+          "margin_effect": 0.7557958364486694,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50078,
+          "margin_effect": 0.7560464143753052,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50079,
+          "margin_effect": 0.7561758756637573,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50080,
+          "margin_effect": 0.7560200095176697,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50081,
+          "margin_effect": 0.7559002637863159,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50082,
+          "margin_effect": 0.7561190128326416,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50083,
+          "margin_effect": 0.755914032459259,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50084,
+          "margin_effect": 0.7558348178863525,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50085,
+          "margin_effect": 0.756022036075592,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50086,
+          "margin_effect": 0.7559607028961182,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50087,
+          "margin_effect": 0.7561321258544922,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50088,
+          "margin_effect": 0.7559194564819336,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50089,
+          "margin_effect": 0.7560944557189941,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50090,
+          "margin_effect": 0.7559060454368591,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50091,
+          "margin_effect": 0.7560738325119019,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50092,
+          "margin_effect": 0.7560620903968811,
+          "action_change_rate": 0.325
+        },
+        {
+          "seed": 50093,
+          "margin_effect": 0.7560713291168213,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50094,
+          "margin_effect": 0.7559581995010376,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50095,
+          "margin_effect": 0.7560130953788757,
+          "action_change_rate": 0.315
+        },
+        {
+          "seed": 50096,
+          "margin_effect": 0.7559120655059814,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50097,
+          "margin_effect": 0.7558677196502686,
+          "action_change_rate": 0.33
+        },
+        {
+          "seed": 50098,
+          "margin_effect": 0.7559203505516052,
+          "action_change_rate": 0.32
+        },
+        {
+          "seed": 50099,
+          "margin_effect": 0.7560628056526184,
+          "action_change_rate": 0.32
+        }
+      ]
+    },
+    "black": {
+      "mean_margin_effect": 0.8233288897219645,
+      "mean_action_change_rate": 0.6092,
+      "per_seed": [
+        {
+          "seed": 50000,
+          "margin_effect": 0.8232663869857788,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50001,
+          "margin_effect": 0.823288083076477,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50002,
+          "margin_effect": 0.823384702205658,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50003,
+          "margin_effect": 0.8233487606048584,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50004,
+          "margin_effect": 0.8231792449951172,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50005,
+          "margin_effect": 0.8232115507125854,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50006,
+          "margin_effect": 0.8230764269828796,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50007,
+          "margin_effect": 0.8231295943260193,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50008,
+          "margin_effect": 0.8231750130653381,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50009,
+          "margin_effect": 0.8233726620674133,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50010,
+          "margin_effect": 0.8234176635742188,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50011,
+          "margin_effect": 0.8233252763748169,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50012,
+          "margin_effect": 0.8233807682991028,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50013,
+          "margin_effect": 0.8235160112380981,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50014,
+          "margin_effect": 0.8232007622718811,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50015,
+          "margin_effect": 0.8234560489654541,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50016,
+          "margin_effect": 0.8234016299247742,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50017,
+          "margin_effect": 0.8232375979423523,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50018,
+          "margin_effect": 0.8233420252799988,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50019,
+          "margin_effect": 0.8233584761619568,
+          "action_change_rate": 0.62
+        },
+        {
+          "seed": 50020,
+          "margin_effect": 0.8232845067977905,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50021,
+          "margin_effect": 0.8231938481330872,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50022,
+          "margin_effect": 0.8233672976493835,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50023,
+          "margin_effect": 0.8232643604278564,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50024,
+          "margin_effect": 0.823219895362854,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50025,
+          "margin_effect": 0.8232663869857788,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50026,
+          "margin_effect": 0.8233711123466492,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50027,
+          "margin_effect": 0.8235867023468018,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50028,
+          "margin_effect": 0.8232995867729187,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50029,
+          "margin_effect": 0.8233925104141235,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50030,
+          "margin_effect": 0.8233160376548767,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50031,
+          "margin_effect": 0.8233071565628052,
+          "action_change_rate": 0.6
+        },
+        {
+          "seed": 50032,
+          "margin_effect": 0.8235270977020264,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50033,
+          "margin_effect": 0.8232381343841553,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50034,
+          "margin_effect": 0.823185384273529,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50035,
+          "margin_effect": 0.8233227133750916,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50036,
+          "margin_effect": 0.8232854008674622,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50037,
+          "margin_effect": 0.8232519030570984,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50038,
+          "margin_effect": 0.8235206604003906,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50039,
+          "margin_effect": 0.8232641816139221,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50040,
+          "margin_effect": 0.8232823610305786,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50041,
+          "margin_effect": 0.8232485055923462,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50042,
+          "margin_effect": 0.8233200311660767,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50043,
+          "margin_effect": 0.8233146667480469,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50044,
+          "margin_effect": 0.823283851146698,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50045,
+          "margin_effect": 0.823488712310791,
+          "action_change_rate": 0.6
+        },
+        {
+          "seed": 50046,
+          "margin_effect": 0.8233641982078552,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50047,
+          "margin_effect": 0.8236157894134521,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50048,
+          "margin_effect": 0.8231393694877625,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50049,
+          "margin_effect": 0.8234708309173584,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50050,
+          "margin_effect": 0.8234161734580994,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50051,
+          "margin_effect": 0.8235231041908264,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50052,
+          "margin_effect": 0.8233794569969177,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50053,
+          "margin_effect": 0.823398768901825,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50054,
+          "margin_effect": 0.8235688805580139,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50055,
+          "margin_effect": 0.8235141038894653,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50056,
+          "margin_effect": 0.8233780264854431,
+          "action_change_rate": 0.595
+        },
+        {
+          "seed": 50057,
+          "margin_effect": 0.8232741951942444,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50058,
+          "margin_effect": 0.8234440684318542,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50059,
+          "margin_effect": 0.8232690691947937,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50060,
+          "margin_effect": 0.8231911659240723,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50061,
+          "margin_effect": 0.8233858346939087,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50062,
+          "margin_effect": 0.8234032392501831,
+          "action_change_rate": 0.62
+        },
+        {
+          "seed": 50063,
+          "margin_effect": 0.8231051564216614,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50064,
+          "margin_effect": 0.8234119415283203,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50065,
+          "margin_effect": 0.823215126991272,
+          "action_change_rate": 0.62
+        },
+        {
+          "seed": 50066,
+          "margin_effect": 0.8233543634414673,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50067,
+          "margin_effect": 0.8231151700019836,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50068,
+          "margin_effect": 0.823270320892334,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50069,
+          "margin_effect": 0.8234779238700867,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50070,
+          "margin_effect": 0.8234885334968567,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50071,
+          "margin_effect": 0.8233851790428162,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50072,
+          "margin_effect": 0.8232459425926208,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50073,
+          "margin_effect": 0.8232914805412292,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50074,
+          "margin_effect": 0.823214590549469,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50075,
+          "margin_effect": 0.8233408331871033,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50076,
+          "margin_effect": 0.8232831954956055,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50077,
+          "margin_effect": 0.8232647180557251,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50078,
+          "margin_effect": 0.8233955502510071,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50079,
+          "margin_effect": 0.8232595920562744,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50080,
+          "margin_effect": 0.8234636783599854,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50081,
+          "margin_effect": 0.8233870267868042,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50082,
+          "margin_effect": 0.823259174823761,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50083,
+          "margin_effect": 0.8233622908592224,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50084,
+          "margin_effect": 0.8233609795570374,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50085,
+          "margin_effect": 0.8233347535133362,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50086,
+          "margin_effect": 0.8232272863388062,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50087,
+          "margin_effect": 0.8233885765075684,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50088,
+          "margin_effect": 0.823246419429779,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50089,
+          "margin_effect": 0.8231989145278931,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50090,
+          "margin_effect": 0.8233734965324402,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50091,
+          "margin_effect": 0.823462188243866,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50092,
+          "margin_effect": 0.8231973648071289,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50093,
+          "margin_effect": 0.8232066631317139,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50094,
+          "margin_effect": 0.8233771920204163,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50095,
+          "margin_effect": 0.8234469890594482,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50096,
+          "margin_effect": 0.8233252763748169,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50097,
+          "margin_effect": 0.8232628107070923,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50098,
+          "margin_effect": 0.8232399821281433,
+          "action_change_rate": 0.6
+        },
+        {
+          "seed": 50099,
+          "margin_effect": 0.8234441876411438,
+          "action_change_rate": 0.61
+        }
+      ]
+    },
+    "mean_image": {
+      "mean_margin_effect": 0.867586337517795,
+      "mean_action_change_rate": 0.61005,
+      "per_seed": [
+        {
+          "seed": 50000,
+          "margin_effect": 0.8675838708877563,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50001,
+          "margin_effect": 0.8675265312194824,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50002,
+          "margin_effect": 0.8676381707191467,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50003,
+          "margin_effect": 0.8675819039344788,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50004,
+          "margin_effect": 0.8674516081809998,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50005,
+          "margin_effect": 0.8675394058227539,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50006,
+          "margin_effect": 0.8673388957977295,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50007,
+          "margin_effect": 0.867415726184845,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50008,
+          "margin_effect": 0.8674033284187317,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50009,
+          "margin_effect": 0.8676218390464783,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50010,
+          "margin_effect": 0.8676864504814148,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50011,
+          "margin_effect": 0.867600679397583,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50012,
+          "margin_effect": 0.8676219582557678,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50013,
+          "margin_effect": 0.8677988052368164,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50014,
+          "margin_effect": 0.867454469203949,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50015,
+          "margin_effect": 0.8676930069923401,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50016,
+          "margin_effect": 0.8676830530166626,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50017,
+          "margin_effect": 0.8674896359443665,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50018,
+          "margin_effect": 0.8675488233566284,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50019,
+          "margin_effect": 0.86761075258255,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50020,
+          "margin_effect": 0.8675958514213562,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50021,
+          "margin_effect": 0.8674684762954712,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50022,
+          "margin_effect": 0.8676168322563171,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50023,
+          "margin_effect": 0.8675392270088196,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50024,
+          "margin_effect": 0.8674644827842712,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50025,
+          "margin_effect": 0.8675246834754944,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50026,
+          "margin_effect": 0.8675686717033386,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50027,
+          "margin_effect": 0.8678398728370667,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50028,
+          "margin_effect": 0.8675495982170105,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50029,
+          "margin_effect": 0.8676286935806274,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50030,
+          "margin_effect": 0.8675398826599121,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50031,
+          "margin_effect": 0.8675676584243774,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50032,
+          "margin_effect": 0.8677338361740112,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50033,
+          "margin_effect": 0.8674686551094055,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50034,
+          "margin_effect": 0.8674126863479614,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50035,
+          "margin_effect": 0.8675886392593384,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50036,
+          "margin_effect": 0.86753249168396,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50037,
+          "margin_effect": 0.8674957752227783,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50038,
+          "margin_effect": 0.8678234219551086,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50039,
+          "margin_effect": 0.867501974105835,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50040,
+          "margin_effect": 0.8675497174263,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50041,
+          "margin_effect": 0.8675131797790527,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50042,
+          "margin_effect": 0.8675669431686401,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50043,
+          "margin_effect": 0.8676241636276245,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50044,
+          "margin_effect": 0.8675314784049988,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50045,
+          "margin_effect": 0.8676955699920654,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50046,
+          "margin_effect": 0.8676273822784424,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50047,
+          "margin_effect": 0.8678818345069885,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50048,
+          "margin_effect": 0.8674162030220032,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50049,
+          "margin_effect": 0.867775022983551,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50050,
+          "margin_effect": 0.8676195740699768,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50051,
+          "margin_effect": 0.8677487969398499,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50052,
+          "margin_effect": 0.867621660232544,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50053,
+          "margin_effect": 0.867627739906311,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50054,
+          "margin_effect": 0.8677857518196106,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50055,
+          "margin_effect": 0.8678102493286133,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50056,
+          "margin_effect": 0.8676517605781555,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50057,
+          "margin_effect": 0.8675913214683533,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50058,
+          "margin_effect": 0.86766117811203,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50059,
+          "margin_effect": 0.8675317764282227,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50060,
+          "margin_effect": 0.8674468398094177,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50061,
+          "margin_effect": 0.8676578402519226,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50062,
+          "margin_effect": 0.8676434755325317,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50063,
+          "margin_effect": 0.8672630786895752,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50064,
+          "margin_effect": 0.8677133321762085,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50065,
+          "margin_effect": 0.8674180507659912,
+          "action_change_rate": 0.615
+        },
+        {
+          "seed": 50066,
+          "margin_effect": 0.867599606513977,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50067,
+          "margin_effect": 0.867358922958374,
+          "action_change_rate": 0.605
+        },
+        {
+          "seed": 50068,
+          "margin_effect": 0.8674868941307068,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50069,
+          "margin_effect": 0.8678050637245178,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50070,
+          "margin_effect": 0.8677268028259277,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50071,
+          "margin_effect": 0.8676595687866211,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50072,
+          "margin_effect": 0.8675240278244019,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50073,
+          "margin_effect": 0.8675541281700134,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50074,
+          "margin_effect": 0.8674955368041992,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50075,
+          "margin_effect": 0.8675768375396729,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50076,
+          "margin_effect": 0.8675040602684021,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50077,
+          "margin_effect": 0.8675382137298584,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50078,
+          "margin_effect": 0.8676114678382874,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50079,
+          "margin_effect": 0.8675328493118286,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50080,
+          "margin_effect": 0.8677399158477783,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50081,
+          "margin_effect": 0.8676290512084961,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50082,
+          "margin_effect": 0.8675450086593628,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50083,
+          "margin_effect": 0.8675649166107178,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50084,
+          "margin_effect": 0.8676491975784302,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50085,
+          "margin_effect": 0.8675991296768188,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50086,
+          "margin_effect": 0.8674750924110413,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50087,
+          "margin_effect": 0.8676822185516357,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50088,
+          "margin_effect": 0.8674894571304321,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50089,
+          "margin_effect": 0.8675419688224792,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50090,
+          "margin_effect": 0.8676484823226929,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50091,
+          "margin_effect": 0.8677390217781067,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50092,
+          "margin_effect": 0.8675118684768677,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50093,
+          "margin_effect": 0.8674486875534058,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50094,
+          "margin_effect": 0.8676458597183228,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50095,
+          "margin_effect": 0.8677224516868591,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50096,
+          "margin_effect": 0.8675517439842224,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50097,
+          "margin_effect": 0.8675405383110046,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50098,
+          "margin_effect": 0.8674757480621338,
+          "action_change_rate": 0.61
+        },
+        {
+          "seed": 50099,
+          "margin_effect": 0.8677390813827515,
+          "action_change_rate": 0.61
+        }
+      ]
+    }
+  }
+}
