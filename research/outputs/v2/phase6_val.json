@@ -127,6 +127,27 @@
           "effective_total_trainable_parameters": 25642,
           "registered_delta_slots": 20656,
           "masked_slots_with_zero_grad": 182
+        },
+        "6A_real": {
+          "decoder_trainable_parameters": 82948,
+          "effective_total_trainable_parameters": 82948,
+          "input_dim": 1291,
+          "hidden_dim": 64,
+          "dropout": 0.1
+        },
+        "6A_random": {
+          "decoder_trainable_parameters": 82948,
+          "effective_total_trainable_parameters": 82948,
+          "input_dim": 1291,
+          "hidden_dim": 64,
+          "dropout": 0.1
+        },
+        "6A_scramble": {
+          "decoder_trainable_parameters": 82948,
+          "effective_total_trainable_parameters": 82948,
+          "input_dim": 1291,
+          "hidden_dim": 64,
+          "dropout": 0.1
         }
       },
       "source_activity": {
@@ -458,6 +479,27 @@
       "effective_total_trainable_parameters": 25642,
       "registered_delta_slots": 20656,
       "masked_slots_with_zero_grad": 182
+    },
+    "6A_real": {
+      "decoder_trainable_parameters": 82948,
+      "effective_total_trainable_parameters": 82948,
+      "input_dim": 1291,
+      "hidden_dim": 64,
+      "dropout": 0.1
+    },
+    "6A_random": {
+      "decoder_trainable_parameters": 82948,
+      "effective_total_trainable_parameters": 82948,
+      "input_dim": 1291,
+      "hidden_dim": 64,
+      "dropout": 0.1
+    },
+    "6A_scramble": {
+      "decoder_trainable_parameters": 82948,
+      "effective_total_trainable_parameters": 82948,
+      "input_dim": 1291,
+      "hidden_dim": 64,
+      "dropout": 0.1
     }
   },
   "thresholds_frozen_from_yaml": {

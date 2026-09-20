@@ -35,6 +35,7 @@ from research.pipeline.extract_upstream_v2 import (
 from research.pipeline.flywire_graph import load_flywire_graph, spectral_radius
 from research.pipeline.phase6_training import (
     ACTIONS,
+    DecoderMLP,
     fit_final_model,
     predict_model,
     prune_edge_budget,
@@ -975,8 +976,18 @@ def run_phase6() -> dict[str, Any]:
     import torch
 
     graph_parameter_counts = graph_metadata["parameter_budget"]
+    decoder_template = DecoderMLP(input_dim=1291, hidden_dim=64, dropout=0.1)
+    decoder_parameters = int(sum(parameter.numel() for parameter in decoder_template.parameters()))
     for model_key in MODEL_KEYS:
-        if model_key.startswith("6B"):
+        if model_key.startswith("6A"):
+            graph_parameter_counts[model_key] = {
+                "decoder_trainable_parameters": decoder_parameters,
+                "effective_total_trainable_parameters": decoder_parameters,
+                "input_dim": 1291,
+                "hidden_dim": 64,
+                "dropout": 0.1,
+            }
+        elif model_key.startswith("6B"):
             graph_parameter_counts[model_key] = {
                 "active_delta_parameters": int(graph_metadata["parameter_budget"]["common_active_synapse_parameters"]),
                 "linear_head_parameters": int(graph_metadata["parameter_budget"]["linear_head_parameters"]),

@@ -110,6 +110,12 @@ def test_predict_model_returns_continuous_predictions_and_three_action_logits():
     assert np.isfinite(action_logits).all()
 
 
+def test_phase6a_decoder_parameter_budget_is_explicit_and_equal_across_variants():
+    model = DecoderMLP(input_dim=1291, hidden_dim=64, dropout=0.1)
+
+    assert sum(parameter.numel() for parameter in model.parameters()) == 82948
+
+
 def test_torch_reservoir_can_return_time_mean_for_selected_neurons():
     torch = pytest.importorskip("torch")
     if not torch.cuda.is_available():
