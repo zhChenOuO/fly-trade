@@ -50,6 +50,23 @@ TARGET_ICS = (0.0, 0.005, 0.01, 0.02, 0.03, 0.05)
 SIGNAL_FORMS = ("momentum", "mean_reversion", "image_projection")
 
 
+def _require_finite(name: str, values: np.ndarray | float) -> None:
+    arr = np.asarray(values)
+    if not np.isfinite(arr).all():
+        raise FloatingPointError(f"Non-finite value in {name}.")
+
+
+def _require_finite_tree(value: object, path: str = "$") -> None:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            _require_finite_tree(child, f"{path}.{key}")
+    elif isinstance(value, (list, tuple)):
+        for i, child in enumerate(value):
+            _require_finite_tree(child, f"{path}[{i}]")
+    elif isinstance(value, (float, np.floating)) and not np.isfinite(value):
+        raise FloatingPointError(f"Non-finite result at {path}.")
+
+
 def wilson_score_interval(successes: int, trials: int, confidence: float = 0.95) -> tuple[float, float]:
     """Compute Wilson score confidence interval for a binomial proportion."""
     if trials <= 0:
@@ -94,6 +111,9 @@ def calibrate_signal_amplitude(
     max_iters: int = 40,
 ) -> float:
     """Calibrate amplitude `a` such that Spearman IC(s_t, a * s_t + eps) equals target_ic."""
+    _require_finite("calibration signal", s_t)
+    _require_finite("calibration noise", eps)
+    _require_finite("calibration target", target_ic)
     if target_ic <= 0.0:
         return 0.0
 
@@ -115,6 +135,7 @@ def calibrate_signal_amplitude(
     for _ in range(max_iters):
         a_mid = 0.5 * (a_low + a_high)
         ic_mid = compute_continuous_metrics(a_mid * s_std + eps, s_std)["spearman_ic"]
+        _require_finite("calibration IC", ic_mid)
         if abs(ic_mid - target_ic) <= tol:
             return float(a_mid)
         if ic_mid < target_ic:
@@ -122,7 +143,15 @@ def calibrate_signal_amplitude(
         else:
             a_high = a_mid
 
-    return float(0.5 * (a_low + a_high))
+    amplitude = float(0.5 * (a_low + a_high))
+    achieved_ic = compute_continuous_metrics(amplitude * s_std + eps, s_std)["spearman_ic"]
+    _require_finite("calibrated amplitude and IC", np.asarray([amplitude, achieved_ic]))
+    if abs(achieved_ic - target_ic) > tol:
+        raise RuntimeError(
+            f"Signal calibration failed after {max_iters} iterations: "
+            f"target_ic={target_ic:.6f}, achieved_ic={achieved_ic:.6f}, tolerance={tol:.6f}"
+        )
+    return amplitude
 
 
 def extract_signal_forms(
@@ -195,6 +224,8 @@ class CachedSpectralRidgeCV:
 
         X_train = np.asarray(X_train, dtype=np.float64)
         X_val = np.asarray(X_val, dtype=np.float64)
+        _require_finite("standardized train features", X_train)
+        _require_finite("standardized validation features", X_val)
         n_samples, d = X_train.shape
         fold_size = n_samples // (n_folds + 1)
 
@@ -238,6 +269,7 @@ class CachedSpectralRidgeCV:
     def select_alpha_and_predict(self, y_train: np.ndarray) -> tuple[float, dict, np.ndarray]:
         """Perform chronological expanding-window CV, select best alpha, fit full train, and predict on val."""
         y_train = np.asarray(y_train, dtype=np.float64)
+        _require_finite("synthetic train labels", y_train)
         cv_losses: dict[float, list[float]] = {a: [] for a in self.alphas}
 
         for f_info in self.folds:
@@ -251,6 +283,8 @@ class CachedSpectralRidgeCV:
             W = z[:, None] / (f_info["eigvals"][:, None] + np.array(self.alphas)[None, :])
             Y_pred = f_info["M_ev"] @ W + mu_y  # shape (n_ev, n_alphas)
             mses = np.mean((Y_pred - y_ev[:, None])**2, axis=0)
+            _require_finite("ridge CV coefficients", W)
+            _require_finite("ridge CV predictions and losses", np.concatenate([Y_pred.ravel(), mses]))
             for i, a in enumerate(self.alphas):
                 cv_losses[a].append(float(mses[i]))
 
@@ -281,6 +315,7 @@ class CachedSpectralRidgeCV:
         z_full = self.XcV_full.T @ yc_full
         w_best = z_full / (self.eigvals_full + best_alpha)
         pred_val = self.M_val @ w_best + mu_y_full
+        _require_finite("ridge full-train coefficients and validation predictions", np.concatenate([w_best, pred_val]))
 
         return best_alpha, diagnostics, pred_val
 
@@ -305,6 +340,9 @@ def paired_block_bootstrap_ic_and_ci(
         Re-computes exact Spearman rank correlation on each bootstrap resample.
     """
     n = len(y_true)
+    _require_finite("bootstrap labels", y_true)
+    for name, pred in preds_dict.items():
+        _require_finite(f"bootstrap predictions for {name}", pred)
     rng = np.random.default_rng(seed)
     n_blocks = int(np.ceil(n / block_size))
 
@@ -360,6 +398,8 @@ def paired_block_bootstrap_ic_and_ci(
         m: (float(np.percentile(reps[m], q_low)), float(np.percentile(reps[m], q_high)))
         for m in model_names
     }
+    for m in model_names:
+        _require_finite(f"bootstrap IC replicates and CI for {m}", np.asarray([*reps[m], *cis[m]]))
 
     # Delta CIs relative to real
     delta_cis = {}
@@ -371,6 +411,7 @@ def paired_block_bootstrap_ic_and_ci(
                     float(np.percentile(delta_reps, q_low)),
                     float(np.percentile(delta_reps, q_high)),
                 )
+                _require_finite(f"paired bootstrap delta CI for {m}", delta_cis[f"real_vs_{m}"])
 
     return cis, delta_cis
 
@@ -427,6 +468,8 @@ def run_mde_injection_experiment(
 
     y_train_real = y_cont_all[train_mask]
     y_val_real = y_cont_all[val_mask]
+    _require_finite("train labels", y_train_real)
+    _require_finite("validation labels", y_val_real)
 
     n_train = len(y_train_real)
     n_val = len(y_val_real)
@@ -448,6 +491,8 @@ def run_mde_injection_experiment(
             "train": (s_tr - mu) / sigma_adj,
             "val": (s_va - mu) / sigma_adj,
         }
+        _require_finite(f"{s_name} train signal", signals[s_name]["train"])
+        _require_finite(f"{s_name} validation signal", signals[s_name]["val"])
 
     # 4. Load or receive feature matrices for Real, Random, Scramble
     feature_matrices = {}
@@ -512,8 +557,11 @@ def run_mde_injection_experiment(
 
                 y_synth_tr = a_tr * s_tr + eps_tr
                 y_synth_va = a_va * s_va + eps_va
+                _require_finite("synthetic train labels", y_synth_tr)
+                _require_finite("synthetic validation labels", y_synth_va)
 
                 oracle_ic = compute_continuous_metrics(y_synth_va, s_va)["spearman_ic"]
+                _require_finite("oracle validation IC", oracle_ic)
                 oracle_ics_val.append(oracle_ic)
 
                 # Train Ridge models via cached spectral solver (identical to PureNumpyRidge)
@@ -537,6 +585,10 @@ def run_mde_injection_experiment(
                 for v in variants:
                     obs_ic = compute_continuous_metrics(y_synth_va, preds_va[v])["spearman_ic"]
                     ci_low, ci_high = cis[v]
+                    _require_finite(
+                        f"{v} observed IC, confidence interval, and bias",
+                        np.asarray([obs_ic, ci_low, ci_high, obs_ic - target_ic]),
+                    )
                     detected = bool(ci_low > 0.0)
                     rep_stats[v].append({
                         "observed_ic": obs_ic,
@@ -609,6 +661,8 @@ def run_mde_injection_experiment(
 
     # Assemble final output
     output_payload = {
+        "EXPLORATORY_POST_HOC": True,
+        "DOES_NOT_CHANGE_PHASE5_VERDICT": True,
         "metadata": {
             "notice_1": "EXPLORATORY_POST_HOC",
             "notice_2": "DOES_NOT_CHANGE_PHASE5_VERDICT",
@@ -635,6 +689,7 @@ def run_mde_injection_experiment(
         "mde_summary_by_signal_and_variant": mde_table,
         "detailed_results": results_tree,
     }
+    _require_finite_tree(output_payload)
 
     # Write output JSON atomically if output path specified
     output_path.parent.mkdir(parents=True, exist_ok=True)
