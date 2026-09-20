@@ -117,7 +117,7 @@ class FlySimulator:
         """Reset the internal RNG to the initial seed."""
         self._rng = np.random.default_rng(self.seed)
 
-    def run(self, images: np.ndarray) -> dict[str, np.ndarray]:
+    def run(self, images: np.ndarray, return_readout: bool = False) -> dict[str, np.ndarray]:
         """Run reservoir simulation for a batch of 64x64x3 images or direct sensory currents.
 
         Parameters
@@ -126,19 +126,27 @@ class FlySimulator:
             Input images of shape (B, 64, 64, 3) or (64, 64, 3).
             Can be uint8 [0..255] or float.
             If direct_currents=True and encoder=None, can be sensory currents (B, n_sensory).
+        return_readout: bool, default False
+            If True, also return 'readout' containing the time-averaged activity vector
+            for the readout neurons (buy_idx followed by sell_idx) with shape (B, n_readout).
 
         Returns
         -------
         dict[str, np.ndarray]
             dict(buy_score=np.ndarray (B,), sell_score=np.ndarray (B,))
+            plus optional 'readout'=np.ndarray (B, n_readout) if return_readout=True.
         """
         img_arr = np.asarray(images)
 
         if img_arr.size == 0 or img_arr.shape[0] == 0:
-            return {
+            res = {
                 "buy_score": np.zeros(0, dtype=np.float64),
                 "sell_score": np.zeros(0, dtype=np.float64),
             }
+            if return_readout:
+                n_readout = len(self._buy_cols) + len(self._sell_cols)
+                res["readout"] = np.zeros((0, n_readout), dtype=np.float32)
+            return res
 
         n_sensory = len(self.graph.sensory_idx)
 
@@ -191,8 +199,8 @@ class FlySimulator:
             currents_1d = flat_img @ W_in  # (B, n_sensory)
 
         # 3-5. Temporal expansion, optional noise, and reservoir simulation.
+        readout_parts = []
         if self.backend == "scipy":
-            # Keep the legacy path unchanged by default.
             currents = np.repeat(
                 currents_1d[:, None, :], self.steps, axis=1
             )  # (B, steps, n_sensory)
@@ -207,6 +215,10 @@ class FlySimulator:
                 motor_trace = self.reservoir.simulate_batch(currents, gain_arr, leak_arr)
                 buy_score = motor_trace[:, :, self._buy_cols].sum(axis=(1, 2))
                 sell_score = motor_trace[:, :, self._sell_cols].sum(axis=(1, 2))
+                if return_readout:
+                    r_buy = motor_trace[:, :, self._buy_cols].mean(axis=1)
+                    r_sell = motor_trace[:, :, self._sell_cols].mean(axis=1)
+                    readout = np.hstack([r_buy, r_sell]).astype(np.float32)
             else:
                 buy_scores_list = []
                 sell_scores_list = []
@@ -219,8 +231,14 @@ class FlySimulator:
                     m_chunk = self.reservoir.simulate_batch(c_chunk, gain_chunk, leak_chunk)
                     buy_scores_list.append(m_chunk[:, :, self._buy_cols].sum(axis=(1, 2)))
                     sell_scores_list.append(m_chunk[:, :, self._sell_cols].sum(axis=(1, 2)))
+                    if return_readout:
+                        rb = m_chunk[:, :, self._buy_cols].mean(axis=1)
+                        rs = m_chunk[:, :, self._sell_cols].mean(axis=1)
+                        readout_parts.append(np.hstack([rb, rs]))
                 buy_score = np.concatenate(buy_scores_list, axis=0)
                 sell_score = np.concatenate(sell_scores_list, axis=0)
+                if return_readout:
+                    readout = np.concatenate(readout_parts, axis=0).astype(np.float32)
         else:
             assert self.torch_reservoir is not None
             chunk_size = min(
@@ -251,8 +269,14 @@ class FlySimulator:
                 sell_scores_list.append(
                     motor_trace[:, :, self._sell_cols].sum(axis=(1, 2))
                 )
+                if return_readout:
+                    rb = motor_trace[:, :, self._buy_cols].mean(axis=1)
+                    rs = motor_trace[:, :, self._sell_cols].mean(axis=1)
+                    readout_parts.append(np.hstack([rb, rs]))
             buy_score = np.concatenate(buy_scores_list, axis=0)
             sell_score = np.concatenate(sell_scores_list, axis=0)
+            if return_readout:
+                readout = np.concatenate(readout_parts, axis=0).astype(np.float32)
 
         if self.baseline is not None:  # v2: 每神經元平均活動,以 Train 基準 z-score
             bl = self.baseline
@@ -261,7 +285,26 @@ class FlySimulator:
             buy_score = (buy_score / (self.steps * n_b) - bl["buy_mean"]) / bl["buy_std"]
             sell_score = (sell_score / (self.steps * n_s) - bl["sell_mean"]) / bl["sell_std"]
 
-        return {
+        result = {
             "buy_score": buy_score.astype(np.float64),
             "sell_score": sell_score.astype(np.float64),
         }
+        if return_readout:
+            result["readout"] = readout
+        return result
+
+    def extract_readout(self, images: np.ndarray) -> np.ndarray:
+        """Extract time-averaged activity vector for readout neurons (buy_idx U sell_idx).
+
+        Parameters
+        ----------
+        images: np.ndarray
+            Input images of shape (B, 64, 64, 3) or sensory currents.
+
+        Returns
+        -------
+        np.ndarray
+            float32 array of shape (B, len(buy_motor_idx) + len(sell_motor_idx)).
+        """
+        return self.run(images, return_readout=True)["readout"]
+

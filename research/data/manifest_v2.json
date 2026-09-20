@@ -1,0 +1,210 @@
+{
+  "manifest_version": "2.0",
+  "created_at_utc": "2026-09-20T04:38:42.801793+00:00",
+  "git_commit": "79124f5b8f4aae27a620102b6ed092ecf461fe34",
+  "experiment_config": {
+    "path": "research/config/experiment_v2.yaml",
+    "sha256": "6d1a41bcb5cc02352d46bb0319ea6e286b7493db114980c8654d74e64dc55580"
+  },
+  "data_period": {
+    "symbol": "BTC/USDT",
+    "interval": "5m",
+    "raw_bars": 315648,
+    "raw_start": "2023-09-19T08:35:00",
+    "raw_end_exclusive": "2026-09-19T08:35:00",
+    "raw_sha256": "a45423405ded052aec0b33d0461f7daaa99dad695741a9a510c6536eb9840e3e"
+  },
+  "splits": {
+    "train": {
+      "role": "train",
+      "count": 31556,
+      "sample_id_range": [
+        0,
+        31555
+      ],
+      "first_timestamp": "2023-09-19T12:35:00",
+      "last_timestamp": "2025-07-07T22:05:00",
+      "raw_bar_range": [
+        0,
+        189388
+      ],
+      "boundary_nan_counts": {
+        "future_return_1": 0,
+        "future_return_3": 0,
+        "future_return_6": 0,
+        "future_return_12": 1,
+        "future_volatility_6": 0,
+        "maximum_favorable_excursion_6": 0,
+        "maximum_adverse_excursion_6": 0,
+        "action": 0
+      }
+    },
+    "val": {
+      "role": "val",
+      "count": 10504,
+      "sample_id_range": [
+        31556,
+        42059
+      ],
+      "first_timestamp": "2025-07-08T07:35:00",
+      "last_timestamp": "2026-02-12T03:05:00",
+      "raw_bar_range": [
+        189442,
+        252518
+      ],
+      "boundary_nan_counts": {
+        "future_return_1": 0,
+        "future_return_3": 0,
+        "future_return_6": 0,
+        "future_return_12": 1,
+        "future_volatility_6": 0,
+        "maximum_favorable_excursion_6": 0,
+        "maximum_adverse_excursion_6": 0,
+        "action": 0
+      }
+    },
+    "dev_test_v1": {
+      "role": "development_test_v1",
+      "count": 10504,
+      "sample_id_range": [
+        42060,
+        52563
+      ],
+      "first_timestamp": "2026-02-12T12:35:00",
+      "last_timestamp": "2026-09-19T08:05:00",
+      "raw_bar_range": [
+        252572,
+        315648
+      ],
+      "boundary_nan_counts": {
+        "future_return_1": 0,
+        "future_return_3": 0,
+        "future_return_6": 0,
+        "future_return_12": 1,
+        "future_volatility_6": 0,
+        "maximum_favorable_excursion_6": 0,
+        "maximum_adverse_excursion_6": 0,
+        "action": 0
+      }
+    },
+    "holdout": {
+      "status": "PENDING_FUTURE_COLLECTION",
+      "role": "future_sealed_holdout",
+      "note": "Awaiting future BTC/USDT spot data collection; strictly prohibited to use dev_test_v1."
+    }
+  },
+  "governance": {
+    "old_test_role": "development_test_v1",
+    "old_test_result_status": "INVALID_INPUT_MAPPING",
+    "old_test_highest_level": 0,
+    "sealed_holdout_access": "once"
+  },
+  "cost_settings": {
+    "cost_fee_per_side": 0.0004,
+    "cost_slippage": 0.0002,
+    "cost_threshold": 0.001,
+    "derivation": "cost_threshold = 2 * cost_fee_per_side + cost_slippage"
+  },
+  "purge_settings": {
+    "input_window_bars": 48,
+    "primary_horizon": 6,
+    "max_horizon": 12,
+    "purge_bars_rule": "window_bars (48) + max_horizon (12) = 60 bars",
+    "embargo_bars_in_splits": 54,
+    "boundary_nan_rule": "Samples where t + h >= split_stop are marked NaN without filling across splits",
+    "boundary_nan_total": 3
+  },
+  "labels_v2_parquet": {
+    "path": "research/data/labels_v2.parquet",
+    "sha256": "9f73c268ed086ce1d9c1d16507f8f7f598374140db6d4fb80842720c46d9804b",
+    "total_samples": 52564,
+    "columns": [
+      "sample_id",
+      "timestamp",
+      "split",
+      "future_return_1",
+      "future_return_3",
+      "future_return_6",
+      "future_return_12",
+      "future_volatility_6",
+      "maximum_favorable_excursion_6",
+      "maximum_adverse_excursion_6",
+      "action"
+    ],
+    "action_counts": {
+      "HOLD": 19508,
+      "BUY": 16674,
+      "SELL": 16382
+    },
+    "action_ratios": {
+      "HOLD": 0.37112852903127613,
+      "BUY": 0.31721330187961344,
+      "SELL": 0.3116581690891104
+    },
+    "summary_statistics": {
+      "future_return_1": {
+        "count": 52564,
+        "nan_count": 0,
+        "mean": -5.38287950646624e-06,
+        "std": 0.0015496499430684453,
+        "min": -0.04954875562677252,
+        "median": 0.0,
+        "max": 0.037808065313792626
+      },
+      "future_return_3": {
+        "count": 52564,
+        "nan_count": 0,
+        "mean": 1.1304842477358725e-05,
+        "std": 0.0025982890281365844,
+        "min": -0.10131821420214103,
+        "median": 5.768717514594384e-06,
+        "max": 0.04513630392915214
+      },
+      "future_return_6": {
+        "count": 52564,
+        "nan_count": 0,
+        "mean": 2.065747096376816e-05,
+        "std": 0.0035187452772978845,
+        "min": -0.04564395649284248,
+        "median": 1.42321954955059e-05,
+        "max": 0.05598156529604113
+      },
+      "future_return_12": {
+        "count": 52561,
+        "nan_count": 3,
+        "mean": 4.135324044071779e-05,
+        "std": 0.00495145741886238,
+        "min": -0.07101529990841789,
+        "median": 4.1658894490785654e-05,
+        "max": 0.06820038176334135
+      },
+      "future_volatility_6": {
+        "count": 52564,
+        "nan_count": 0,
+        "mean": 0.0011524465385598713,
+        "std": 0.0009488900081033144,
+        "min": 1.1935051693920732e-07,
+        "median": 0.0009109190912193247,
+        "max": 0.040860962241574365
+      },
+      "maximum_favorable_excursion_6": {
+        "count": 52564,
+        "nan_count": 0,
+        "mean": 0.0022541596677331257,
+        "std": 0.002785847902422713,
+        "min": -1.8984207776427648e-05,
+        "median": 0.0014447626839486326,
+        "max": 0.08019879935688343
+      },
+      "maximum_adverse_excursion_6": {
+        "count": 52564,
+        "nan_count": 0,
+        "mean": -0.002308532191351401,
+        "std": 0.0030660221502252505,
+        "min": -0.12049838714482478,
+        "median": -0.0014482608080156642,
+        "max": 2.8689779561625094e-05
+      }
+    }
+  }
+}

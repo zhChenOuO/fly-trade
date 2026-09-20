@@ -1,0 +1,280 @@
+{
+  "metadata": {
+    "generated_at": "2026-09-20T04:42:51.335232+00:00",
+    "git_commit": "79124f5b8f4aae27a620102b6ed092ecf461fe34",
+    "config_sha256": "6d1a41bcb5cc02352d46bb0319ea6e286b7493db114980c8654d74e64dc55580",
+    "normalization_sha256": "7f8bccf912b9ce43b7f67bdf53a63a32337193546510f3d77cceb36e751237cd",
+    "split_evaluated": "val",
+    "train_samples": 31556,
+    "val_samples": 10504,
+    "dropped_nan_train": 0,
+    "dropped_nan_val": 0,
+    "feature_dim": 150,
+    "cost_fee_per_side": 0.0004,
+    "cost_slippage": 0.0002,
+    "cost_threshold": 0.001
+  },
+  "models": {
+    "B0_constant_majority": {
+      "description": "Train mean for continuous return; Train majority class for action",
+      "continuous": {
+        "spearman_ic": 0.0,
+        "mae": 0.002064093576214623,
+        "ic_ci_95": [
+          0.0,
+          0.0
+        ]
+      },
+      "classification": {
+        "balanced_accuracy": 0.3333333333333333,
+        "mcc": 0.0,
+        "precision": {
+          "BUY": 0.0,
+          "HOLD": 0.4068926123381569,
+          "SELL": 0.0
+        },
+        "recall": {
+          "BUY": 0.0,
+          "HOLD": 1.0,
+          "SELL": 0.0
+        },
+        "predicted_counts": {
+          "BUY": 0,
+          "HOLD": 10504,
+          "SELL": 0
+        },
+        "predicted_ratios": {
+          "BUY": 0.0,
+          "HOLD": 1.0,
+          "SELL": 0.0
+        },
+        "confusion_matrix": [
+          [
+            0,
+            3092,
+            0
+          ],
+          [
+            0,
+            4274,
+            0
+          ],
+          [
+            0,
+            3138,
+            0
+          ]
+        ],
+        "balanced_accuracy_ci_95": [
+          0.3333333333333333,
+          0.3333333333333333
+        ]
+      },
+      "trading": {
+        "net_return": 0.0,
+        "buy_and_hold_return": -0.37767596992203,
+        "annualized_sharpe": 0.0,
+        "max_drawdown": 0.0,
+        "turnover": 0.0,
+        "trade_count": 0,
+        "market_coverage": 0.0,
+        "per_step_mean_return": 0.0,
+        "per_step_volatility": 0.0
+      }
+    },
+    "B1a_ridge": {
+      "description": "Ridge regression with alpha chosen by chronological expanding-window CV on Train",
+      "best_alpha": 10000.0,
+      "continuous": {
+        "spearman_ic": -0.0007304371183932733,
+        "mae": 0.0020733749336644945,
+        "ic_ci_95": [
+          -0.019547637251620613,
+          0.018660725343742208
+        ]
+      },
+      "classification": {
+        "balanced_accuracy": 0.3347713241205387,
+        "mcc": 0.022433378488212388,
+        "precision": {
+          "BUY": 0.4666666666666667,
+          "HOLD": 0.40789222243455,
+          "SELL": 0.375
+        },
+        "recall": {
+          "BUY": 0.004527813712807244,
+          "HOLD": 0.9988301357042583,
+          "SELL": 0.0009560229445506692
+        },
+        "predicted_counts": {
+          "BUY": 30,
+          "HOLD": 10466,
+          "SELL": 8
+        },
+        "predicted_ratios": {
+          "BUY": 0.0028560548362528563,
+          "HOLD": 0.9963823305407464,
+          "SELL": 0.0007616146230007616
+        },
+        "confusion_matrix": [
+          [
+            14,
+            3074,
+            4
+          ],
+          [
+            4,
+            4269,
+            1
+          ],
+          [
+            12,
+            3123,
+            3
+          ]
+        ],
+        "balanced_accuracy_ci_95": [
+          0.3339427662784119,
+          0.33590875559888245
+        ]
+      },
+      "trading": {
+        "net_return": -0.39006312965673084,
+        "buy_and_hold_return": -0.37767596992203,
+        "annualized_sharpe": -2.1111948478311957,
+        "max_drawdown": 0.4392874534752562,
+        "turnover": 17.0,
+        "trade_count": 17,
+        "market_coverage": 0.660986290936786,
+        "per_step_mean_return": -4.3364548733784255e-05,
+        "per_step_volatility": 0.0027197077874844054
+      }
+    },
+    "B1b_logistic": {
+      "description": "Multinomial Logistic regression (3-class softmax with L2)",
+      "continuous": {
+        "spearman_ic": 0.012952355023067914,
+        "mae": 0.04236859033483304,
+        "ic_ci_95": [
+          -0.006784858487583598,
+          0.032619743709422284
+        ]
+      },
+      "classification": {
+        "balanced_accuracy": 0.4146178307933042,
+        "mcc": 0.1535313368044929,
+        "precision": {
+          "BUY": 0.3881544156530936,
+          "HOLD": 0.4909297052154195,
+          "SELL": 0.394990366088632
+        },
+        "recall": {
+          "BUY": 0.23738680465717982,
+          "HOLD": 0.8104819840898456,
+          "SELL": 0.1959847036328872
+        },
+        "predicted_counts": {
+          "BUY": 1891,
+          "HOLD": 7056,
+          "SELL": 1557
+        },
+        "predicted_ratios": {
+          "BUY": 0.18002665651180502,
+          "HOLD": 0.6717440974866717,
+          "SELL": 0.14822924600152323
+        },
+        "confusion_matrix": [
+          [
+            734,
+            1784,
+            574
+          ],
+          [
+            442,
+            3464,
+            368
+          ],
+          [
+            715,
+            1808,
+            615
+          ]
+        ],
+        "balanced_accuracy_ci_95": [
+          0.4044256627617586,
+          0.42471350733691915
+        ]
+      },
+      "trading": {
+        "net_return": -0.6483309972818693,
+        "buy_and_hold_return": -0.37767596992203,
+        "annualized_sharpe": -5.221602418870156,
+        "max_drawdown": 0.6699166115843613,
+        "turnover": 1539.0,
+        "trade_count": 1539,
+        "market_coverage": 0.5738766184310738,
+        "per_step_mean_return": -9.64893717931885e-05,
+        "per_step_volatility": 0.0024467602076032736
+      }
+    },
+    "B2_mlp": {
+      "description": "1-hidden-layer MLP (D=150 -> H=64 -> 1) with Adam optimizer, multi-seed",
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "continuous": {
+        "ic_mean": -0.0027265680395352153,
+        "ic_std": 0.004177543839927025,
+        "mae_mean": 0.03556919738878486,
+        "mae_std": 0.015327641112980784,
+        "ic_ci_95": [
+          -0.018262804138726198,
+          0.02302209512007959
+        ]
+      },
+      "classification": {
+        "balanced_accuracy_mean": 0.3358525101306307,
+        "balanced_accuracy_std": 0.0028362571025732776,
+        "mcc_mean": 0.0046648295769222275,
+        "mcc_std": 0.004577334653192232,
+        "balanced_accuracy_ci_95": [
+          0.33023249387729536,
+          0.34625813636672553
+        ]
+      },
+      "trading": {
+        "net_return_mean": -0.9360811285449798,
+        "net_return_std": 0.00449887680165729,
+        "annualized_sharpe_mean": -15.34482359264919,
+        "max_drawdown_mean": 0.9371195370137116,
+        "turnover_mean": 4880.333333333333,
+        "buy_and_hold_return": -0.37767596992203
+      },
+      "seeds_detail": [
+        {
+          "seed": 42,
+          "ic": 0.002489875719276801,
+          "balanced_accuracy": 0.3383408330413839,
+          "net_return": -0.9358711986655401,
+          "annualized_sharpe": -15.422938822228422
+        },
+        {
+          "seed": 43,
+          "ic": -0.007736735939386255,
+          "balanced_accuracy": 0.33188388205833413,
+          "net_return": -0.9416930695877007,
+          "annualized_sharpe": -16.065730547126343
+        },
+        {
+          "seed": 44,
+          "ic": -0.0029328438984961916,
+          "balanced_accuracy": 0.33733281529217424,
+          "net_return": -0.9306791173816987,
+          "annualized_sharpe": -14.545801408592801
+        }
+      ]
+    }
+  }
+}

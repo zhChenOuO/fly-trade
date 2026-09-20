@@ -1,0 +1,154 @@
+# Research v2 experiment specification — Frozen Protocol Phase 0
+# Authority: research_v2.md (§3, §4, §6, §8, §10, §12)
+
+experiment_id: supervised_connectome_v2
+
+data:
+  symbol: BTC/USDT
+  interval: 5m
+  input_window_bars: 48
+  prediction_horizons: [1, 3, 6, 12]
+  primary_horizon: 6
+  sample_stride: 6
+  split_method: chronological
+  # purge = input_window_bars (48) + max(prediction_horizons) (12) = 60 bars.
+  # Existing splits.json embargo is 54 bars (for h=6).
+  # Samples crossing split boundaries for h=12 are marked NaN in labels/manifest layer.
+  purge_bars: 60
+
+governance:
+  old_test_role: development_test_v1
+  old_test_result_status: INVALID_INPUT_MAPPING
+  old_test_highest_level: 0
+  sealed_holdout:
+    status: PENDING_FUTURE_COLLECTION
+    note: "Currently no future holdout data collected; strictly prohibited to use old test as holdout."
+  sealed_holdout_access: once
+
+cost:
+  cost_fee_per_side: 0.0004       # 4 bps per side
+  cost_slippage: 0.0002           # 2 bps estimated round-trip slippage
+  # Note: cost_threshold = 2 * cost_fee_per_side + cost_slippage = 0.0010 (10 bps).
+  # Dynamically derived by code from the two fields above; do NOT hardcode a third number.
+
+splits:
+  train:
+    source: "old train (samples 0..31555)"
+    role: train
+  val:
+    source: "old val (samples 31556..42059)"
+    role: validation
+  dev_test_v1:
+    source: "old test (samples 42060..52563)"
+    role: development_test_v1
+    note: "For debugging only, invalid as formal Level 4 evidence"
+  holdout:
+    status: PENDING_FUTURE_COLLECTION
+    role: future_sealed_holdout
+
+labels:
+  primary_target: future_return_6
+  horizons: [1, 3, 6, 12]
+  actions: [BUY, HOLD, SELL]
+  action_semantics:
+    BUY: "open long"
+    SELL: "spot reduce/close position, NOT open short"
+    HOLD: "maintain current position"
+  include_transaction_cost: true
+
+encoding:
+  version: train_mean_subtraction_v2
+  fit_split: train
+  image_size: [64, 64]
+
+model:
+  connectome_frozen: true
+  decoder: ridge
+  seeds: 30
+
+evaluation:
+  primary_metric: spearman_ic
+  bootstrap: block
+  bootstrap_samples: 2000
+  permutations: 1000
+
+# Pre-registered success thresholds (§5.3, §6 Phase 0/3/5, §8, §12)
+# Any threshold requiring proposal has status: PROPOSED_NEEDS_USER_CONFIRMATION
+thresholds:
+  primary_metric:
+    name: spearman_ic
+    value: 0.02
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§8.1, §10"
+    description: "Validation set primary target Spearman IC minimum threshold"
+  min_practical_effect:
+    metric: spearman_ic
+    value: 0.02
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§8.3, §12"
+    description: "Minimum practical effect size; statistical significance alone is insufficient"
+  min_practical_effect_balanced_acc:
+    value: 0.02
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§8.3, §12"
+    description: "Minimum practical effect for balanced accuracy over 0.5/majority baseline (+0.02)"
+  seeds_agreement_ratio:
+    value: 0.80
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§6 Phase 0, §8.1, §12"
+    description: "Direction agreement across seeds (at least 80% seeds agree in sign)"
+  minority_action_ratio:
+    value: 0.05
+    status: FROZEN_SPEC_V2
+    spec_ref: "§6 Phase 3, §12"
+    description: "Minority action ratio >= 0.05 to avoid action collapse (§6 Phase 3)"
+  margin_std_min:
+    value: 1.0e-5
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§6 Phase 3"
+    description: "Minimum standard deviation of margin across samples to verify non-flat output"
+  alpha_level:
+    value: 0.05
+    status: FROZEN_SPEC_V2
+    spec_ref: "§8.3"
+    description: "Significance level for permutation tests (p < 0.05)"
+  trading_net_return_min:
+    value: 0.0
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§8.2, §12"
+    description: "Minimum net return after cost (must be strictly positive, >= 0.0)"
+  trading_sharpe_min:
+    value: 0.5
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§8.2, §12"
+    description: "Minimum strategy Sharpe ratio after cost"
+  trading_max_drawdown_max:
+    value: 0.15
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§8.2, §12"
+    description: "Maximum allowable strategy drawdown (<= 15%)"
+  connectome_vs_matched_control_ic_delta_min:
+    value: 0.01
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§6 Phase 5, §8.3, §12"
+    description: "Minimum Spearman IC increment of Connectome over matched control (Random/Scramble)"
+  connectome_vs_matched_control_p_max:
+    value: 0.01
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§6 Phase 5, §8.3, §12"
+    description: "Maximum p-value from block permutation test comparing Connectome vs matched control"
+  connectome_vs_ohlcv_baseline_ic_delta_min:
+    value: 0.01
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§6 Phase 4/5, §12"
+    description: "Minimum Spearman IC increment of Connectome over OHLCV baseline"
+  renderer_shortcut_r2_max:
+    value: 0.05
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§5.3, §12"
+    description: "Maximum R^2 of margin explained by mean brightness, nonzero pixels, or renderer features"
+  input_to_simulation_noise_variance_ratio_min:
+    value: 2.0
+    status: PROPOSED_NEEDS_USER_CONFIRMATION
+    spec_ref: "§6 Phase 3, §12"
+    description: "Minimum ratio of cross-input margin variance to repeated-simulation noise variance"
