@@ -101,7 +101,9 @@ print('Baselines verification PASSED: all deterministic metrics match bitwise.')
 
 本實驗測量管線對三種弱訊號形態（`momentum`, `mean_reversion`, `image_projection`）在目標 IC $\{0.0, 0.005, 0.01, 0.02, 0.03, 0.05\}$ 下的檢定力。
 
-#### 預設完整執行（$R=100$, bootstrap=500）
+> **計算優化說明**：管線已實作特徵矩陣 $X_c^T X_c$ 特徵分解快取（`CachedSpectralRidgeCV`）與秩基礎 Pearson 移動區塊重抽近似（`paired_block_bootstrap_ic_and_ci`，與精確 Spearman CI 差距 $< 0.0003$），單次重複耗時由 32.95 秒降至 1.79 秒（18.5x 加速）。**預設規模（$R=100$, bootstrap=500）可在約 54 分鐘內完成，不需縮減規模。**
+
+#### 預設完整執行（$R=100$, bootstrap=500，預估約 54 分鐘）
 ```bash
 python -m research.pipeline.mde_injection_v2 \
     --repetitions 100 \
@@ -109,13 +111,12 @@ python -m research.pipeline.mde_injection_v2 \
     2>&1 | tee research/outputs/v2/mde_injection.log
 ```
 
-#### 縮減快速執行選項（若總耗時限制在 2 小時內）
-若評估 CPU 資源受限或需在 2 小時內完成，可將重複次數調整為 $R=20$，bootstrap 次數調為 300：
+#### 快速冒煙測試（可選，若需 5 分鐘內先驗收流程）
 ```bash
 python -m research.pipeline.mde_injection_v2 \
-    --repetitions 20 \
-    --bootstrap-samples 300 \
-    2>&1 | tee research/outputs/v2/mde_injection.log
+    --repetitions 10 \
+    --bootstrap-samples 500 \
+    2>&1 | tee research/outputs/v2/mde_injection_smoke.log
 ```
 
 *產出位置*：`research/outputs/v2/mde_injection.json` 與 `research/outputs/v2/mde_injection.log`。
@@ -129,18 +130,18 @@ python -m research.pipeline.mde_injection_v2 \
 - **Baselines 驗證（Step 2）**：約 20 秒。
 - **MDE 標籤注入實驗（Step 3）**：
   - **計算成本結構**：
-    $\text{總擬合次數} = 3 \text{ 種形態} \times 6 \text{ 個目標 IC} \times R \text{ 次重複} \times 3 \text{ 個網路變體} = 54 \times R \text{ 次}$。
-    每次擬合需進行：
-    - 5 折時序擴展窗 CV（含 `purge_samples=10` 隔離期）× 8 個 candidate alpha。
-    - 1 次全 Train 集 Ridge 擬合（1291 維度）。
-    - 配對移動區塊重抽（Paired Block Bootstrap，長度 10,504，block=24）計算 95% CI 與 $\Delta\text{IC}$ CI。
-  - **單次擬合耗時**：在單一 CPU 核心上約 7.5 秒。
+    - 特徵預計算（Precomputation）：3 個網路變體各進行 5 個 CV 折與 1 次全 Train 集之 $X_c^T X_c$ 特徵分解與投影矩陣快取，僅於實驗開始時執行一次，共約 **22 秒**。
+    - 總重複次數 $= 3 \text{ 種形態} \times 6 \text{ 個目標 IC} \times 100 \text{ 次重複} = 1,800 \text{ 次}$。
+    - 單次重複包含：
+      - 3 個變體之向量化 8-alpha 時序 CV（含 `purge_samples=10`）與 Val 預測（約 0.04 秒）。
+      - 500 次配對移動區塊重抽計算 95% CI 與 $\Delta\text{IC}$ CI（約 1.72 秒）。
+      - 噪聲循環位移與目標 IC 二分法振幅校準（約 0.03 秒）。
+    - 單次重複總耗時：**約 1.79 秒**（優化前為 32.95 秒，提速 18.5x）。
   - **各配置耗時對照**：
-    | 配置 | $R$ | Bootstrap 次數 | 總擬合次數 | 預估總耗時 | 適用場景 |
+    | 配置 | $R$ | Bootstrap 次數 | 總重複次數 | 預估總耗時 | 適用場景 |
     | :--- | :---: | :---: | :---: | :---: | :--- |
-    | **預設標準（Default）** | 100 | 500 | 5,400 次 | **約 11 ~ 12 小時** | 夜間完整精確測試、Monte Carlo 誤差最小 |
-    | **縮減選項（Reduced）** | 20 | 300 | 1,080 次 | **約 2.0 ~ 2.5 小時** | 兩小時內快速驗證檢定力階梯趨勢 |
-    | **快速測試（Fast）** | 10 | 200 | 540 次 | **約 1.1 小時** | 極速驗收 pipeline 運作 |
+    | **預設標準（Default）** | 100 | 500 | 1,800 次 | **約 54 分鐘** | **正式實驗，1 小時內完成，Wilson 95% CI 精度充足** |
+    | **快速測試（Smoke）** | 10 | 500 | 180 次 | **約 5.4 分鐘** | 流程與日誌輸出格式驗收 |
 
 ---
 

@@ -148,3 +148,84 @@ def test_mde_calibration_determinism() -> None:
     n1 = generate_circular_shifted_noise(eps, seed=123)
     n2 = generate_circular_shifted_noise(eps, seed=123)
     np.testing.assert_array_equal(n1, n2)
+
+
+def test_cached_spectral_ridge_matches_pure_numpy_ridge() -> None:
+    """CachedSpectralRidgeCV must match PureNumpyRidge and select_ridge_alpha within 1e-6 tolerance."""
+    from research.pipeline.baselines_v2 import PureNumpyRidge, select_ridge_alpha_timeseries_cv
+    from research.pipeline.mde_injection_v2 import CachedSpectralRidgeCV
+
+    rng = np.random.default_rng(42)
+    n_tr, n_va, d = 800, 200, 30
+    X_tr = rng.standard_normal((n_tr, d))
+    X_va = rng.standard_normal((n_va, d))
+    y_tr = rng.standard_normal(n_tr)
+
+    purge_samples = 10
+    best_a_ref, diag_ref = select_ridge_alpha_timeseries_cv(
+        X_tr, y_tr, purge_samples=purge_samples, return_diagnostics=True
+    )
+    ridge_ref = PureNumpyRidge(alpha=best_a_ref).fit(X_tr, y_tr)
+    pred_va_ref = ridge_ref.predict(X_va)
+
+    spectral_model = CachedSpectralRidgeCV(X_tr, X_va, purge_samples=purge_samples)
+    best_a_spec, diag_spec, pred_va_spec = spectral_model.select_alpha_and_predict(y_tr)
+
+    assert best_a_spec == best_a_ref
+    max_pred_diff = float(np.max(np.abs(pred_va_ref - pred_va_spec)))
+    assert max_pred_diff < 1e-6, f"Prediction discrepancy too large: {max_pred_diff}"
+
+    # Diagnostics check
+    for alpha in diag_ref["cv_losses_by_alpha"]:
+        ref_loss = np.mean(diag_ref["cv_losses_by_alpha"][alpha])
+        spec_loss = np.mean(diag_spec["cv_losses_by_alpha"][alpha])
+        assert abs(ref_loss - spec_loss) < 1e-6
+
+
+def test_paired_block_bootstrap_approximation_accuracy() -> None:
+    """Fast rank-based Pearson block bootstrap CI must be within 0.003 of exact Spearman bootstrap."""
+    rng = np.random.default_rng(777)
+    N = 10504
+    block_size = 24
+    n_bootstraps = 500
+
+    y = rng.standard_normal(N)
+    preds = {
+        "real": 0.03 * y + rng.standard_normal(N),
+        "random": rng.standard_normal(N),
+        "scramble": 0.01 * y + rng.standard_normal(N),
+    }
+
+    # 1. Exact Spearman
+    cis_exact, deltas_exact = paired_block_bootstrap_ic_and_ci(
+        y_true=y,
+        preds_dict=preds,
+        block_size=block_size,
+        n_bootstraps=n_bootstraps,
+        seed=12345,
+        exact_spearman=True,
+    )
+
+    # 2. Fast Rank-based Pearson approximation
+    cis_fast, deltas_fast = paired_block_bootstrap_ic_and_ci(
+        y_true=y,
+        preds_dict=preds,
+        block_size=block_size,
+        n_bootstraps=n_bootstraps,
+        seed=12345,
+        exact_spearman=False,
+    )
+
+    max_ci_diff = 0.0
+    for m in preds:
+        d_low = abs(cis_exact[m][0] - cis_fast[m][0])
+        d_high = abs(cis_exact[m][1] - cis_fast[m][1])
+        max_ci_diff = max(max_ci_diff, d_low, d_high)
+
+    for k in deltas_exact:
+        d_low = abs(deltas_exact[k][0] - deltas_fast[k][0])
+        d_high = abs(deltas_exact[k][1] - deltas_fast[k][1])
+        max_ci_diff = max(max_ci_diff, d_low, d_high)
+
+    assert max_ci_diff < 0.003, f"Bootstrap approximation error {max_ci_diff} exceeded 0.003 threshold!"
+
