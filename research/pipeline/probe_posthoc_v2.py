@@ -430,7 +430,7 @@ def run_posthoc_analysis(
     with open(config_path, "r", encoding="utf-8") as f:
         config_data = yaml.safe_load(f)
 
-    labels = pd.read_parquet(labels_path)
+    labels = pd.read_parquet(labels_path, filters=[("split", "in", ["train", "val"])])
     validate_split_name("train")
     validate_split_name("val")
 
@@ -498,7 +498,7 @@ def run_posthoc_analysis(
 
     # 4. OHLCV Baselines
     print("Computing non-Connectome OHLCV features (B1a Ridge, B1b Logistic)...")
-    samples = pd.read_parquet(DATA_DIR / "samples.parquet")
+    samples = pd.read_parquet(DATA_DIR / "samples.parquet", filters=[("split", "in", ["train", "val"])])
     raw = pd.read_parquet(DATA_DIR / "raw_ohlcv.parquet")
 
     X_ohlcv, ohlcv_names = extract_sample_features(raw, samples)
