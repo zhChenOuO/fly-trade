@@ -80,7 +80,7 @@ def test_circular_shifted_noise_preserves_length_and_variance() -> None:
 def test_mde_detection_monotonic_and_low_fpr() -> None:
     """MDE detection rate on features with known signal must be non-decreasing with target IC."""
     rng = np.random.default_rng(303)
-    n_va = 300  # 12.5 blocks of 24
+    n_va = 1200  # 50 blocks of 24
     s_t = rng.standard_normal(n_va)
 
     # Model Real has access to the true signal + small noise
@@ -92,14 +92,15 @@ def test_mde_detection_monotonic_and_low_fpr() -> None:
     eps = rng.standard_normal(n_va) * 0.05
 
     detection_counts = []
-    # Test at target IC = 0.0, 0.15, 0.35 with R=10 repetitions
-    R = 10
-    for target in [0.0, 0.15, 0.35]:
+    # Test at target IC = 0.0, 0.04, 0.15 with R=20 repetitions
+    R = 20
+    for target in [0.0, 0.04, 0.15]:
         detected_cnt = 0
+        calib_noise = [generate_circular_shifted_noise(eps, seed=5000 + k) for k in range(50)]
+        a = calibrate_signal_amplitude(s_t, calib_noise, target_ic=target, tol=1e-3)
         for r in range(R):
             rep_seed = 1000 * r + int(target * 1000)
             eps_shifted = generate_circular_shifted_noise(eps, seed=rep_seed)
-            a = calibrate_signal_amplitude(s_t, eps_shifted, target_ic=target)
             y_synth = a * s_t + eps_shifted
 
             cis, _ = paired_block_bootstrap_ic_and_ci(
@@ -114,14 +115,89 @@ def test_mde_detection_monotonic_and_low_fpr() -> None:
 
         detection_counts.append(detected_cnt)
 
-    # 1. At IC=0, false positive rate should be low (<= 2 out of 10 = 20%)
+    # 1. At IC=0, false positive rate should be low (<= 2 out of 20 = 10%)
     assert detection_counts[0] <= 2, f"False positive count at IC=0 was {detection_counts[0]}/{R}"
 
-    # 2. Strong signal has higher detection rate than null
+    # 2. Detection rate is non-decreasing with increasing target IC
     assert detection_counts[1] >= detection_counts[0]
     assert detection_counts[2] >= detection_counts[1]
-    # Strong signal should be detected in at least 8 out of 10 repetitions
-    assert detection_counts[2] >= 8
+    # Strong signal should be detected in majority of repetitions (>= 16 out of 20 = 80%)
+    assert detection_counts[2] >= 16
+
+
+def test_population_calibration_train_accuracy_and_val_sampling_sd() -> None:
+    """Fixed population amplitude achieves Train IC mean within target +- 0.001 and Val SD in [0.005, 0.015]."""
+    rng = np.random.default_rng(42)
+    n_tr = 20000
+    n_va = 10504
+
+    s_tr = rng.standard_normal(n_tr)
+    s_tr = (s_tr - np.mean(s_tr)) / np.std(s_tr)
+
+    s_va = rng.standard_normal(n_va)
+    s_va = (s_va - np.mean(s_va)) / np.std(s_va)
+
+    y_tr_real = rng.standard_normal(n_tr) * 0.01
+    y_va_real = rng.standard_normal(n_va) * 0.01
+
+    calib_noise_tr = [generate_circular_shifted_noise(y_tr_real, seed=100 + k) for k in range(50)]
+
+    for target in [0.005, 0.01, 0.02, 0.03, 0.05]:
+        a = calibrate_signal_amplitude(s_tr, calib_noise_tr, target_ic=target, tol=1e-4)
+
+        # 1. Train oracle IC mean across the K=50 noise draws must be within target +- 0.001
+        tr_ics = [compute_continuous_metrics(a * s_tr + e, s_tr)["spearman_ic"] for e in calib_noise_tr]
+        tr_mean = float(np.mean(tr_ics))
+        assert abs(tr_mean - target) <= 0.001, f"Target {target} Train mean {tr_mean} deviated by {abs(tr_mean - target)}"
+
+        # 2. Val oracle IC across independent noise draws has sampling SD in [0.005, 0.015]
+        val_noise = [generate_circular_shifted_noise(y_va_real, seed=2000 + r) for r in range(50)]
+        va_ics = [compute_continuous_metrics(a * s_va + e, s_va)["spearman_ic"] for e in val_noise]
+        va_sd = float(np.std(va_ics))
+        assert 0.005 <= va_sd <= 0.015, f"Target {target} Val SD {va_sd} outside [0.005, 0.015]"
+
+
+def test_mde_injection_synthetic_dry_run() -> None:
+    """Dry run of full MDE injection pipeline with R=5 on synthetic features."""
+    import tempfile
+    from pathlib import Path
+    from research.pipeline.mde_injection_v2 import run_mde_injection_experiment
+
+    rng = np.random.default_rng(42)
+    d = 8
+    n_tr, n_va = 31556, 10504
+    synth_features = {
+        "real": (rng.standard_normal((n_tr, d)), rng.standard_normal((n_va, d))),
+        "random": (rng.standard_normal((n_tr, d)), rng.standard_normal((n_va, d))),
+        "scramble": (rng.standard_normal((n_tr, d)), rng.standard_normal((n_va, d))),
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_out = Path(tmpdir) / "mde_dry_run.json"
+        res = run_mde_injection_experiment(
+            output_path=tmp_out,
+            repetitions=5,
+            bootstrap_samples=50,
+            target_ics=(0.0, 0.01),
+            signal_forms=("momentum",),
+            features_dict=synth_features,
+            verify_hashes=False,
+        )
+
+        assert res["EXPLORATORY_POST_HOC"] is True
+        assert res["DOES_NOT_CHANGE_PHASE5_VERDICT"] is True
+        assert "detection_monotonicity" in res
+        mono_real = res["detection_monotonicity"]["momentum"]["real"]
+        assert "is_monotonic_with_mc_tol" in mono_real
+        assert "detection_rates" in mono_real
+
+        entry = res["detailed_results"]["momentum"]["0.0100"]
+        assert "calibrated_amplitude" in entry
+        assert "oracle_ic_train_mean" in entry
+        assert "oracle_ic_val_mean" in entry
+        assert "oracle_ic_val_std" in entry
+        assert abs(entry["oracle_ic_train_mean"] - 0.01) <= 0.002
+        assert 0.005 <= entry["oracle_ic_val_std"] <= 0.015
 
 
 def test_split_whitelist_raises_on_dev_test_v1() -> None:

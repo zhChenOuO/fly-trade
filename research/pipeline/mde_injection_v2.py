@@ -105,37 +105,76 @@ def generate_circular_shifted_noise(
 
 def calibrate_signal_amplitude(
     s_t: np.ndarray,
-    eps: np.ndarray,
+    eps: np.ndarray | list[np.ndarray],
     target_ic: float,
-    tol: float = 0.001,
-    max_iters: int = 40,
+    tol: float = 1e-4,
+    max_iters: int = 50,
 ) -> float:
-    """Calibrate amplitude `a` such that Spearman IC(s_t, a * s_t + eps) equals target_ic."""
+    """Calibrate amplitude `a` such that average Spearman IC across noise sample(s) equals target_ic.
+
+    When `eps` is a list/tuple of noise arrays or a 2D array, calibration matches the
+    average oracle Spearman IC across the K noise draws to `target_ic` via monotonic bisection.
+    """
     _require_finite("calibration signal", s_t)
-    _require_finite("calibration noise", eps)
     _require_finite("calibration target", target_ic)
     if target_ic <= 0.0:
         return 0.0
 
-    # Ensure s_t is standardized
-    s_std = (s_t - np.mean(s_t)) / (np.std(s_t) + 1e-12)
-    eps_scale = float(np.std(eps)) if np.std(eps) > 1e-12 else 1.0
+    if isinstance(eps, (list, tuple)):
+        eps_list = [np.asarray(e, dtype=np.float64) for e in eps]
+    elif isinstance(eps, np.ndarray) and eps.ndim == 2:
+        eps_list = [eps[i] for i in range(len(eps))]
+    else:
+        eps_arr = np.asarray(eps, dtype=np.float64)
+        eps_list = [eps_arr]
+
+    for i, e in enumerate(eps_list):
+        _require_finite(f"calibration noise [{i}]", e)
+
+    s_std_val = float(np.std(s_t))
+    s_scale = s_std_val if s_std_val > 1e-12 else 1.0
+    eps_scales = [float(np.std(e)) for e in eps_list if np.std(e) > 1e-12]
+    eps_scale = float(np.mean(eps_scales)) if eps_scales else 1.0
+
+    def _eval_mean_ic(a_val: float) -> float:
+        ics = [
+            compute_continuous_metrics(a_val * s_t + e, s_t)["spearman_ic"]
+            for e in eps_list
+        ]
+        return float(np.mean(ics))
+
+    # Check baseline correlation at a = 0
+    ic_zero = _eval_mean_ic(0.0)
+    _require_finite("calibration IC at zero", ic_zero)
+    if ic_zero >= target_ic:
+        if abs(ic_zero - target_ic) <= tol:
+            return 0.0
+        raise RuntimeError(
+            f"Signal calibration failed at a=0: baseline IC ({ic_zero:.6f}) exceeds target ({target_ic:.6f})."
+        )
 
     # Find bracket [a_low, a_high]
     a_low = 0.0
-    a_high = eps_scale * 0.1
-    ic_high = compute_continuous_metrics(a_high * s_std + eps, s_std)["spearman_ic"]
+    a_high = (eps_scale / s_scale) * 0.1 if eps_scale > 1e-12 else 0.1
+    ic_high = _eval_mean_ic(a_high)
+    _require_finite("calibration IC high bracket", ic_high)
 
     while ic_high < target_ic and a_high < 1e6:
         a_low = a_high
         a_high *= 2.0
-        ic_high = compute_continuous_metrics(a_high * s_std + eps, s_std)["spearman_ic"]
+        ic_high = _eval_mean_ic(a_high)
+        _require_finite("calibration IC high bracket", ic_high)
+
+    if ic_high < target_ic:
+        raise RuntimeError(
+            f"Signal calibration failed to bracket target: target_ic={target_ic:.6f}, max_ic={ic_high:.6f} at a={a_high:.2e}"
+        )
 
     # Binary search
     for _ in range(max_iters):
         a_mid = 0.5 * (a_low + a_high)
-        ic_mid = compute_continuous_metrics(a_mid * s_std + eps, s_std)["spearman_ic"]
-        _require_finite("calibration IC", ic_mid)
+        ic_mid = _eval_mean_ic(a_mid)
+        _require_finite("calibration IC mid", ic_mid)
         if abs(ic_mid - target_ic) <= tol:
             return float(a_mid)
         if ic_mid < target_ic:
@@ -144,8 +183,8 @@ def calibrate_signal_amplitude(
             a_high = a_mid
 
     amplitude = float(0.5 * (a_low + a_high))
-    achieved_ic = compute_continuous_metrics(amplitude * s_std + eps, s_std)["spearman_ic"]
-    _require_finite("calibrated amplitude and IC", np.asarray([amplitude, achieved_ic]))
+    achieved_ic = _eval_mean_ic(amplitude)
+    _require_finite("calibrated amplitude and achieved IC", np.asarray([amplitude, achieved_ic]))
     if abs(achieved_ic - target_ic) > tol:
         raise RuntimeError(
             f"Signal calibration failed after {max_iters} iterations: "
@@ -533,6 +572,7 @@ def run_mde_injection_experiment(
     variants = list(feature_matrices.keys())
     results_tree: dict[str, dict[str, dict]] = {s_name: {} for s_name in signals}
     mde_table: dict[str, dict[str, str | float]] = {s_name: {} for s_name in signals}
+    detection_monotonicity_by_signal: dict[str, dict] = {}
 
     for s_name, s_data in signals.items():
         s_tr = s_data["train"]
@@ -540,29 +580,44 @@ def run_mde_injection_experiment(
 
         for target_ic in target_ics:
             ic_str = f"{target_ic:.4f}"
+
+            # 1. Calibrate ONE amplitude a on Train using K=50 independent circular shift noise draws
+            if target_ic <= 0.0:
+                a_calib = 0.0
+            else:
+                calib_base_seed = seed + 50000 + int(round(target_ic * 10000))
+                calib_noise_tr = [
+                    generate_circular_shifted_noise(y_train_real, seed=calib_base_seed + k, block_size=24)
+                    for k in range(50)
+                ]
+                a_calib = calibrate_signal_amplitude(s_tr, calib_noise_tr, target_ic=float(target_ic), tol=1e-4)
+
+            _require_finite("calibrated amplitude", a_calib)
+
             rep_stats: dict[str, list[dict]] = {v: [] for v in variants}
             delta_stats: dict[str, list[dict]] = {"real_vs_random": [], "real_vs_scramble": []}
+            oracle_ics_tr = []
             oracle_ics_val = []
 
             for r in range(repetitions):
-                rep_seed = seed + 10000 * r + int(target_ic * 1000)
+                rep_seed = seed + 10000 * r + int(round(target_ic * 10000))
 
                 # Generate circularly shifted noise
                 eps_tr = generate_circular_shifted_noise(y_train_real, seed=rep_seed, block_size=24)
                 eps_va = generate_circular_shifted_noise(y_val_real, seed=rep_seed + 1, block_size=24)
 
-                # Calibrate amplitude on Train and Val independently to achieve oracle target IC
-                a_tr = calibrate_signal_amplitude(s_tr, eps_tr, target_ic, tol=0.001)
-                a_va = calibrate_signal_amplitude(s_va, eps_va, target_ic, tol=0.001)
-
-                y_synth_tr = a_tr * s_tr + eps_tr
-                y_synth_va = a_va * s_va + eps_va
+                # Same calibrated amplitude applied to both Train and Val
+                y_synth_tr = a_calib * s_tr + eps_tr
+                y_synth_va = a_calib * s_va + eps_va
                 _require_finite("synthetic train labels", y_synth_tr)
                 _require_finite("synthetic validation labels", y_synth_va)
 
-                oracle_ic = compute_continuous_metrics(y_synth_va, s_va)["spearman_ic"]
-                _require_finite("oracle validation IC", oracle_ic)
-                oracle_ics_val.append(oracle_ic)
+                oracle_ic_tr = compute_continuous_metrics(y_synth_tr, s_tr)["spearman_ic"]
+                oracle_ic_va = compute_continuous_metrics(y_synth_va, s_va)["spearman_ic"]
+                _require_finite("oracle train IC", oracle_ic_tr)
+                _require_finite("oracle validation IC", oracle_ic_va)
+                oracle_ics_tr.append(oracle_ic_tr)
+                oracle_ics_val.append(oracle_ic_va)
 
                 # Train Ridge models via cached spectral solver (identical to PureNumpyRidge)
                 preds_va = {}
@@ -612,6 +667,9 @@ def run_mde_injection_experiment(
             # Aggregate over repetitions for this target_ic
             agg_entry = {
                 "target_ic": float(target_ic),
+                "calibrated_amplitude": float(a_calib),
+                "oracle_ic_train_mean": float(np.mean(oracle_ics_tr)),
+                "oracle_ic_train_std": float(np.std(oracle_ics_tr)),
                 "oracle_ic_val_mean": float(np.mean(oracle_ics_val)),
                 "oracle_ic_val_std": float(np.std(oracle_ics_val)),
                 "variants": {},
@@ -659,6 +717,21 @@ def run_mde_injection_experiment(
                     break
             mde_table[s_name][v] = mde_val
 
+        # Check monotonicity across target ICs for each variant
+        mono_info = {}
+        for v in variants:
+            rates = [float(results_tree[s_name][f"{t:.4f}"]["variants"][v]["detection_rate"]) for t in target_ics]
+            mc_margin = float(max(0.05, 1.96 * np.sqrt(0.25 / repetitions)))
+            is_mono = all(rates[i+1] >= rates[i] - mc_margin for i in range(len(rates) - 1))
+            is_strict_mono = all(rates[i+1] >= rates[i] for i in range(len(rates) - 1))
+            mono_info[v] = {
+                "detection_rates": rates,
+                "is_monotonic_with_mc_tol": bool(is_mono),
+                "is_strictly_monotonic": bool(is_strict_mono),
+                "mc_margin": mc_margin,
+            }
+        detection_monotonicity_by_signal[s_name] = mono_info
+
     # Assemble final output
     output_payload = {
         "EXPLORATORY_POST_HOC": True,
@@ -687,6 +760,7 @@ def run_mde_injection_experiment(
             ),
         },
         "mde_summary_by_signal_and_variant": mde_table,
+        "detection_monotonicity": detection_monotonicity_by_signal,
         "detailed_results": results_tree,
     }
     _require_finite_tree(output_payload)
