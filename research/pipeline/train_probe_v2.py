@@ -412,7 +412,10 @@ def run_probe_v2(
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
-    labels = pd.read_parquet(labels_path)
+    labels = pd.read_parquet(
+        labels_path,
+        filters=[("split", "in", ["train", "val"])],
+    )
     validate_split_name("train")
     validate_split_name("val")
 
@@ -476,7 +479,10 @@ def run_probe_v2(
 
     # 3. Control (a): Nuisance-only Probe
     print("Evaluating Control (a): Nuisance-only probe (7 renderer features)...")
-    samples = pd.read_parquet(DATA_DIR / "samples.parquet")
+    samples = pd.read_parquet(
+        DATA_DIR / "samples.parquet",
+        filters=[("split", "in", ["train", "val"])],
+    )
     raw = pd.read_parquet(DATA_DIR / "raw_ohlcv.parquet")
     images_mmap = np.load(DATA_DIR / "images.npy", mmap_mode="r")
     n_tr_used = n_train
