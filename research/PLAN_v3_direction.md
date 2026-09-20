@@ -178,3 +178,62 @@ Phase 6B 的 `z_i = Σ(W_ij+Δ_ij)x_j` 以凍結動力學下的上游平均活�
 - **修改 Phase 0 描述：** `SPEC_v3.md` 不只與 `phase0_report_remote.json` 矛盾，它明載 Amendment 2 是看到 PC-2 結果後才將其降為非 gate。故不得把後改規則後的 GO 當完全先驗凍結的成功；遠端報告的原 gate 狀態是 STOP。PC-1、PC-3 個別成功仍可報告，但整體 S4 不可被重述成沒有事後改規則。
 - **修改停止建議的語氣：** 停止的是目前市場／交易確認性主張與新的 holdout 成本投入；不是宣稱所有細小效果為零。Phase 5 的區間與 MDE 要分開呈現：本次效應未達門檻，以及對更小效應的辨識力各自回答不同問題。
 - **更正本節的 graph 計時：** 各 99 個 random/scramble control 共 198 個 graph；以每圖約 5.8 分鐘計約 19 小時。先前寫約 10 小時是算術錯誤，以上述更正為準。
+
+## 交叉詰問回覆 II（Phase 6 後）
+
+### Q1. Phase 6 程式獨立審查
+
+**總判定：樣本排序與 Train/Val 隔離的程式檢查完整；6B 的自由參數實際作用、loss、尺度與輸出記錄不足以支持「已測到突觸可塑性」或「真實拓樸帶來增量」的解讀。** `origin/remote/phase6` 的 `run_phase6.py` 只允許 `train`、`val`；輸出記錄亦標示未讀取 forbidden split。以下判斷只依程式與現存 Train/Val 摘要，不涉及 test labels。
+
+- **特徵與標籤順序：未發現本次錯位（低嚴重度；修正不會改變結果）。** `_read_allowed_split` 兩邊都按 `sample_id` 排序並逐列比對；Phase 5 feature sidecar 另核對 sample-ID hash、feature SHA256、shape 與有限值。6A 對特徵套用 label valid mask；6B upstream 保留完整 sample rows，本次 Train/Val 都是 0 筆 NaN label，長度仍一致，任何未來非零 drop 會被 selector 長度檢查擋下。輸出為 Train 31,556、Val 10,504，兩邊 `dropped_nan_labels=0`。資料集建置器按時間順序遞增指派 `sample_id`，所以內層時間切分的排序前提有來源保證。
+- **Huber 尾部：標準化無洩漏，但不是穩健尺度（中嚴重度；是否改變比較無法由摘要判定）。** target mean/std 只由內層 Train 計算，Huber `delta=1` 對標準化殘差採線性尾損失；但標準差仍會受極端值影響，沒有 clipping/winsorization。結果檔未提供 target 分位數或超過一個標準差的比例，故不能斷言尾部已造成結果，也不能確認其影響很小。
+- **HOLD 處理：標籤映射正確，退化實際發生（交易判斷高嚴重度；修正訓練目標可能改變 6B，不能挽救目前失敗結果）。** action head 以固定 `BUY/HOLD/SELL` 三類及無 class weight 的 cross-entropy 訓練，沒有漏掉 HOLD 類；但 6B-real 的 Val 預測為 588 BUY、9,916 HOLD、0 SELL，6B-null 為 100% HOLD，兩者均違反 minority-action gate。連續 IC head 仍可單獨描述，但這不構成可交易的三分類結果。
+- **超參數沒有用外部 Val 選擇（低嚴重度；沒有發現 Val selection leakage）。** `select_hyperparameters_train_only` 只接受 Train 陣列，內部分成按時間排序的 80/20 並 purge 60 bars，4 組候選以 Huber+CE+L2 的 combined loss 選擇；`run_phase6` 在全部模型完成後才用 Val 算結果。內層約 6.3k 筆用來調參不等於外部 Val。限制是只用一個內層切分，且選擇目標不是主要 IC，故超參數不穩定與估計目標錯配屬中高風險。
+- **final refit：符合程式所述流程，epoch 數仍有抽樣不確定性（中低嚴重度；不屬洩漏）。** 每個 seed 以內層選出的 hyperparameters 與 `best_epoch` 從新初始化，在完整 Train 重算 Train-only scaler 後重訓；沒有用外部 Val 決定 epoch。此法合理但受單一內層切分影響。實際 6A 選到 2–4 epochs，6B-real 為 11、23、11、23、30；不能把這些 epoch 解讀為在外部 Val 上確認的最佳值。
+- **6B weight decay 漏掉 linear heads（高嚴重度；修正可能改變 6B 結果）。** `_loss_for_batch` 對 `SparsePlasticReadout` 的 penalty 只算 active `delta`，不含 return/action linear heads；Adam 本身沒有傳 `weight_decay`。因此 YAML/grid 名稱中的 weight decay 對 6B heads 實際為零正則化，且 early-stop 的 validation combined loss 也用同一不完整 penalty。這比單純「loss 不以 IC 選擇」更直接影響 6B 的 head 大小與 action collapse。
+- **6B 未標準化且未記錄必要診斷（高嚴重度；可能改變結論）。** 6B 的 upstream activity 原樣進入 `z_i=Σ(W+Δ)x`；6A 則做 Train-only feature standardization。現存 JSON 有 source 數、float16/hash 與 collapse 比率，沒有各 feature/z 的尺度、訓練後 Δ、Δ/|W|、梯度或預測對 Δ 的敏感度，因此不能查明頭部是否受尺度壓制，也不能證明 Δ 有效移動。
+- **6B 不是遞迴網路可塑性（對原科學命題高嚴重度；更正命名本身不會改變 6B IC）。** 每筆市場窗口各自從零狀態開始，同一影像電流重複 32 步，最後只保留來源 neuron 的時間平均；訓練出的 Δ 不回寫 reservoir，也不參與狀態更新。測到的是凍結動力學活動上的稀疏靜態 readout，不是沿時間流動市場輸入的 reservoir memory，也不是網路內突觸學習。
+- **輸入噪聲、拓樸與 seed 的外推不足（高嚴重度；會改變拓樸穩健性的結論）。** upstream 活動每圖、每 split 僅用 `noise_seed=0`；5 個 seeds 是 readout 初始化／訓練種子，不是市場樣本、模擬噪聲或 graph instances。三種圖各只有 seed 0；大圖 scramble 每邊僅嘗試 0.1 次 swap，輸出沒有成功 swap 數、邊重疊率或混合診斷，故不能確認 degree-preserved null 已充分混合。需多個 graph instances 與動力學 noise seeds 才能估這些變異。
+- **統計單位與摘要欄位須分清（中高嚴重度；可翻轉模型排名）。** paired block bootstrap 對共同市場時間區塊重抽，並非把 5 seeds 當 5 倍樣本，這點正確；但主要 aggregate 指標是先平均 5 組預測後算 IC，不等於 5 個 per-seed IC 的平均。例：6B-random per-seed mean IC=0.0081，ensemble prediction IC=0.0197；6B-real 分別為 0.0173 與 0.0175，兩種摘要會翻轉 random/real 排序。正式 paired ΔIC 用的是 ensemble，全部 6B real-control CI 跨 0、Holm p=1。報告不得把 per-seed mean 當成 paired 比較所檢驗的 estimand。
+- **另一比較限制（中嚴重度；可影響 real-vs-control，但不支持當前正面結論）。** 每種圖只取一個 graph seed，且按各圖 top-|w| 邊後再全域裁到共同預算；real/null 才逐 DN 匹配邊數。活動維度與固定值比例亦不同（Train 6B-real 約 23.2% 常數/零、null 約 26.8%、random 0%、scramble 約 1.1%）。這些會混入拓樸差異。`run_phase6.py` 的 split whitelist assertion 本身是恆真檢查，但實際讀檔仍由 `_read_allowed_split` 阻止其他 split，故此處是低嚴重度防護缺陷，未發現它造成 test 存取。
+
+### Q2. 對四項診斷的判斷與數字
+
+1. **Δ 位移小：同意量級方向，不同意「≤1」是嚴格上界。** Phase6 JSON 顯示 6B-real final refit epoch 為 11–30；Train 31,556、batch 1,024，即每 epoch 31 次 optimizer step；最大 lr=0.001。若 Adam 每步每座標的正規化更新量約為 1，名目累積位移為 0.001×31×epoch，即各 seed 約 0.34–0.93。以交叉詰問提供、但本 checkout 無 graph cache 可獨立重算的 |W| 中位數 9–21、p90 48–92、最大 600+ 計，名目相對變化分別約 1.6–10.3%、0.37–1.94%、低於 0.16%。這只是一階尺度估算：Adam 的 moment 比值沒有被程式限制在 1，Δ 沒有 clipping，故不是數學上界；|W| 也不能代表 Δx 對 z 的效果。現有檔案缺 `graph_cache.npz`、upstream `*_train.npy`、final model state/Δ，且 JSON 不存 x/z moments 或 Δ，所以精確相對位移及功能影響不可驗證。6B 即使 Δ 很小仍是在固定 z 上訓練線性 heads；稱為近似固定特徵 readout 合理，稱「實際測了遞迴突觸可塑性」不合理。
+2. **6B 缺輸入標準化：同意。** 6B 明確 `scaler=None`，而 6A 以 Train 均值／標準差縮放；活動與 z 的尺度未存檔，無法估其對梯度、head 或 collapse 的實際影響。
+3. **以 combined loss 選 epoch：同意，並補充 6B 正則化不完整。** Huber+CE 等權，且 validation loss 含 L2；selection 不看 Spearman IC，也不報 loss 曲線平坦程度或候選間差距。6A 短 epoch 與 6B 11–30 epoch 是不穩定選擇的警訊，但不是 Val 洩漏證據。
+4. **無弱訊號訓練注入：同意。** `test_phase6_training.py` 的人工 signal 測試只比較隨機 target 與 `target + noise(scale=0.5)`，IC 約大於 0.5；它沒有訓練模型。稀疏遮罩測試另用小矩陣與 AdamW，並非實際 `_train_epochs` 的 Adam/Huber/CE 路徑。這些測試不能證明在 31,556/10,504 樣本、時序依賴及 IC 0.03/0.05 時有足夠檢定力。
+
+### Q3. 監督式訓練已驗證到哪裡
+
+**判定：資料對齊、split 白名單、有限值、模型 I/O、訓練函式與輸出彙總的部分工程契約有檢查；Phase 6 監督式學習對弱訊號的可恢復性尚未驗證。**
+
+- **已驗證：** runner 使用 Train/Val 白名單；sample IDs、Phase 5 feature hashes、樣本數與 valid mask 對齊；Train/Val 均無 dropped NaN；selector API 不接受外部 Val；purge、輸出 shape、finite、mask 梯度及模型可回傳 3 logits 有小型測試。Phase 6 一致性檢查顯示前 100 筆 Val 的原始 W 加權活動與 frozen DN 讀出可對上（flattened Pearson r=0.261；每 DN r 中位數 0.849），但這只驗證部分運算對應，不驗證 target 訊號。
+- **未驗證：** 在真實規模 feature 上跑完整 Train-only 選參、refit 與 Val 評估能否回收已知 IC 0.03/0.05；weak-signal power、null 假陽性率、尾部和尺度敏感度、連同 HOLD 的三類學習；6B Δ 是否真的改變預測。Phase 5 MDE 是 Ridge，不是 Phase 6 MLP/6B。`run_phase6.py` 硬讀市場 label parquet，沒有注入介面；直接呼叫相同 training functions 的 harness 能驗證 trainer，但要宣稱驗證 runner 全流程還須有獨立、合成標籤的 orchestration 測試。Phase 6 JSON 亦明列 `PHASE6_OVERRIDE_EXPLORATORY`，多項門檻標為 `PROPOSED_NEEDS_USER_CONFIRMATION`，故本次結果不是 confirmation gate。
+- **最低可解讀測試：** 先做一個直接 feature-teacher 正控制，確認同一 trainer 能從預先凍結的 feature 線性組合回收 IC=0.05；再做 Batch 5 momentum 端到端測試：`s_t=log(C_{t-1}/C_{t-7})`（只取當下可見的前 6 根 bar），用已鎖定的實際 Phase 6 Train/Val features 生成 `y=βs_t+ε_t`。β 僅用 Train 校準，noise 由 Train-only 分布／事前固定 block generator 產生；Val noise 獨立，不得為了把 Val oracle IC 調到目標而另行改 β。做 IC=0、0.03、0.05 三種，合成 action 也只由合成 y 和凍結門檻生成；完整保留 4 組內層選參、5 個 model seeds、refit、同一 24-sample block bootstrap。IC 0.03/0.05 的「回收」建議定義為至少 2/3 oracle IC 且模型 Val block-CI 下界大於 0；100 組獨立合成 noise cohort 中，0.03 的回收率 Wilson 95% 下界須 ≥0.80，IC=0 的家族錯誤率上界須 ≤0.05。直接 teacher 失敗表示 trainer/尺度有問題；teacher 通過、momentum 失敗表示輸入表徵未保留此訊號。Val 標籤在此是獨立合成標籤，不是市場未來標籤；這仍只校準固定 feature panel 下的條件 power，不代表新市場樣本 power。
+- **成本：** Phase 6 全流程記錄 7,813 秒（2.17 小時）RTX 5070 elapsed，其中 upstream 萃取約 19 分鐘，GPU active time 沒有獨立記錄。若快取 features，一組含 real 6A/6B 與 IC 0/0.03/0.05 六個模型條件的合成 cohort 約 1.6–1.9 GPU-equivalent 小時；100 組約 160–187 小時，按既有 elapsed 線性縮放，另加一組 direct-feature teacher 約 0.5–0.6 小時及 harness 工時。單一 cohort 可用約 2 小時作工程 sanity check，但不能宣稱已估得 80% power。精確檢定力驗證成本不符合本計畫建議上限，故不建議為重跑 Phase 6B 花這筆預算。
+
+### Q4. 可行方向、成功率、成本與唯一推薦
+
+**仍有繼續研究的可能，但限於改問「真實連接體拓樸是否對已知時間序列計算任務提供歸納偏置」；原市場交易確認性路線停止。** 下列機率均是以明確成功事件為條件的主觀決策先驗，不是資料估計；三條路線的成功事件不同。
+
+- **A. 標準合成時間序列 reservoir 任務（推薦）。** 主測 NARMA10，Mackey–Glass 與 Lorenz 只作事前 secondary；主要成功事件定為真實圖相對至少 20 個 random 與 20 個充分混合 degree-preserved scramble graph 的 median，NARMA10 holdout NMSE 至少降低 5%，且 graph-instance/時間 block 配對區間下界大於 0。主觀機率約 **15%（範圍 5–30%）**。這比市場資料更直接測非線性時間記憶，但不能回答可交易性。輸入須採可說明的感覺路徑：優先用已有 annotation/retinotopic 座標把標量時間序列映成固定全視野亮度，再由 photoreceptor 輸入；不得隨機投影或看結果換 sensory group。simulation 必須跨連續 t 保留 state 並事前鎖定 washout；Phase 6 現在每窗口歸零、重播 32 步再平均的流程不能直接拿來測時間記憶。1291 個既選 DN 可保留為同一固定活動向量，丟掉 BUY/SELL 語義，改用單一 Train-only ridge scalar readout；若改成全神經元 readout，視為另一研究，不得看 benchmark 結果後挑。估計 3–4 個工作天、至多 8 GPU-h，前提是首日確認可追蹤 state 的模擬器與固定 sensory mapping；此為工作量上限而非已量測工時。
+- **B. 修正 6B 再跑市場。** 即使改成 Δ=W⊙ρ、Train-only 標準化、以 IC 早停，也是在看過 Val 後的新模型；同 Val 只能 exploratory，不能確認。要回到市場確認需再做上述弱訊號驗證並另找未碰過的未來 holdout；偵測 ΔIC≈0.01 的先前樂觀規劃量級約 4.5 年，10,504 筆則約 208 天，但樣本相依會增加成本。主觀機率：取得「新資料上真實拓樸市場 ΔIC≥0.01 且可交易」約 **2%（範圍 0.5–5%）**；單跑同 Val 得正點估計不計成功。修正與單輪重跑約 1–2 工作天、2–4 GPU-h；弱訊號 power 若按 Q3 達標需約 160–190 GPU-h，另加新 holdout 等待時間。因此不推薦。
+- **C. 停止並封存市場問題。** 新增正面科學發現機率為 0；依既有 frozen gates 封存「本設定未達所需效果」的決策確定性為 100%。成本 0 GPU、小於半個工作天。此路線正確保留負結果與結論界線，但放棄測試拓樸一般計算能力。
+
+**唯一推薦 A，總預算上限 8 GPU-h、4 工作天；不得用超支或換 benchmark 補救失敗。** 先做 stateful simulation 與固定 sensory/readout mapping 的小型正負控制；超過 1 個工作天仍無法證明 sample/state 對齊，或 0.05 planted signal 未被既定 ridge readout 回收，就停。通過後才做凍結的 NARMA10 主測；real 未達 5% NMSE 增益、區間包含 0、或與 controls 的差異只出現在單一 seed/graph，就結案，不再改 mapping、readout 或 primary task。
+
+### Q5. 先驗校準與前一輪建議修正
+
+- **6A 全 matched-control pass：舊先驗 10%。** 這次實際結果已知為 FAIL；對一個未來、獨立複現仍照原市場 protocol 通過的主觀機率下修至 **2%**。五 seed mean IC 雖為 0.0121，並未顯示穩定 real-control 增量。
+- **6B 全 matched-control/null pass：舊先驗 5%。** 實際結果 FAIL，且 real 有 0 SELL、與 100% HOLD 的 null 在 IC 上相近。若只是修 code 後對舊 Val 重跑，通過的確認性機率仍是 **0%**；若指新資料的未來市場成功，估 **1–2%**。
+- **市場真實拓樸 ΔIC≥0.01：舊先驗 10%。** 下修到 **約 2%**（主觀寬範圍 0.5–8%）；6B-real 對 random 的正式 ensemble ΔIC=-0.0023、95% CI [-0.0239, 0.0202]；對 scramble Δ=0.0124、CI [-0.0127, 0.0376]；對 null Δ=0.0025、CI [-0.0147, 0.0187]，Holm p 均 1。點估計不能抵銷不確定性、action collapse 及單一 graph instance。
+- **波動方向 C：舊先驗 20%。** Phase 6 target 是 future return/action，不是 future volatility，故不以本次結果更新；維持 **20%** 僅為尚未校準的主觀先驗。
+
+先前若把 6B「五個 seed 的穩定度」說成拓樸訊號較可信，判斷過度：五個 seeds 共用相同市場樣本與 `noise_seed=0` 活動，且 real-null 都穩定、random 的 ensemble 排序反而翻轉。先前對 Phase 6B 可解讀性的正面期待應撤回；現有 evidence 只支持精確報告探索性輸出與停止原市場確認性主張。
+
+### Q6. 6B 穩定 IC 的不回看 Val 判別法
+
+**目前不能在「真實上游活動含弱預測訊號」與「固定特徵加低變動線性 head」之間作因果判定。** 6B-real per-seed mean IC 0.0173、SD 0.00068；null 為 0.0149、SD 0.00101。兩者都使用 real connectome 的相同 upstream activity bank，只改抽取的 incoming edge set；這種相近且穩定的結果不支持真實局部拓樸優勢。per-seed 預測分布不是獨立市場樣本，亦未涵蓋 simulator-noise 變異。
+
+可先用 Train-only 作診斷：凍結目前 real Train activities，在相同 purged expanding-time folds 重訓三個版本——`Δ=0` 的固定 W linear head、現有 sparse-Δ head、matched 6B-null head；每一 outer fold 的 hparam selection 只能用該 fold 內資料，並輸出 out-of-fold IC/loss、有效 Δ/|W| 分布、z 尺度與零訊號 permutation 結果。若 Δ-head 對 W-only 的 OOF 增益未達 0.01 IC 且區間含 0，結果與固定表示/readout 足以解釋相容，不能宣稱 Δ 貢獻或拓樸效果；若增益跨 folds、seed 與新 simulator-noise seed 重複，才是「Train 內可學到」的證據，仍不是外部市場泛化證據。此為看過研究結果後的 Train-only 診斷，不具確認性；若要判定它能否延續到新市場，仍需新資料。
