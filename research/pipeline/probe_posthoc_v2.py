@@ -390,11 +390,24 @@ def verify_reproduction(
     probe_val_data: dict,
     tolerance: float = 1e-4,
 ) -> None:
-    """Verify that retrained models match probe_val.json values exactly."""
+    """Verify retrained model ICs against their recorded probe_val.json fields."""
     models_dict = probe_val_data.get("models", {})
+    expected_ics = {
+        f"{variant}_{model_type}": models_dict[variant][model_type]["continuous"]["spearman_ic"]
+        for variant in ("real", "random", "scramble")
+        for model_type in ("ridge", "logistic")
+    }
+    expected_ics.update({
+        f"nuisance_{model_type}": models_dict["nuisance_only"][model_type]["continuous"]["spearman_ic"]
+        for model_type in ("ridge", "logistic")
+    })
+    expected_ics["ohlcv_ridge"] = models_dict["ohlcv_baselines"]["B1a_ridge_ic"]
+    expected_ics["ohlcv_logistic"] = models_dict["ohlcv_baselines"]["B1b_logistic_ic"]
+
     for key, obs_ic in observed_ics.items():
-        variant, model_type = key.split("_")
-        expected_ic = models_dict[variant][model_type]["continuous"]["spearman_ic"]
+        if key not in expected_ics:
+            raise KeyError(f"No recorded probe_val.json IC for reproduction key {key!r}")
+        expected_ic = expected_ics[key]
         diff = abs(obs_ic - expected_ic)
         if diff > tolerance:
             raise RuntimeError(
