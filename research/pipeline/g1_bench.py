@@ -64,14 +64,17 @@ G1_SEEDS_SHA256: str = hashlib.sha256(_SEEDS_PAYLOAD.encode("utf-8")).hexdigest(
 # NARMA10 Generators & Sealed Test Access (SPEC §2, §9)
 # ==============================================================================
 
-def generate_narma10_reference(u: np.ndarray) -> tuple[np.ndarray, np.ndarray, dict]:
+def generate_narma10_reference(
+    u: np.ndarray,
+    u_negative: np.ndarray | None = None,
+) -> tuple[np.ndarray, np.ndarray, dict]:
     """Reference step-by-step for-loop implementation of discrete NARMA10.
 
     Recurrence equation:
         y[t+1] = 0.3 * y[t] + 0.05 * y[t] * sum_{k=0..9}(y[t-k]) + 1.5 * u[t] * u[t-9] + 0.1
     where:
         u[t] ~ Uniform[0, 0.5]
-        Initial history: y[-9..0] = 0.0, u[k] = 0.0 for k < 0.
+        Initial history: y[-9..0] = 0.0, u[-9..-1] via explicit u_negative mapping if provided, else 0.0.
 
     Alignment:
         At time step t, the reservoir receives input u[t] and targets y_next[t] = y[t+1].
@@ -82,8 +85,20 @@ def generate_narma10_reference(u: np.ndarray) -> tuple[np.ndarray, np.ndarray, d
     T = len(u)
     y = np.zeros(T + 1, dtype=np.float64)
 
+    if u_negative is not None:
+        u_neg = np.asarray(u_negative, dtype=np.float64)
+        if len(u_neg) != 9:
+            raise ValueError(f"Expected u_negative of length 9 for u[-9..-1], got {len(u_neg)}")
+    else:
+        u_neg = np.zeros(9, dtype=np.float64)
+
     for t in range(T):
-        u_lag = u[t - 9] if t >= 9 else 0.0
+        if t >= 9:
+            u_lag = u[t - 9]
+        else:
+            # Explicit index mapping: t=0 -> u_neg[0] (u[-9]), t=8 -> u_neg[8] (u[-1])
+            u_lag = u_neg[t]
+
         sum_y = 0.0
         for k in range(10):
             if t - k >= 0:
@@ -94,13 +109,16 @@ def generate_narma10_reference(u: np.ndarray) -> tuple[np.ndarray, np.ndarray, d
         "generator": "reference_for_loop",
         "first_valid_lag_step": 9,
         "first_valid_target_index": 10,
-        "initial_history_rule": "y[-9..0]=0, u[<0]=0",
+        "initial_history_rule": "y[-9..0]=0, u[-9..-1] explicit mapping",
         "length": T,
     }
     return u.astype(np.float64), y[1:], metadata
 
 
-def generate_narma10_vectorized(u: np.ndarray) -> tuple[np.ndarray, np.ndarray, dict]:
+def generate_narma10_vectorized(
+    u: np.ndarray,
+    u_negative: np.ndarray | None = None,
+) -> tuple[np.ndarray, np.ndarray, dict]:
     """Sliding-window buffer implementation of discrete NARMA10.
 
     Maintains a 10-element ring/history buffer with identical arithmetic order
@@ -113,8 +131,19 @@ def generate_narma10_vectorized(u: np.ndarray) -> tuple[np.ndarray, np.ndarray, 
     y_next = np.empty(T, dtype=np.float64)
     hist = np.zeros(10, dtype=np.float64)
 
+    if u_negative is not None:
+        u_neg = np.asarray(u_negative, dtype=np.float64)
+        if len(u_neg) != 9:
+            raise ValueError(f"Expected u_negative of length 9 for u[-9..-1], got {len(u_neg)}")
+    else:
+        u_neg = np.zeros(9, dtype=np.float64)
+
     for t in range(T):
-        u_lag = u[t - 9] if t >= 9 else 0.0
+        if t >= 9:
+            u_lag = u[t - 9]
+        else:
+            u_lag = u_neg[t]
+
         yt = hist[-1]
         sum_y = 0.0
         for k in range(10):
@@ -128,7 +157,7 @@ def generate_narma10_vectorized(u: np.ndarray) -> tuple[np.ndarray, np.ndarray, 
         "generator": "sliding_buffer_vectorized",
         "first_valid_lag_step": 9,
         "first_valid_target_index": 10,
-        "initial_history_rule": "y[-9..0]=0, u[<0]=0",
+        "initial_history_rule": "y[-9..0]=0, u[-9..-1] explicit mapping",
         "length": T,
     }
     return u.astype(np.float64), y_next, metadata
@@ -139,13 +168,14 @@ def generate_narma10_sequence(
     valid_length: int,
     washout: int = WASHOUT_STEPS,
     split_tag: str = "train",
+    u_negative: np.ndarray | None = None,
 ) -> dict:
     """Generate a single NARMA10 stream with pre-pended washout steps."""
     total_length = valid_length + washout
     rng = np.random.default_rng(seed)
     u = rng.uniform(0.0, 0.5, size=total_length).astype(np.float64)
 
-    u, y_next, meta = generate_narma10_reference(u)
+    u, y_next, meta = generate_narma10_reference(u, u_negative=u_negative)
     meta["seed"] = seed
     meta["split"] = split_tag
     meta["valid_length"] = valid_length
@@ -355,6 +385,8 @@ class G1RidgeReadout:
         assert n_seqs == 10, f"Expected exactly 10 Train sequences for group CV, got {n_seqs}"
 
         cv_losses: dict[float, list[float]] = {a: [] for a in self.alphas}
+        oof_preds: dict[float, list[np.ndarray]] = {a: [] for a in self.alphas}
+        oof_targets: list[np.ndarray] = []
         val_size = n_seqs // n_folds  # 2 sequences per fold
 
         for f in range(n_folds):
@@ -366,6 +398,7 @@ class G1RidgeReadout:
             y_tr_fold = np.concatenate([sequence_targets[i] for i in tr_seq_idx], axis=0)
             X_va_fold = np.concatenate([sequence_features[i] for i in va_seq_idx], axis=0)
             y_va_fold = np.concatenate([sequence_targets[i] for i in va_seq_idx], axis=0)
+            oof_targets.append(y_va_fold)
 
             # Train-only standardization for this fold
             X_tr_std, mu_act, std_act, act = self._standardize_train(X_tr_fold)
@@ -385,14 +418,21 @@ class G1RidgeReadout:
                 pred_va = X_va_std @ B_a + b0_a
                 nmse_val = compute_nmse(pred_va, y_va_fold)
                 cv_losses[a].append(nmse_val)
+                oof_preds[a].append(pred_va)
 
-        # Average NMSE across folds
+        # Pooled OOF NMSE across all held-out sequences (SPEC v2 §4.3, A10)
+        y_oof_full = np.concatenate(oof_targets, axis=0)
+        pooled_oof_losses: dict[float, float] = {}
+        for a in self.alphas:
+            p_oof_full = np.concatenate(oof_preds[a], axis=0)
+            pooled_oof_losses[a] = compute_nmse(p_oof_full, y_oof_full)
+
         mean_losses = {a: float(np.mean(cv_losses[a])) for a in self.alphas}
-        min_loss = min(mean_losses.values())
+        min_loss = min(pooled_oof_losses.values())
 
-        # Select alpha with minimum mean NMSE; tie-break: select LARGER alpha
+        # Select alpha with minimum pooled OOF NMSE; tie-break: select LARGER alpha
         tied_alphas = [
-            a for a, loss in mean_losses.items()
+            a for a, loss in pooled_oof_losses.items()
             if loss == min_loss or (min_loss > 0 and abs(loss - min_loss) / min_loss <= 1e-9)
         ]
         best_a = max(tied_alphas)
@@ -420,8 +460,10 @@ class G1RidgeReadout:
         self.cv_results = {
             "cv_losses_by_alpha": cv_losses,
             "mean_nmse_by_alpha": mean_losses,
+            "pooled_oof_nmse_by_alpha": pooled_oof_losses,
             "best_alpha": self.best_alpha,
             "best_cv_mean_nmse": float(mean_losses[self.best_alpha]),
+            "best_pooled_oof_nmse": float(pooled_oof_losses[self.best_alpha]),
             "alpha_at_upper_bound": alpha_at_upper,
             "alpha_zero_diagnostic": alpha_zero_diag,
             "alpha_at_boundary": alpha_at_upper,  # Backward-compatible alias for upper bound no-go
@@ -449,25 +491,37 @@ def select_r16_indices(graph: Any) -> tuple[np.ndarray, dict]:
 
     Per G1_SPEC §3, §9:
         Only photoreceptors with photoreceptor_type == 'R1-6' and finite (u, v)
-        coordinates receive uniform luminance current. R7 and R8 are not injected.
         Non-injected neurons (including R7 and R8) form the denominator of saturation gate.
     """
-    meta = graph.meta
+    meta = getattr(graph, "meta", None)
+    if meta is None or not isinstance(meta, dict):
+        raise ValueError("Graph meta must be a non-empty dictionary.")
+
     sensory_idx = np.asarray(graph.sensory_idx, dtype=np.int64)
+    if len(sensory_idx) == 0:
+        raise ValueError("Graph has empty sensory_idx.")
 
     if "photoreceptor_type" in meta:
         ptypes = np.asarray(meta["photoreceptor_type"])
-        u = np.asarray(meta.get("u", []))
-        v = np.asarray(meta.get("v", []))
+        if len(ptypes) == 0:
+            raise ValueError("Empty photoreceptor_type array in graph metadata.")
+
+        u_raw = meta.get("u")
+        v_raw = meta.get("v")
+        if u_raw is None or v_raw is None:
+            raise ValueError("Graph metadata has photoreceptor_type but is missing retina coordinates 'u' or 'v'.")
+
+        u = np.asarray(u_raw)
+        v = np.asarray(v_raw)
+        if len(u) != len(ptypes) or len(v) != len(ptypes):
+            raise ValueError(
+                f"Misaligned metadata: photoreceptor_type ({len(ptypes)}) does not match retina coords u ({len(u)}), v ({len(v)})."
+            )
 
         is_r16 = (ptypes == "R1-6")
-        if len(u) == len(ptypes) and len(v) == len(ptypes):
-            is_finite = np.isfinite(u) & np.isfinite(v)
-            mask = is_r16 & is_finite
-            n_non_finite = int(np.sum(is_r16 & ~is_finite))
-        else:
-            mask = is_r16
-            n_non_finite = 0
+        is_finite = np.isfinite(u) & np.isfinite(v)
+        mask = is_r16 & is_finite
+        n_non_finite = int(np.sum(is_r16 & ~is_finite))
         n_r7_r8 = int(np.sum((ptypes == "R7") | (ptypes == "R8")))
 
         if len(mask) == len(sensory_idx):
@@ -484,7 +538,8 @@ def select_r16_indices(graph: Any) -> tuple[np.ndarray, dict]:
         n_r7_r8 = 0
         n_non_finite = 0
 
-    assert len(r16_idx) > 0, "No valid R1-6 photoreceptor neurons found in graph."
+    if len(r16_idx) == 0:
+        raise ValueError("No valid R1-6 photoreceptor neurons found in graph.")
 
     from research.pipeline.graph_variants import compute_graph_sha256
     graph_sha = meta.get("sha256") or compute_graph_sha256(graph)

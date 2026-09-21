@@ -58,7 +58,7 @@ def test_pilot_rejects_val_and_test_sequences():
 
 
 def test_pilot_gate_evaluation_and_common_rho_selection():
-    """Verify pilot gate evaluation and rho selection on synthetic graphs."""
+    """Verify pilot runner is deprecated and strictly rejected with RuntimeError per SPEC v2 §1, §7."""
     provider = make_synthetic_pilot_provider(
         n_neurons=60,
         avg_out_degree=6.0,
@@ -67,49 +67,23 @@ def test_pilot_gate_evaluation_and_common_rho_selection():
         base_seed=42,
     )
 
-    # Use shorter Train sequences for fast unit testing (1,000 steps + 200 washout)
     fast_train_seqs = [
         generate_narma10_sequence(seed=s, valid_length=1000, washout=200)
         for s in TRAIN_SEEDS
     ]
 
-    results = run_g1_pilot(
-        graph_provider=provider,
-        candidate_rhos=(0.90, 0.95, 0.99),
-        train_sequences=fast_train_seqs,
-    )
-
-    assert "selected_rho" in results
-    assert "qualification_by_rho" in results
-    assert "family_balanced_mc_by_rho" in results
-    assert "spec_rules_hash" in results
-
-    # At least one rho must qualify on this synthetic family
-    assert results["selected_rho"] in (0.90, 0.95, 0.99)
-    assert not results["no_go"]
-
-    # Verify that selected rho has the highest family-balanced MC among qualified rhos
-    qualified = [float(r) for r in (0.90, 0.95, 0.99) if results["qualification_by_rho"][str(r)]]
-    assert results["selected_rho"] in qualified
-
-    best_qual_mc = max(results["family_balanced_mc_by_rho"][str(r)] for r in qualified)
-    assert abs(results["family_balanced_mc_by_rho"][str(results["selected_rho"])] - best_qual_mc) < 1e-6
-
-    # Verify graph hashes structure
-    for fam in PILOT_FAMILIES:
-        assert len(results["graph_hashes"][fam]) == FAMILY_INSTANCE_COUNTS[fam]
-        for sha in results["graph_hashes"][fam]:
-            assert len(sha) == 64  # Valid SHA256 hex string
+    with pytest.raises(RuntimeError, match="run_g1_pilot is deprecated and withdrawn in G1 v2"):
+        run_g1_pilot(
+            graph_provider=provider,
+            candidate_rhos=(0.90, 0.95, 0.99),
+            train_sequences=fast_train_seqs,
+        )
 
 
 def test_pilot_all_disqualified_leads_to_nogo():
-    """Verify that if all candidate rhos fail a gate, pilot triggers NO-GO."""
-    from src.connectome.synthetic import make_synthetic_connectome
-
-    # Graph with zero sensory connections or disconnected motor -> fails gates or forces failure
+    """Verify that calling deprecated pilot runner raises RuntimeError."""
     base = make_synthetic_connectome(n_neurons=40, avg_out_degree=4.0, n_sensory=5, n_motor=5, seed=123)
 
-    # Mock provider returning base graph
     def provider(family: str, instance_idx: int):
         return base
 
@@ -118,35 +92,21 @@ def test_pilot_all_disqualified_leads_to_nogo():
         for s in TRAIN_SEEDS
     ]
 
-    # Test with candidate rhos that are set very high (e.g. 1.20, 1.30) where forgetting gate fails
-    results = run_g1_pilot(
-        graph_provider=provider,
-        candidate_rhos=(1.20, 1.30),
-        train_sequences=fast_train_seqs,
-    )
-
-    assert results["no_go"] is True
-    assert results["selected_rho"] is None
-    assert len(results["no_go_reasons"]) == 2
-    for r_str in ["1.2", "1.3"]:
-        assert r_str in results["no_go_reasons"]
-        assert len(results["no_go_reasons"][r_str]) > 0
+    with pytest.raises(RuntimeError, match="run_g1_pilot is deprecated and withdrawn in G1 v2"):
+        run_g1_pilot(
+            graph_provider=provider,
+            candidate_rhos=(1.20, 1.30),
+            train_sequences=fast_train_seqs,
+        )
 
 
 def test_pilot_deterministic_reproducibility():
-    """Verify that pilot results are bitwise/numerically reproducible."""
+    """Verify that calling deprecated pilot runner raises RuntimeError consistently."""
     provider1 = make_synthetic_pilot_provider(n_neurons=40, avg_out_degree=4.0, n_sensory=8, n_motor=8, base_seed=99)
-    provider2 = make_synthetic_pilot_provider(n_neurons=40, avg_out_degree=4.0, n_sensory=8, n_motor=8, base_seed=99)
-
     fast_train_seqs1 = [generate_narma10_sequence(seed=s, valid_length=500, washout=100) for s in TRAIN_SEEDS]
-    fast_train_seqs2 = [generate_narma10_sequence(seed=s, valid_length=500, washout=100) for s in TRAIN_SEEDS]
 
-    res1 = run_g1_pilot(graph_provider=provider1, candidate_rhos=(0.90, 0.95), train_sequences=fast_train_seqs1)
-    res2 = run_g1_pilot(graph_provider=provider2, candidate_rhos=(0.90, 0.95), train_sequences=fast_train_seqs2)
-
-    assert res1["selected_rho"] == res2["selected_rho"]
-    assert res1["no_go"] == res2["no_go"]
-    assert res1["family_balanced_mc_by_rho"] == res2["family_balanced_mc_by_rho"]
+    with pytest.raises(RuntimeError, match="run_g1_pilot is deprecated and withdrawn in G1 v2"):
+        run_g1_pilot(graph_provider=provider1, candidate_rhos=(0.90, 0.95), train_sequences=fast_train_seqs1)
 
 
 def test_pilot_train_seeds_exact_match_guard():
@@ -252,8 +212,7 @@ def test_pilot_r16_sensory_selection_and_denominator():
 
 
 def test_pilot_end_to_end_go_and_gate_failure_scenarios():
-    """Verify pilot end-to-end execution for both GO and GATE_FAILURE scenarios with JSON serialization."""
-    # Fast sequences for test execution
+    """Verify that calling deprecated pilot runner raises RuntimeError."""
     fast_train_seqs = [
         generate_narma10_sequence(seed=s, valid_length=1000, washout=200)
         for s in TRAIN_SEEDS
@@ -266,48 +225,18 @@ def test_pilot_end_to_end_go_and_gate_failure_scenarios():
         base_seed=42,
     )
 
-    # 1. Scenario GO: using planted q engine factory to pass q positive-control gate
-    res_go = run_g1_pilot(
-        graph_provider=provider,
-        candidate_rhos=(0.90,),
-        train_sequences=fast_train_seqs,
-        engine_factory=make_planted_q_engine_factory(),
-        n_bootstraps=100,
-    )
-
-    assert res_go["gate_verdict"] == "GO"
-    assert res_go["no_go"] is False
-    assert res_go["no_go_category"] is None
-    assert res_go["is_valid_run"] is True
-    assert res_go["selected_rho"] == 0.90
-    assert len(res_go["spec_rules_hash"]) == 64
-    assert res_go["mc_ratio_diagnostic"]["rho"] == 0.90
-    assert res_go["nested_cv_results"]["q_gate_results"]["passed_q_gate"] is True
-
-    # Verify JSON serialization roundtrip
-    serialized = json.dumps(res_go)
-    deserialized = json.loads(serialized)
-    assert deserialized["gate_verdict"] == "GO"
-    assert deserialized["is_valid_run"] is True
-
-    # 2. Scenario GATE_FAILURE: candidate rhos fail dynamics gates (e.g. forgetting gate failure)
-    res_fail = run_g1_pilot(
-        graph_provider=provider,
-        candidate_rhos=(1.20, 1.30),
-        train_sequences=fast_train_seqs,
-        n_bootstraps=100,
-    )
-
-    assert res_fail["gate_verdict"] == "NO_GO"
-    assert res_fail["no_go"] is True
-    assert res_fail["no_go_category"] == "GATE_FAILURE"
-    assert res_fail["is_valid_run"] is True
-    assert res_fail["selected_rho"] is None
-    assert len(res_fail["no_go_reasons"]) == 2
+    with pytest.raises(RuntimeError, match="run_g1_pilot is deprecated and withdrawn in G1 v2"):
+        run_g1_pilot(
+            graph_provider=provider,
+            candidate_rhos=(0.90,),
+            train_sequences=fast_train_seqs,
+            engine_factory=make_planted_q_engine_factory(),
+            n_bootstraps=100,
+        )
 
 
 def test_nested_cv_non_leakage_and_isolation():
-    """Verify that nested 5-fold CV strictly isolates outer sequences from inner CV selection."""
+    """Verify that calling deprecated nested CV / pilot runner raises RuntimeError."""
     fast_train_seqs = [
         generate_narma10_sequence(seed=s, valid_length=500, washout=100)
         for s in TRAIN_SEEDS
@@ -320,37 +249,11 @@ def test_nested_cv_non_leakage_and_isolation():
         base_seed=42,
     )
 
-    res = run_g1_pilot(
-        graph_provider=provider,
-        candidate_rhos=(0.90,),
-        train_sequences=fast_train_seqs,
-        n_bootstraps=50,
-    )
-
-    nested_results = res["nested_cv_results"]
-    assert nested_results["n_folds"] == 5
-    fold_details = nested_results["fold_details"]
-    assert len(fold_details) == 5
-
-    all_outer_indices = set()
-    for f, details in enumerate(fold_details):
-        assert details["fold"] == f
-        outer_indices = details["outer_sequence_indices"]
-        inner_indices = details["inner_sequence_indices"]
-
-        # Exactly 2 outer sequences, exactly 8 inner sequences
-        assert len(outer_indices) == 2
-        assert len(inner_indices) == 8
-        assert outer_indices == [f * 2, f * 2 + 1]
-
-        # Zero leakage: outer and inner sets are strictly disjoint
-        outer_set = set(outer_indices)
-        inner_set = set(inner_indices)
-        assert len(outer_set & inner_set) == 0, f"Fold {f} leaked outer sequences into inner CV: {outer_set & inner_set}"
-        assert outer_set | inner_set == set(range(10))
-
-        all_outer_indices.update(outer_indices)
-
-    # All 10 Train sequences were used across the 5 outer folds exactly once
-    assert all_outer_indices == set(range(10))
+    with pytest.raises(RuntimeError, match="run_g1_pilot is deprecated and withdrawn in G1 v2"):
+        run_g1_pilot(
+            graph_provider=provider,
+            candidate_rhos=(0.90,),
+            train_sequences=fast_train_seqs,
+            n_bootstraps=50,
+        )
 

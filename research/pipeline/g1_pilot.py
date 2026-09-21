@@ -346,29 +346,14 @@ def run_g1_pilot(
 ) -> dict:
     """Execute G1 Pilot across 16 graphs x candidate rhos with nested 5-fold CV and q gate.
 
-    Governance and Requirements (SPEC §4, §7, §9, REVIEW_stop_rule Q2, Q3, Q5):
-    1. Evaluates Train sequences ONLY (strictly validated against TRAIN_SEEDS).
-    2. Candidate rhos {0.90, 0.95, 0.99}.
-    3. Nested 5-fold Train CV:
-       - 5 outer folds (each has 2 outer sequences, 8 inner sequences).
-       - Inner 8 sequences evaluate 16 Pilot graphs across candidate rhos (saturation, forgetting,
-         and 4-fold group CV MC). Selects common rho_f* with max family-balanced MC.
-       - If no candidate rho qualifies in any fold: NO-GO (GATE_FAILURE).
-       - Outer 2 held-out sequences evaluate q readout positive control at selected rho_f*.
-         r = y[t+1] - q[t], z = r + beta* q. beta* calibrated on inner Train real graph (exact 5%).
-         Evaluates matched q and mismatched q (TRAIN_SEEDS cyclic shift by 1).
-    4. q gate pass conditions:
-       - A_q pooled point estimate >= 0.05.
-       - One-sided 95% block-bootstrap lower bound > 0.
-       - True 5% oracle probe detection rate >= 80%.
-       - Mismatched q null FPR <= 5%.
-    5. Final rho selection:
-       - Evaluated on all 10 Train sequences independently of q results.
-       - Selected rho requires all 16 graphs to pass saturation & forgetting on full Train.
-    6. Diagnostics & Verdict:
-       - MC ratio is secondary diagnostic only (not a gate).
-       - Output JSON clearly distinguishes GATE_FAILURE vs INVALID_RUN.
+    DEPRECATED:
+        q gate and nested CV rho selector were retracted in G1 v2 specification (SPEC §1, §7).
+        This function is kept for provenance and raises RuntimeError when called.
     """
+    raise RuntimeError(
+        "run_g1_pilot is deprecated and withdrawn in G1 v2 per SPEC §1, §7 "
+        "(q gate and nested CV rho selector retracted)."
+    )
     total_t0 = time.time()
 
     # 1. Compute and verify specification hash

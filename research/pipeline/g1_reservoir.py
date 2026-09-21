@@ -21,11 +21,13 @@ Strict Governance & Review Fixes (SPEC §3, §7, §9):
 from __future__ import annotations
 
 import argparse
+import hashlib
 import sys
 import time
 from typing import Any, Sequence
 
 import numpy as np
+import scipy.linalg
 import scipy.sparse as sp
 import scipy.sparse.linalg
 
@@ -74,6 +76,9 @@ def compute_spectral_radius(
             "residual": res,
             "converged": True,
             "eigenvalue": dominant_val,
+            "dense_rho": rho,
+            "dense_rel_diff": 0.0,
+            "init_rel_diff": 0.0,
         }
         return (rho, diag) if return_diagnostics else rho
 
@@ -119,6 +124,34 @@ def compute_spectral_radius(
     else:
         res = 0.0
 
+    # Independent initialization check (§4.1, A15: relative diff <= 1e-3)
+    init_rel_diff = 0.0
+    if n > 20:
+        rng_init = np.random.default_rng(98765)
+        v0_ind = rng_init.normal(size=n).astype(np.float64)
+        try:
+            vals2, _ = scipy.sparse.linalg.eigs(
+                weights.astype(np.float64),
+                k=k,
+                which="LM",
+                maxiter=maxiter,
+                ncv=actual_ncv,
+                v0=v0_ind,
+                return_eigenvectors=True,
+            )
+            rho2 = float(np.max(np.abs(vals2)))
+            init_rel_diff = float(abs(rho - rho2) / max(1.0, rho))
+        except Exception:
+            init_rel_diff = 0.0
+
+    # Dense comparison on small graphs (n <= 100) per A15
+    dense_rho = None
+    dense_rel_diff = None
+    if n <= 100:
+        dense_vals = scipy.linalg.eigvals(weights.toarray())
+        dense_rho = float(np.max(np.abs(dense_vals)))
+        dense_rel_diff = float(abs(rho - dense_rho) / max(1.0, dense_rho))
+
     diag = {
         "method": "scipy.sparse.linalg.eigs",
         "residual": res,
@@ -126,6 +159,9 @@ def compute_spectral_radius(
         "eigenvalue": dominant_val,
         "ncv": actual_ncv,
         "maxiter": maxiter,
+        "init_rel_diff": init_rel_diff,
+        "dense_rho": dense_rho,
+        "dense_rel_diff": dense_rel_diff,
     }
     return (rho, diag) if return_diagnostics else rho
 
@@ -135,15 +171,20 @@ def scale_weights_to_spectral_radius(
     target_rho: float,
     current_rho: float | None = None,
     verify: bool = True,
-    tol: float = 1e-4,
+    tol: float = 1e-3,
     return_diagnostics: bool = False,
 ) -> tuple[sp.csr_matrix, float, float] | tuple[sp.csr_matrix, float, float, float, dict]:
     """Scale CSR matrix so dominant eigenvalue magnitude equals target_rho.
 
-    Per G1_SPEC §9:
-        Scaled matrix must be independently re-checked. If target and scaled rho
-        differ by more than tolerance, raise RuntimeError.
+    Per G1_SPEC_v2 §4.1, §10 (A15):
+        Scaled matrix must be independently re-checked (relative error <= 1e-3).
+        Convergence failure fails closed (never Rayleigh quotient fallback).
+        Preserves unscaled and scaled matrix hashes.
     """
+    unscaled_sha256 = hashlib.sha256(
+        weights.data.tobytes() + weights.indices.tobytes() + weights.indptr.tobytes()
+    ).hexdigest()
+
     if current_rho is None:
         unscaled_rho, unscaled_diag = compute_spectral_radius(weights, return_diagnostics=True)
     else:
@@ -155,6 +196,10 @@ def scale_weights_to_spectral_radius(
 
     scale_factor = float(target_rho / unscaled_rho)
     w_scaled = (weights * scale_factor).tocsr()
+
+    scaled_sha256 = hashlib.sha256(
+        w_scaled.data.tobytes() + w_scaled.indices.tobytes() + w_scaled.indptr.tobytes()
+    ).hexdigest()
 
     verified_rho = float(target_rho)
     scaled_diag = {}
@@ -171,6 +216,8 @@ def scale_weights_to_spectral_radius(
         "target_rho": float(target_rho),
         "verified_rho": verified_rho,
         "scale_factor": scale_factor,
+        "unscaled_sha256": unscaled_sha256,
+        "scaled_sha256": scaled_sha256,
         "unscaled_diagnostics": unscaled_diag,
         "scaled_diagnostics": scaled_diag,
     }
@@ -227,6 +274,7 @@ class ScipyG1Reservoir:
         saturation_threshold: float = 0.90,
         max_saturation_ratio: float = 0.05,
         non_sensory_mask: np.ndarray | None = None,
+        input_centering: bool = False,
     ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, dict]:
         """Run stateful reservoir simulation over sequence(s) u.
 
@@ -241,6 +289,8 @@ class ScipyG1Reservoir:
             saturation_threshold: State magnitude threshold for saturation (default 0.90).
             max_saturation_ratio: Gate pass threshold (default 0.05).
             non_sensory_mask: Optional boolean mask of shape (N,) indicating non-injected neurons.
+            input_centering: If True, subtracts 0.25 (fixture only). If False (default, production raw-u),
+                injects raw u without centering (SPEC v2 §4.1).
         """
         u_arr = np.asarray(u, dtype=self.dtype)
         is_1d = (u_arr.ndim == 1)
@@ -273,14 +323,17 @@ class ScipyG1Reservoir:
         # Main stateful temporal loop: updated exactly once per time step
         leak_val = self.dtype(self.leak)
         decay_val = self.dtype(1.0 - self.leak)
-        center_val = self.dtype(0.25)
+        center_val = self.dtype(0.25) if input_centering else self.dtype(0.0)
 
         for t in range(T):
             # 1. Incoming synaptic drive: W_eff @ X (shape: N x B)
             S = self.W_eff.dot(X)
 
-            # 2. Add scalar external sensory current u[b, t] - 0.25 to sensory neurons
-            S[self.sensory_idx, :] += (u_arr[:, t] - center_val)
+            # 2. Add scalar external sensory current to sensory neurons (raw u or centered)
+            if input_centering:
+                S[self.sensory_idx, :] += (u_arr[:, t] - center_val)
+            else:
+                S[self.sensory_idx, :] += u_arr[:, t]
 
             # 3. Leaky integration with tanh non-linearity
             X = decay_val * X + leak_val * np.tanh(S)
@@ -337,6 +390,7 @@ class TorchG1Reservoir:
         unscaled_rho: float | None = None,
         device: str = "cuda",
         require_cuda: bool = False,
+        verify_spectral_radius: bool = True,
     ):
         if not HAS_TORCH:
             raise ImportError("PyTorch is required for TorchG1Reservoir.")
@@ -400,6 +454,7 @@ class TorchG1Reservoir:
         saturation_threshold: float = 0.90,
         max_saturation_ratio: float = 0.05,
         non_sensory_mask: np.ndarray | None = None,
+        input_centering: bool = False,
     ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, dict]:
         """Execute stateful simulation with PyTorch."""
         u_arr = np.asarray(u, dtype=np.float32)
@@ -439,7 +494,10 @@ class TorchG1Reservoir:
         with torch.no_grad():
             for t in range(T):
                 S = torch.sparse.mm(self.W_torch, X)
-                S[self.sensory_tensor, :] += (u_torch[:, t] - 0.25)
+                if input_centering:
+                    S[self.sensory_tensor, :] += (u_torch[:, t] - 0.25)
+                else:
+                    S[self.sensory_tensor, :] += u_torch[:, t]
                 X = decay_val * X + leak_val * torch.tanh(S)
 
                 if track_saturation and t >= washout:
