@@ -529,12 +529,39 @@ def evaluate_diagnostic_negative_control(
         if not passed_target:
             any_failed = True
 
+        # Per-stream audit metrics for check sequences
+        stream_sse_model = []
+        stream_sse_const = []
+        stream_pred_mean = []
+        stream_pred_std = []
+        stream_target_mean = []
+        stream_target_std = []
+        for i in range(n_check):
+            t_i = c_targets[i]
+            p_i = c_preds[i]
+            stream_sse_model.append(float(np.sum((t_i - p_i) ** 2)))
+            stream_sse_const.append(float(np.sum((t_i - c_base) ** 2)))
+            stream_pred_mean.append(float(np.mean(p_i)))
+            stream_pred_std.append(float(np.std(p_i)))
+            stream_target_mean.append(float(np.mean(t_i)))
+            stream_target_std.append(float(np.std(t_i)))
+
         results_by_target[name] = {
             "G_point": G_point,
             "ci_lower": ci_lower,
             "ci_upper": ci_upper,
             "passed": passed_target,
             "best_alpha": float(ridge.best_alpha) if ridge.best_alpha is not None else 0.0,
+            "c_base": c_base,
+            "baseline_mean_offset_sq": float((np.mean(y_check_all) - c_base) ** 2),
+            "per_stream_audit": {
+                "stream_sse_model": stream_sse_model,
+                "stream_sse_const": stream_sse_const,
+                "stream_pred_mean": stream_pred_mean,
+                "stream_pred_std": stream_pred_std,
+                "stream_target_mean": stream_target_mean,
+                "stream_target_std": stream_target_std,
+            },
         }
 
     return {

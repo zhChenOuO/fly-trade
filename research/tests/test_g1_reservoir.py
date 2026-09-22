@@ -440,3 +440,127 @@ def test_spectral_radius_cluster_stability_5000_node_medium_graph() -> None:
     rel_spread = spread / max(rhos)
     assert rel_spread <= 1e-6, f"5000-node eigensolver unstable across v0 seeds: rel_spread={rel_spread:.2e} > 1e-6"
 
+
+# ==============================================================================
+# Causal Fixtures: Disjoint Sensory/DN Delay Verification
+# ==============================================================================
+
+def test_causal_propagation_single_hop_fixture() -> None:
+    """Verify that perturbing u[t] has ZERO effect on same-step DN readout and appears at step t+1 (1-hop delay)."""
+    # Graph topology: Sensory Node 0 -> DN Node 3.
+    # Disjoint sets: sensory={0}, readout={3}.
+    # Nodes 1 <-> 2 form a cycle for spectral radius scaling.
+    N = 4
+    row = [3, 1, 2]
+    col = [0, 2, 1]
+    data = [0.5, 0.8, 0.8]
+    W = sp.csr_matrix((data, (row, col)), shape=(N, N), dtype=np.float64)
+
+    sensory_idx = np.array([0])
+    readout_idx = np.array([3])
+    res = ScipyG1Reservoir(
+        weights=W,
+        sensory_idx=sensory_idx,
+        readout_idx=readout_idx,
+        target_rho=0.95,
+        leak=0.5,
+    )
+
+    T = 15
+    rng = np.random.default_rng(42)
+    u_base = rng.uniform(0.0, 0.5, size=(1, T)).astype(np.float32)
+    u_perturbed = u_base.copy()
+    t_inject = 5
+    u_perturbed[0, t_inject] += 0.3
+
+    out_base, _ = res.simulate(u_base)
+    out_pert, _ = res.simulate(u_perturbed)
+
+    diffs = np.abs(out_pert[0, :, 0] - out_base[0, :, 0])
+
+    # 1. Verification of strict causality:
+    # At t <= t_inject, DN readout contains ONLY information up to t_inject - 1.
+    # Therefore difference must be EXACTLY zero.
+    assert np.all(diffs[: t_inject + 1] == 0.0), f"Non-zero diff before causal arrival: {diffs[:t_inject+1]}"
+
+    # 2. First arrival at 1-hop: t_inject + 1
+    assert diffs[t_inject + 1] > 1e-4, f"Perturbation did not arrive at t={t_inject + 1}: diff={diffs[t_inject + 1]}"
+
+    # 3. Hand-calculated analytical verification from state equations:
+    # Single pulse u[0] = 0.4
+    u_pulse = np.zeros((1, 3), dtype=np.float32)
+    u_pulse[0, 0] = 0.4
+    out_pulse, _ = res.simulate(u_pulse)
+
+    W_eff = res.W_eff.toarray()
+    w_03 = W_eff[3, 0]
+    leak = 0.5
+    # Step 0: x[1][0] = leak * tanh(0.4), x[1][3] = 0 -> readout out[0] = 0.0
+    # Step 1: x[2][3] = leak * tanh(w_03 * x[1][0]) -> readout out[1] = x[2][3]
+    hand_x3_step1 = float(leak * np.tanh(w_03 * (leak * np.tanh(0.4))))
+
+    assert out_pulse[0, 0, 0] == 0.0
+    np.testing.assert_allclose(out_pulse[0, 1, 0], hand_x3_step1, rtol=1e-5, atol=1e-7)
+
+
+def test_causal_propagation_multi_hop_fixture() -> None:
+    """Verify that in a 3-hop chain (0 -> 1 -> 2 -> 3), perturbation at t arrives at readout exactly at t+3."""
+    # Graph topology: 0 (Sensory) -> 1 -> 2 -> 3 (DN).
+    # Nodes 4 <-> 5 form a cycle for spectral radius scaling.
+    N = 6
+    row = [1, 2, 3, 4, 5]
+    col = [0, 1, 2, 5, 4]
+    data = [0.6, 0.6, 0.6, 0.8, 0.8]
+    W = sp.csr_matrix((data, (row, col)), shape=(N, N), dtype=np.float64)
+
+    sensory_idx = np.array([0])
+    readout_idx = np.array([3])
+    res = ScipyG1Reservoir(
+        weights=W,
+        sensory_idx=sensory_idx,
+        readout_idx=readout_idx,
+        target_rho=0.95,
+        leak=0.5,
+    )
+
+    T = 15
+    rng = np.random.default_rng(123)
+    u_base = rng.uniform(0.0, 0.5, size=(1, T)).astype(np.float32)
+    u_perturbed = u_base.copy()
+    t_inject = 4
+    u_perturbed[0, t_inject] += 0.35
+
+    out_base, _ = res.simulate(u_base)
+    out_pert, _ = res.simulate(u_perturbed)
+
+    diffs = np.abs(out_pert[0, :, 0] - out_base[0, :, 0])
+
+    # For 3 hops, perturbation injected at t=4 must produce EXACT ZERO difference at:
+    # t=4 (hop 0), t=5 (hop 1, node 1), t=6 (hop 2, node 2)
+    assert np.all(diffs[: t_inject + 3] == 0.0), f"Non-zero diff before 3 hops: {diffs[:t_inject+3]}"
+
+    # First non-zero difference arrives at t = t_inject + 3 = 7
+    assert diffs[t_inject + 3] > 1e-4, f"Perturbation did not arrive at t={t_inject + 3}: diff={diffs[t_inject + 3]}"
+
+    # Hand-calculated analytical verification:
+    u_pulse = np.zeros((1, 5), dtype=np.float32)
+    u_pulse[0, 0] = 0.45
+    out_pulse, _ = res.simulate(u_pulse)
+
+    W_eff = res.W_eff.toarray()
+    w1 = W_eff[1, 0]
+    w2 = W_eff[2, 1]
+    w3 = W_eff[3, 2]
+    leak = 0.5
+
+    x0_1 = leak * np.tanh(0.45)
+    x1_2 = leak * np.tanh(w1 * x0_1)
+    x2_3 = leak * np.tanh(w2 * x1_2)
+    x3_4 = leak * np.tanh(w3 * x2_3)
+
+    assert out_pulse[0, 0, 0] == 0.0
+    assert out_pulse[0, 1, 0] == 0.0
+    assert out_pulse[0, 2, 0] == 0.0
+    np.testing.assert_allclose(out_pulse[0, 3, 0], x3_4, rtol=1e-5, atol=1e-7)
+
+

@@ -58,6 +58,7 @@ import resource
 import sys
 import time
 from typing import Any, Callable, Sequence
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -172,25 +173,120 @@ def access_stage_b_split(split_name: str, manifest: G1Manifest) -> list[dict[str
     return generate_split_sequences(clean, manifest)
 
 
+def compute_independent_reference_diagnostic_targets(
+    u: Sequence[float] | np.ndarray,
+    washout: int = 500,
+    u_negative: Sequence[float] | np.ndarray | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute reference d1 and d2 directly from input sequence u using an independent implementation.
+
+    This function does NOT call or share code with `g1_v2.py::build_diagnostic_targets`.
+    It evaluates the exact mathematical definitions directly in float64:
+      v[t] = u[t] - 0.25 for t >= 0
+      v[t] = (u_negative[t+9] - 0.25) if u_negative is given else -0.25 for t in [-9..-1]
+      d1[t] = v[t - 9]
+      d2[t] = v[t] * v[t - 9]
+
+    Returns:
+      (ref_d1, ref_d2) sliced after washout: ref_d1[washout:], ref_d2[washout:].
+    """
+    u_seq = [float(x) for x in u]
+    T = len(u_seq)
+    if T <= washout:
+        raise ValueError(f"Sequence length {T} must be strictly greater than washout {washout}")
+
+    if u_negative is not None:
+        neg_vals = [float(x) - 0.25 for x in u_negative]
+        if len(neg_vals) != 9:
+            raise ValueError(f"Expected u_negative of length 9, got {len(neg_vals)}")
+    else:
+        neg_vals = [-0.25] * 9
+
+    full_v = neg_vals + [x - 0.25 for x in u_seq]
+    # In full_v, index 9 corresponds to t = 0.
+    # For any t >= 0:
+    # v[t] is at full_v[9 + t]
+    # v[t - 9] is at full_v[9 + t - 9] = full_v[t]
+    ref_d1 = np.array([full_v[t] for t in range(washout, T)], dtype=np.float64)
+    ref_d2 = np.array([full_v[9 + t] * full_v[t] for t in range(washout, T)], dtype=np.float64)
+    return ref_d1, ref_d2
+
+
 def evaluate_stage_b_oracle_controls(
     check_targets_d1: Sequence[np.ndarray],
     check_targets_d2: Sequence[np.ndarray],
+    check_sequences: Sequence[dict[str, Any]] | None = None,
+    reference_targets_d1: Sequence[np.ndarray] | None = None,
+    reference_targets_d2: Sequence[np.ndarray] | None = None,
+    rel_tol: float = 1e-10,
+    min_r2: float = 1.0 - 1e-6,
 ) -> dict[str, Any]:
-    """Evaluate oracle positive controls for d1 and d2 (SPEC §6).
+    """Evaluate oracle positive controls for d1 and d2 against independent reference recurrence (§6).
 
-    Direct lag and product access must achieve R^2 >= 1.0 - 1e-6.
+    Replaces deprecated self-comparison identity (R^2(y, y) = 1) with point-by-point comparison
+    against independent float64 calculations from raw input u.
     """
     y_d1 = np.concatenate(check_targets_d1)
     y_d2 = np.concatenate(check_targets_d2)
-    r2_d1 = compute_pooled_r2(y_d1, y_d1)
-    r2_d2 = compute_pooled_r2(y_d2, y_d2)
-    passed_d1 = bool(r2_d1 >= 1.0 - 1e-6)
-    passed_d2 = bool(r2_d2 >= 1.0 - 1e-6)
+
+    if check_sequences is not None:
+        ref_d1_list = []
+        ref_d2_list = []
+        for s in check_sequences:
+            r1, r2 = compute_independent_reference_diagnostic_targets(
+                u=s["u"],
+                washout=s.get("washout", 500),
+                u_negative=s.get("u_negative", None),
+            )
+            ref_d1_list.append(r1)
+            ref_d2_list.append(r2)
+        y_ref_d1 = np.concatenate(ref_d1_list)
+        y_ref_d2 = np.concatenate(ref_d2_list)
+        mode = "independent_reference"
+    elif reference_targets_d1 is not None and reference_targets_d2 is not None:
+        y_ref_d1 = np.concatenate(reference_targets_d1)
+        y_ref_d2 = np.concatenate(reference_targets_d2)
+        mode = "independent_reference"
+    else:
+        warnings.warn(
+            "Self-comparison oracle is deprecated. Pass check_sequences or reference_targets "
+            "for independent reference verification.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        y_ref_d1 = y_d1
+        y_ref_d2 = y_d2
+        mode = "deprecated_self_comparison"
+
+    # Pointwise absolute and relative differences
+    d1_abs_err = np.abs(y_d1 - y_ref_d1)
+    d2_abs_err = np.abs(y_d2 - y_ref_d2)
+    d1_max_abs = float(np.max(d1_abs_err))
+    d2_max_abs = float(np.max(d2_abs_err))
+
+    denom_d1 = np.abs(y_ref_d1)
+    denom_d2 = np.abs(y_ref_d2)
+    d1_max_rel = float(np.max(d1_abs_err / np.maximum(denom_d1, 1e-12)))
+    d2_max_rel = float(np.max(d2_abs_err / np.maximum(denom_d2, 1e-12)))
+
+    # Pooled R^2 against reference
+    r2_d1 = compute_pooled_r2(y_ref_d1, y_d1)
+    r2_d2 = compute_pooled_r2(y_ref_d2, y_d2)
+
+    passed_d1 = bool(r2_d1 >= min_r2 and d1_max_rel <= rel_tol)
+    passed_d2 = bool(r2_d2 >= min_r2 and d2_max_rel <= rel_tol)
+
     return {
         "passed": bool(passed_d1 and passed_d2),
+        "mode": mode,
         "d1_teacher_r2": float(r2_d1),
         "d2_teacher_r2": float(r2_d2),
-        "min_r2": 1.0 - 1e-6,
+        "d1_max_abs_diff": d1_max_abs,
+        "d2_max_abs_diff": d2_max_abs,
+        "d1_max_rel_diff": d1_max_rel,
+        "d2_max_rel_diff": d2_max_rel,
+        "min_r2": float(min_r2),
+        "max_rel_tol": float(rel_tol),
     }
 
 
@@ -700,7 +796,11 @@ def execute_stage_b(
     t_neg_end = time.perf_counter()
     neg_wall_time = t_neg_end - t_neg_start
 
-    oracle_res = evaluate_stage_b_oracle_controls(check_d1, check_d2)
+    oracle_res = evaluate_stage_b_oracle_controls(
+        check_targets_d1=check_d1,
+        check_targets_d2=check_d2,
+        check_sequences=check_sequences,
+    )
 
     report["negative_control"] = {
         "passed": neg_control_res["passed"],

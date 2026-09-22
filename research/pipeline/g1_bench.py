@@ -430,10 +430,10 @@ class G1RidgeReadout:
         mean_losses = {a: float(np.mean(cv_losses[a])) for a in self.alphas}
         min_loss = min(pooled_oof_losses.values())
 
-        # Select alpha with minimum pooled OOF NMSE; tie-break: select LARGER alpha
+        # Select alpha with minimum pooled OOF NMSE; tie-break: select LARGER alpha on exact numerical tie (SPEC §4.3)
         tied_alphas = [
             a for a, loss in pooled_oof_losses.items()
-            if loss == min_loss or (min_loss > 0 and abs(loss - min_loss) / min_loss <= 1e-9)
+            if loss == min_loss
         ]
         best_a = max(tied_alphas)
         self.best_alpha = float(best_a)

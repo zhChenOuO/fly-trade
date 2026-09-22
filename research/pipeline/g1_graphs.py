@@ -81,8 +81,9 @@ def compute_source_out_strengths(graph: ConnectomeGraph) -> tuple[np.ndarray, np
         end = csc.indptr[j + 1]
         if start < end:
             col_data = csc.data[start:end]
-            signed_strength[j] = float(np.sum(col_data))
-            abs_strength[j] = float(np.sum(np.abs(col_data)))
+            sorted_col = np.sort(col_data)
+            signed_strength[j] = float(np.sum(sorted_col, dtype=np.float64))
+            abs_strength[j] = float(np.sum(np.abs(sorted_col), dtype=np.float64))
 
     return signed_strength, abs_strength
 

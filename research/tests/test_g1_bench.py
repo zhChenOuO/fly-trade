@@ -421,3 +421,41 @@ def test_compute_memory_capacity_cv_group_cv() -> None:
     mc_noise = compute_memory_capacity_cv(noise_states, inputs, max_lag=15, n_folds=5, washout=washout)
     # Held-out R^2 for pure noise should be ~ 0.0 (no in-sample overfitting inflation)
     assert mc_noise["mc_total"] < 0.2, f"Noise CV MC {mc_noise['mc_total']} too high (in-sample leakage)"
+
+
+def test_ridge_exact_tie_break_vs_near_tie() -> None:
+    """Verify Ridge tie-break strictly uses exact equality (loss == min_loss) per SPEC §4.3."""
+    # 1. End-to-end exact tie on uninformative features
+    model = G1RidgeReadout(alphas=(0.01, 0.1, 1.0, 10.0))
+    X_zero = [np.zeros((50, 4)) for _ in range(10)]
+    y_rand = [np.random.default_rng(99).normal(size=50) for _ in range(10)]
+    model.fit_sequence_group_cv(X_zero, y_rand)
+    # With zero features, all alphas produce identical prediction mu_y; exact tie selects max alpha
+    assert model.best_alpha == 10.0
+
+    # 2. Demonstration of behavioral difference between old rule (<= 1e-9) and new rule (loss == min_loss)
+    # Synthetic pooled OOF losses: alpha 0.01 has strictly lower loss by 1e-10 relative to alpha 0.1
+    min_loss_val = 0.500000000000
+    near_loss_val = 0.500000000050  # relative diff = 1e-10 <= 1e-9
+    losses_near_tie = {0.01: min_loss_val, 0.1: near_loss_val, 1.0: 0.600000000000}
+
+    # Old logic: relative difference <= 1e-9 triggers tie-break -> picks larger alpha 0.1
+    min_l = min(losses_near_tie.values())
+    old_tied = [
+        a for a, loss in losses_near_tie.items()
+        if loss == min_l or (min_l > 0 and abs(loss - min_l) / min_l <= 1e-9)
+    ]
+    old_selected = max(old_tied)
+    assert old_selected == 0.1, "Old rule should have incorrectly treated near-tie as tie and selected 0.1"
+
+    # New logic: exact equality only -> 0.01 is strictly lower, no tie -> selects 0.01
+    new_tied = [a for a, loss in losses_near_tie.items() if loss == min_l]
+    new_selected = max(new_tied)
+    assert new_selected == 0.01, "New rule must strictly select 0.01 because it has strictly smaller loss"
+
+    # 3. Exact tie case: both old and new logic agree and select larger alpha
+    losses_exact_tie = {0.01: min_loss_val, 0.1: min_loss_val, 1.0: 0.600000000000}
+    min_exact = min(losses_exact_tie.values())
+    new_exact_tied = [a for a, loss in losses_exact_tie.items() if loss == min_exact]
+    assert max(new_exact_tied) == 0.1
+

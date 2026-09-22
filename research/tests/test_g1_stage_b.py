@@ -331,16 +331,112 @@ def test_stage_b_budget_extrapolation_formulas(tmp_path: Path):
 
 
 # ==============================================================================
-# 8. Oracle Positive Controls Verification
+# 8. Oracle Positive Controls Verification (Independent Reference & Error Injection)
 # ==============================================================================
 
-def test_stage_b_oracle_positive_controls():
-    """Verify direct lag and product teachers achieve R^2 >= 1.0 - 1e-6."""
-    rng = np.random.default_rng(123)
-    targets_d1 = [rng.normal(size=1000) for _ in range(10)]
-    targets_d2 = [rng.normal(size=1000) for _ in range(10)]
+def test_stage_b_oracle_positive_controls_with_independent_reference():
+    """Verify independent recurrence calculation matches runner targets (R^2 >= 1.0 - 1e-6, rel err <= 1e-10)."""
+    from research.pipeline.g1_v2 import build_diagnostic_targets
+    from research.pipeline.g1_stage_b import compute_independent_reference_diagnostic_targets
 
-    res = evaluate_stage_b_oracle_controls(targets_d1, targets_d2)
+    rng = np.random.default_rng(123)
+    n_seqs = 10
+    washout = 500
+    T = 2500
+
+    check_sequences = []
+    targets_d1 = []
+    targets_d2 = []
+
+    for _ in range(n_seqs):
+        u = rng.uniform(0.0, 0.5, size=T).astype(np.float64)
+        check_sequences.append({"u": u, "washout": washout})
+        d1, d2 = build_diagnostic_targets(u, washout=washout)
+        targets_d1.append(d1)
+        targets_d2.append(d2)
+
+    res = evaluate_stage_b_oracle_controls(
+        check_targets_d1=targets_d1,
+        check_targets_d2=targets_d2,
+        check_sequences=check_sequences,
+    )
     assert res["passed"] is True
+    assert res["mode"] == "independent_reference"
     assert res["d1_teacher_r2"] >= 1.0 - 1e-6
     assert res["d2_teacher_r2"] >= 1.0 - 1e-6
+    assert res["d1_max_rel_diff"] <= 1e-10
+    assert res["d2_max_rel_diff"] <= 1e-10
+    assert res["d1_max_abs_diff"] <= 1e-12
+    assert res["d2_max_abs_diff"] <= 1e-12
+
+
+def test_stage_b_oracle_offset_by_one_injection_fails():
+    """Deliberate offset-by-one error injection must cause oracle check to FAIL with R^2 << 1.0."""
+    from research.pipeline.g1_v2 import build_diagnostic_targets
+
+    rng = np.random.default_rng(456)
+    n_seqs = 5
+    washout = 500
+    T = 1500
+
+    check_sequences = []
+    targets_d1 = []
+    targets_d2 = []
+
+    for _ in range(n_seqs):
+        u = rng.uniform(0.0, 0.5, size=T).astype(np.float64)
+        check_sequences.append({"u": u, "washout": washout})
+        d1, d2 = build_diagnostic_targets(u, washout=washout)
+        targets_d1.append(d1)
+        targets_d2.append(d2)
+
+    # Inject offset-by-one into targets: slice targets shifted by 1 vs reference
+    shifted_d1 = [arr[1:] for arr in targets_d1]
+    # Corresponding check_sequences truncated to match length
+    truncated_seqs = [{"u": s["u"][:-1], "washout": washout} for s in check_sequences]
+
+    res = evaluate_stage_b_oracle_controls(
+        check_targets_d1=shifted_d1,
+        check_targets_d2=[arr[1:] for arr in targets_d2],
+        check_sequences=truncated_seqs,
+    )
+    # The check MUST fail because i.i.d. noise shifted by 1 has ~0 correlation
+    assert res["passed"] is False
+    assert res["d1_teacher_r2"] < 0.5
+    assert res["d1_max_rel_diff"] > 0.1
+
+
+def test_independent_reference_diagnostic_targets_multi_seed_match():
+    """compute_independent_reference_diagnostic_targets must match build_diagnostic_targets across multiple seeds."""
+    from research.pipeline.g1_v2 import build_diagnostic_targets
+    from research.pipeline.g1_stage_b import compute_independent_reference_diagnostic_targets
+
+    for seed in [11, 22, 33, 44, 55]:
+        rng = np.random.default_rng(seed)
+        u = rng.uniform(0.0, 0.5, size=2000).astype(np.float64)
+        u_neg = rng.uniform(0.0, 0.5, size=9).astype(np.float64)
+
+        # Case 1: with u_negative
+        ref_d1, ref_d2 = compute_independent_reference_diagnostic_targets(u, washout=500, u_negative=u_neg)
+        prod_d1, prod_d2 = build_diagnostic_targets(u, washout=500, u_negative=u_neg)
+        assert np.array_equal(ref_d1, prod_d1)
+        assert np.array_equal(ref_d2, prod_d2)
+
+        # Case 2: without u_negative (default zeros -> -0.25)
+        ref_d1_0, ref_d2_0 = compute_independent_reference_diagnostic_targets(u, washout=500, u_negative=None)
+        prod_d1_0, prod_d2_0 = build_diagnostic_targets(u, washout=500, u_negative=None)
+        assert np.array_equal(ref_d1_0, prod_d1_0)
+        assert np.array_equal(ref_d2_0, prod_d2_0)
+
+
+def test_stage_b_oracle_deprecated_fallback_emits_warning():
+    """Calling evaluate_stage_b_oracle_controls without reference or sequences emits DeprecationWarning."""
+    rng = np.random.default_rng(789)
+    targets_d1 = [rng.normal(size=100) for _ in range(2)]
+    targets_d2 = [rng.normal(size=100) for _ in range(2)]
+
+    with pytest.deprecated_call():
+        res = evaluate_stage_b_oracle_controls(targets_d1, targets_d2)
+    assert res["passed"] is True
+    assert res["mode"] == "deprecated_self_comparison"
+

@@ -150,6 +150,7 @@ def scale_residuals_for_null_and_alt(
     e_real: np.ndarray,
     e_ctrl: np.ndarray,
     tol: float = 1e-12,
+    expected_n_ctrl: int | None = 20,
 ) -> dict[str, Any]:
     """Scale real residuals to construct exact empirical null and 5% alternative populations.
 
@@ -158,9 +159,11 @@ def scale_residuals_for_null_and_alt(
     e_real: np.ndarray
         Residuals for pseudo-real graph, shape (n_seqs, n_steps) or (1, n_seqs, n_steps).
     e_ctrl: np.ndarray
-        Residuals for 20 control graphs, shape (20, n_seqs, n_steps).
+        Residuals for control graphs, shape (n_ctrl, n_seqs, n_steps). Default expects 20 controls.
     tol: float
         Relative tolerance for verifying population MSE invariants (<= 1e-12).
+    expected_n_ctrl: int | None
+        Expected number of controls (default 20). If None, requires n_ctrl >= 2.
 
     Returns
     -------
@@ -175,11 +178,13 @@ def scale_residuals_for_null_and_alt(
     if e_real_arr.ndim != 2:
         raise ValueError(f"e_real must have 2 dimensions (n_seqs, n_steps), got shape {e_real.shape}")
     if e_ctrl_arr.ndim != 3:
-        raise ValueError(f"e_ctrl must have 3 dimensions (20, n_seqs, n_steps), got shape {e_ctrl.shape}")
+        raise ValueError(f"e_ctrl must have 3 dimensions (n_ctrl, n_seqs, n_steps), got shape {e_ctrl.shape}")
 
     n_ctrl = e_ctrl_arr.shape[0]
-    if n_ctrl != 20:
-        raise ValueError(f"e_ctrl must contain exactly 20 control instances, got {n_ctrl}")
+    if expected_n_ctrl is not None and n_ctrl != expected_n_ctrl:
+        raise ValueError(f"e_ctrl must contain exactly {expected_n_ctrl} control instances, got {n_ctrl}")
+    elif n_ctrl < 2:
+        raise ValueError(f"e_ctrl must contain at least 2 control instances, got {n_ctrl}")
     if e_real_arr.shape != e_ctrl_arr.shape[1:]:
         raise ValueError(
             f"Shape mismatch: e_real {e_real_arr.shape} vs e_ctrl sequences {e_ctrl_arr.shape[1:]}"
@@ -426,6 +431,7 @@ def calibrate_v2_power_and_fpr(
     base_seed: int = 50000,
     alpha_mc: float = 0.025,
     bootstrap_alpha: float = 0.05,
+    expected_n_ctrl: int | None = 20,
 ) -> dict[str, Any]:
     """Execute end-to-end Monte Carlo power and FPR calibration across 1,000 cohorts.
 
@@ -433,7 +439,11 @@ def calibrate_v2_power_and_fpr(
     and cohort specifications (SPEC §7.4, A18, A22).
     """
     # 1. Perform exact §7.2 / §7.3 population residual scaling
-    scale_info = scale_residuals_for_null_and_alt(e_real=e_real, e_ctrl=e_ctrl)
+    scale_info = scale_residuals_for_null_and_alt(
+        e_real=e_real,
+        e_ctrl=e_ctrl,
+        expected_n_ctrl=expected_n_ctrl,
+    )
     e_null_real = scale_info["e_null_real"]
     e_alt_real = scale_info["e_alt_real"]
     e_ctrl_arr = scale_info["e_null_ctrl"]
