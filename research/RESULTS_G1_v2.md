@@ -40,13 +40,23 @@ GPU 成本：Stage B 實測 0.0138 GPU 小時；累計 0.026 GPU 小時，預算
 2. `test_g1_reservoir.py` 缺少 `import torch`，Mac 因 skip 而未發現，GPU 機器才會炸（`ea59c65`）。
 3. CLI timed-pilot 外推公式殘留 pre-v2 的 61 圖×3 rho 舊數字（`6b8c264`，僅列印用，未影響任何預算判定）。
 
-## 最小後續驗證（Codex 提案，僅描述未執行）
-1. 因果 fixture：sensory/DN 不重疊的單邊/多跳小圖，獨立手算 d1/d2，驗證同列 DN 不含 `u[t]`、資訊最早在圖上允許的後續列才出現；取代自我比較的 oracle。
-2. 重新定義乘積 target 前，先由圖結構決定最小可達延遲（不得逐圖掃 lag 挑最好 R²，跨圖同一規則）。
-3. 若要重跑，需用全新、從未看過表現的 Diagnostic-fit/check seeds（依治理規則，不得沿用已看過分數的舊 seeds）。
-4. 負控制的循環配對獨立性問題需另查（保存逐 stream 誤差分解，或改用來源互不重疊的 null）。
+## 二次更正（同日，Codex 追問後撤回 L=9 建議）
+Codex 原建議「改成 L=9 延遲讀出才能跑 Stage C」已被自己撤回。經 Claude 追問並獨立驗算：Stage C 的判定是**比較式**指標 `Δ=(median(NMSE_scramble)−NMSE_real)/median(NMSE_scramble)`，不是絕對 R² 門檻。用正交分解可證：`y[t+1]=m_t+ε_t`（`m_t` 為可預測歷史項，`ε_t=1.5(u[t]−0.25)u[t−9]` 為不可約 innovation，`E[ε_t|F_(t−1)]=0`），因此任一圖的母體風險 `R_g=1/256+A_g`（`A_g` 為對可預測部分 `m_t` 的誤差）。1/256 這個共同不可約項在 Δ 的**分子**完全抵消（只留在分母，壓縮相對改善幅度，不會讓比較失效）。Claude 已獨立驗算 1/256 這個數字。
+
+**結論：Stage C 不需要 L=9 或任何延遲修正，維持原本 `x[t+1]→y[t+1]` 對齊即可執行比較式主測。** d2 的「全歸零」情況（純外生雜訊乘積，無可預測分量）不能類推到完整 NARMA10 target（含歷史項 `m_t`，是可預測的）。
+
+固定延遲 L=9 本身也有未解決的公平性風險（scramble 與 real 到 DN 的傳播速度未驗證是否相同，固定 L 可能反映傳播速度差異而非非線性運算品質），這條路徑已撤回，不再考慮。
+
+完整討論見 `research/DISCUSSION_next_target.md`。
+
+## Stage C 前的最小工程驗收清單（不含延遲修正，範圍已縮小）
+1. **獨立 oracle**：現有 oracle 正控制是 target 對自己算 R²（恆等式），需換成獨立重算的 target 與 runner 輸出逐項比對。
+2. **因果 fixture**（保留作一般完整性驗證，非 Stage C 前置條件）：sensory/DN 不重疊的小圖，獨立手算驗證同列 DN 不含 `u[t]`；用於證明程式忠實對齊規格的時序定義，不是用來決定要不要延遲。
+3. **Ridge tie-break 與 spec 一致**：目前 `g1_bench.py` 用相對差 ≤1e-9 當同分，規格要求「數值完全相同」，需對齊（P2，Codex 審查發現）。
+4. **`d1` 負控制的微小異常**：循環移位配對可能不是真正獨立單位，根因未定；與 Stage C 的 power/FPR 統計機制不同（Stage C 用的是已獨立驗證過的 null/alt residual 縮放，不受此問題影響），可平行處理不阻擋 Stage C。
+5. **Diagnostic-fit/check 的既有結果**：`d1`/`d2` 數字保留為封存觀測，不重跑、不追加新 seeds（Stage B 的能力 gate 已撤除，不再是 Stage C 的前置條件）。
 
 ## 對研究路線的影響
-- G1：**未結案，結論待定**（不是「已證明無非線性能力」，也不是「已通過」）。是否修正並重跑，或就此打住，待決策。
-- `PREREQUISITES_v3.md` 的 G2、G3：維持不解鎖（前提未滿足，與之前相同，但理由改為「G1 尚無有效結論」而非「G1 已證明失敗」）。
+- G1：**Stage B 的能力 gate 已撤除，不再是 Stage C 前置條件**。Stage C（21 圖 Main-Train/Val/Calibration + power/FPR 校準）可在完成上述工程驗收清單後執行，原時序對齊（`x[t+1]→y[t+1]`）不需修改。
+- `PREREQUISITES_v3.md` 的 G2、G3：維持不解鎖，因為 Stage C/D 尚未執行，G1 仍未有正式結論。
 - 市場預測路線（`RESULTS_market_v1.md`）：不受影響，本來就已獨立封存。
