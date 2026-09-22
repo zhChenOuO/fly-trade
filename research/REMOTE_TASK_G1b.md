@@ -44,43 +44,31 @@
 
 ---
 
-## 2. 執行流程與指令
+## 2. 執行流程與精確指令
 
-在專案根目錄建立輸出目錄並執行階段 B（使用 TorchG1Reservoir 引擎）：
+在專案根目錄建立輸出目錄並執行階段 B（使用真實全腦圖、CUDA GPU 與 Torch 引擎）：
 
 ```bash
 mkdir -p research/outputs/v3
 
-/var/home/zh/Documents/github/fly-trade/.worktrees/phase0-gpu/.venv/bin/python -c "
-import json
-import time
-from pathlib import Path
-from research.pipeline.flywire_graph import load_flywire_graph
-from research.pipeline.graph_variants import compute_graph_sha256
-from research.pipeline.g1_manifest import create_g1_manifest, generate_split_sequences
-from research.pipeline.g1_reservoir import TorchG1Reservoir
-from research.pipeline.g1_runner import BudgetLedger
-
-t0 = time.time()
-print('Initializing Stage B runner and manifest...')
-manifest = create_g1_manifest('.')
-manifest.advance_stage('B')
-
-print('Loading base FlyWire v783 connectome...')
-graph = load_flywire_graph(use_cache=True)
-graph.meta['sha256'] = compute_graph_sha256(graph)
-
-print('Generating Diagnostic-fit sequences (10 streams x 2,500 steps)...')
-fit_seqs = generate_split_sequences('diagnostic-fit', manifest)
-
-print('Generating Diagnostic-check sequences (10 streams x 2,500 steps)...')
-check_seqs = generate_split_sequences('diagnostic-check', manifest)
-
-print('Running Stage B execution on CUDA GPU...')
-# GPU Reservoir simulation and Ridge evaluation
-# (Outputs saved to research/outputs/v3/g1_stage_b_report.json)
-" 2>&1 | tee research/outputs/v3/g1_stage_b.log
+/var/home/zh/Documents/github/fly-trade/.worktrees/phase0-gpu/.venv/bin/python -m research.pipeline.g1_stage_b \
+    --graph real \
+    --device cuda \
+    --require-cuda \
+    2>&1 | tee research/outputs/v3/g1_stage_b_real_cuda.log
 ```
+
+執行器將自動驗證 provenance（R1-6 與 1,291 DN）、縮放譜半徑至 $\rho=0.95$、生成 Diagnostic-fit 與 check 序列、執行 stateful 模擬串流評估飽和與初態遺忘、執行 5-fold CV Ridge 讀出與 2,000 次 sequence bootstrap、評估負控制與 oracle 正控制，並輸出完整稽核報告至：
+`research/outputs/v3/g1_stage_b_real_cuda.json`
+
+### 停止條件與 Exit Code 規範（SPEC v2 §8, §9）
+- **Exit Code 0 (`STAGE_COMPLETED`)**：
+  動力學健康 gates、雙能力 gates ($R^2 \ge 0.10$ 且 CI 下界 $> 0$)、負控制 (CI 下界 $\le 0$)、oracle 正控制及 GPU 預算全數通過。放行進入階段 C。
+- **Exit Code 1 (`VALID_GATE_FAIL`)**：
+  任一科學 gate 失敗（飽和 $\ge 5\%$、遺忘 $< 38/40$、任一目標 $R^2 < 0.10$ 或 CI 下界 $\le 0$、選中 $\alpha=10^2$、負控制 CI 下界 $> 0$、或外推 GPU 耗時超標）。立即結案，嚴禁調整超參數或重新挑選圖。
+- **Exit Code 2 (`RUN_INVALID`)**：
+  執行例外阻擋（如 DN 數量 $\ne 1,291$、缺少 `buy_idx`/`sell_idx`、未捕獲的程式異常、OOM 或硬體中斷）。寫入 SPEC §9 稽核事件紀錄。
+
 
 ---
 
