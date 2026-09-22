@@ -375,3 +375,65 @@ def test_torch_device_dtype_and_require_cuda() -> None:
     else:
         res_cuda = TorchG1Reservoir(weights=W, sensory_idx=sensory_idx, device="cuda", require_cuda=True)
         assert "cuda" in res_cuda.actual_device
+
+
+# ==============================================================================
+# Spectral Radius Cluster Robustness & Regression Tests (task_fix_eigs)
+# ==============================================================================
+
+def test_spectral_radius_cluster_stability_2000_node_fixture() -> None:
+    """Regression test for 2000-node fixture scaling stability under near-degenerate eigenvalues (task_fix_eigs)."""
+    W = _create_synthetic_sparse_reservoir(n_neurons=2000, density=0.01, seed=42)
+
+    # Scaling must not raise and verified_rho must match target_rho within 1e-3
+    W_scaled, target, unscaled, factor, diag = scale_weights_to_spectral_radius(
+        W, target_rho=0.95, verify=True, return_diagnostics=True
+    )
+    rel_diff = abs(diag["verified_rho"] - 0.95) / 0.95
+    assert rel_diff <= 1e-3, f"Scaling verification failed: rel_diff={rel_diff:.2e} > 1e-3"
+
+    # ScipyG1Reservoir instantiation must succeed without raising verification failure
+    sensory_idx = np.arange(0, 100)
+    readout_idx = np.arange(1900, 2000)
+    res_cpu = ScipyG1Reservoir(weights=W, sensory_idx=sensory_idx, readout_idx=readout_idx, target_rho=0.95)
+    assert abs(res_cpu.target_rho - 0.95) < 1e-9
+
+
+def test_compute_spectral_radius_multi_seed_v0_stability_2000_nodes() -> None:
+    """compute_spectral_radius must yield identical dominant eigenvalue across different v0 initializations."""
+    W = _create_synthetic_sparse_reservoir(n_neurons=2000, density=0.01, seed=42)
+
+    rhos = []
+    for s in [1, 2, 3, 4, 5]:
+        v0 = np.random.default_rng(s).normal(size=2000).astype(np.float64)
+        rho = compute_spectral_radius(W, v0=v0)
+        rhos.append(rho)
+
+    spread = max(rhos) - min(rhos)
+    rel_spread = spread / max(rhos)
+    assert rel_spread <= 1e-6, f"Eigensolver unstable across v0 seeds: rel_spread={rel_spread:.2e} > 1e-6"
+
+
+def test_spectral_radius_cluster_stability_5000_node_medium_graph() -> None:
+    """Independent 5000-node random graph must also pass spectral radius scaling and multi-seed stability."""
+    n = 5000
+    rng = np.random.default_rng(999)
+    W = sp.random(n, n, density=0.005, format="csr", dtype=np.float64, random_state=rng)
+
+    W_scaled, target, unscaled, factor, diag = scale_weights_to_spectral_radius(
+        W, target_rho=0.95, verify=True, return_diagnostics=True
+    )
+    rel_diff = abs(diag["verified_rho"] - 0.95) / 0.95
+    assert rel_diff <= 1e-3, f"5000-node scaling verification failed: rel_diff={rel_diff:.2e} > 1e-3"
+
+    # Multi-seed test
+    rhos = []
+    for s in [101, 102, 103, 104, 105]:
+        v0 = np.random.default_rng(s).normal(size=n).astype(np.float64)
+        rho = compute_spectral_radius(W, v0=v0)
+        rhos.append(rho)
+
+    spread = max(rhos) - min(rhos)
+    rel_spread = spread / max(rhos)
+    assert rel_spread <= 1e-6, f"5000-node eigensolver unstable across v0 seeds: rel_spread={rel_spread:.2e} > 1e-6"
+

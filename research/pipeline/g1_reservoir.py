@@ -41,16 +41,19 @@ except ImportError:
 
 def compute_spectral_radius(
     weights: sp.csr_matrix,
-    k: int = 1,
+    k: int = 6,
     maxiter: int = 1000,
     ncv: int | None = None,
     return_diagnostics: bool = False,
+    v0: np.ndarray | None = None,
 ) -> float | tuple[float, dict]:
     """Compute dominant eigenvalue magnitude of a CSR matrix without Rayleigh fallback.
 
-    Per G1_SPEC §9:
+    Per G1_SPEC §9 and task_fix_eigs:
+        Uses k=min(6, n-2) with ncv=min(n-1, max(4*k+1, 40)) for n > 20 to resolve
+        near-degenerate eigenvalue cluster instability under circular law.
         Fail-closed eigensolver. If eigs fails to converge, retry with increased
-        ncv and maxiter; if convergence still fails, raise RuntimeError.
+        k, ncv, and maxiter; if convergence still fails, raise RuntimeError.
         Never use Rayleigh quotient or power-iteration fallback, which is invalid
         for non-symmetric matrices (e.g. 2D rotation).
     """
@@ -82,33 +85,39 @@ def compute_spectral_radius(
         }
         return (rho, diag) if return_diagnostics else rho
 
-    # Sparse Arnoldi eigensolver for larger matrices
-    actual_ncv = ncv if ncv is not None else min(n - 1, max(2 * k + 1, 20))
+    # Sparse Arnoldi eigensolver for larger matrices (n > 20)
+    actual_k = min(max(k, 1), n - 2)
+    actual_ncv = ncv if ncv is not None else min(n - 1, max(4 * actual_k + 1, 40))
     vals = None
     vecs = None
 
     try:
         vals, vecs = scipy.sparse.linalg.eigs(
             weights.astype(np.float64),
-            k=k,
+            k=actual_k,
             which="LM",
             maxiter=maxiter,
             ncv=actual_ncv,
+            v0=v0,
             return_eigenvectors=True,
         )
     except Exception:
-        # Retry once with increased ncv and maxiter
-        retry_ncv = min(n - 1, max(4 * k + 1, 40))
+        # Retry once with increased k, ncv, and maxiter
+        retry_k = min(max(actual_k, 10), n - 2)
+        retry_ncv = min(n - 1, max(4 * retry_k + 1, 60))
         retry_maxiter = max(maxiter * 3, 3000)
         try:
             vals, vecs = scipy.sparse.linalg.eigs(
                 weights.astype(np.float64),
-                k=k,
+                k=retry_k,
                 which="LM",
                 maxiter=retry_maxiter,
                 ncv=retry_ncv,
+                v0=v0,
                 return_eigenvectors=True,
             )
+            actual_k = retry_k
+            actual_ncv = retry_ncv
         except Exception as retry_e:
             raise RuntimeError(
                 f"Spectral radius calculation failed to converge via scipy.sparse.linalg.eigs (n={n}, nnz={weights.nnz}): {retry_e}"
@@ -132,7 +141,7 @@ def compute_spectral_radius(
         try:
             vals2, _ = scipy.sparse.linalg.eigs(
                 weights.astype(np.float64),
-                k=k,
+                k=actual_k,
                 which="LM",
                 maxiter=maxiter,
                 ncv=actual_ncv,
@@ -157,6 +166,7 @@ def compute_spectral_radius(
         "residual": res,
         "converged": True,
         "eigenvalue": dominant_val,
+        "k": actual_k,
         "ncv": actual_ncv,
         "maxiter": maxiter,
         "init_rel_diff": init_rel_diff,
