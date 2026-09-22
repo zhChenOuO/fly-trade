@@ -611,7 +611,7 @@ def execute_stage_c(
             e_ctrl=e_ctrl_calib,
             y=calib_targets_arr,
             n_replicates=n_replicates,
-            n_bootstraps_per_cohort=min(500, n_bootstraps),
+            n_bootstraps_per_cohort=n_bootstraps,
             base_seed=60000,
             alpha_mc=0.025,
             expected_n_ctrl=n_controls if n_controls != 20 else 20,
