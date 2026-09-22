@@ -1,0 +1,146 @@
+{
+  "stage": "B",
+  "timestamp": "2026-09-22T06:53:59.883005+00:00",
+  "status": "VALID_GATE_FAIL",
+  "conclusion": "VALID_GATE_FAIL",
+  "exit_code": 1,
+  "environment": {
+    "os": "linux",
+    "platform": "Linux-6.17.7-ba29.fc43.x86_64-x86_64-with-glibc2.42",
+    "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [GCC 13.3.0]",
+    "torch_version": "2.14.0+cu130",
+    "cuda_available": true,
+    "cuda_device_name": "NVIDIA GeForce RTX 5070",
+    "requested_device": "cuda",
+    "require_cuda": true,
+    "actual_engine": "torch",
+    "actual_device": "cuda"
+  },
+  "hashes": {
+    "spec_sha256": "d375d14dc9ec876f4a1ed36197ce5a5227c2ff496f6bf694019af603dd3ef5a4",
+    "source_snapshot_sha256": "24c88f77e4868937c36e9f3d36909a87acafdc19c3689f11c345d3b23a4bbdb1",
+    "manifest_sha256": "ae43726bf68cc6b6007f4cf663ac6f7ae8fc21935ce5292656037b90bbd911f8",
+    "graph_sha256_unscaled": "79a74589bac471f752499f616978b4a13f93a23e635ccec1da52ce7c7bf5404d",
+    "graph_sha256_scaled": "18f4c95237173da9590fcc7c5cb4ff94311b23af9f988979e6de958afac63d91"
+  },
+  "provenance": {
+    "graph_type": "real",
+    "n_neurons": 138639,
+    "sensory_indices_count": 10582,
+    "r16_indices_count": 7932,
+    "r7_r8_excluded": 2650,
+    "dn_indices_count": 1291,
+    "buy_indices_count": 645,
+    "sell_indices_count": 646,
+    "spectral_radius_unscaled": 2164.292802208275,
+    "spectral_radius_target": 0.95,
+    "spectral_radius_verified": 0.950000004157043,
+    "spectral_scale_factor": 0.0004389424568758415,
+    "eigensolver_method": "scipy.sparse.linalg.eigs",
+    "eigensolver_residual": 1.5667928403059611e-15
+  },
+  "health_gates": {
+    "passed": true,
+    "saturation_gate": {
+      "passed": true,
+      "saturation_ratio": 0.0,
+      "max_allowed_ratio": 0.05,
+      "saturated_points": 0,
+      "total_non_sensory_points": 5228280000,
+      "threshold": 0.9
+    },
+    "forgetting_gate": {
+      "passed": true,
+      "n_passed_pairs": 40,
+      "total_pairs": 40,
+      "pass_ratio": 1.0,
+      "min_pass_pairs": 38,
+      "d_rel_median": 9.241010541410112e-09,
+      "d_rel_max": 8.329781122250666e-08
+    },
+    "finite_check": {
+      "passed": true,
+      "non_finite_count": 0
+    }
+  },
+  "capability_gates": {
+    "passed": false,
+    "d1": {
+      "passed": true,
+      "target": "v[t-9]",
+      "r2_point": 0.5775082792925192,
+      "ci_lower": 0.5692295472579274,
+      "ci_upper": 0.584780926836273,
+      "min_r2": 0.1,
+      "best_alpha": 0.0,
+      "alpha_at_upper_bound": false,
+      "alpha_zero_diagnostic": true,
+      "active_p": 277,
+      "effective_rank": 277,
+      "n_discarded_directions": 0,
+      "retained_condition_number": 70909443.14621107
+    },
+    "d2": {
+      "passed": false,
+      "target": "v[t]*v[t-9]",
+      "r2_point": -3.690082212903789e-06,
+      "ci_lower": -0.00038830207252594227,
+      "ci_upper": 5.659436093481406e-05,
+      "min_r2": 0.1,
+      "best_alpha": 100.0,
+      "alpha_at_upper_bound": true,
+      "alpha_zero_diagnostic": false,
+      "active_p": 277,
+      "effective_rank": 277,
+      "n_discarded_directions": 0,
+      "retained_condition_number": 70909443.14621107
+    }
+  },
+  "negative_control": {
+    "passed": false,
+    "d1": {
+      "G_point": 2.1334362875613326e-05,
+      "ci_lower": 1.1040941519525445e-06,
+      "ci_upper": 4.264977759045663e-05,
+      "passed": false,
+      "best_alpha": 100.0
+    },
+    "d2": {
+      "G_point": -4.724565617822403e-05,
+      "ci_lower": -0.0004986503291107487,
+      "ci_upper": 0.00033971865184412417,
+      "passed": true,
+      "best_alpha": 100.0
+    }
+  },
+  "oracle_controls": {
+    "passed": true,
+    "d1_teacher_r2": 1.0,
+    "d2_teacher_r2": 1.0,
+    "min_r2": 0.999999
+  },
+  "timing_and_budget": {
+    "wall_time_simulation_seconds": 31.148767538979882,
+    "wall_time_forgetting_seconds": 18.69192992002354,
+    "wall_time_ridge_seconds": 6.772319287003484,
+    "wall_time_bootstrap_seconds": 0.41514805500628427,
+    "wall_time_total_seconds": 66.24012608799967,
+    "time_per_sequence_seconds": 1.5574383769489941,
+    "time_per_step_seconds": 0.0006229753507795976,
+    "peak_ram_mb": 2052.7109375,
+    "peak_vram_mb": 191.59375,
+    "actual_stage_b_gpu_hours": 0.013844638183056507,
+    "extrapolated_stage_c_gpu_hours": 0.4269976883468492,
+    "extrapolated_stage_d_gpu_hours": 0.1998712583751209,
+    "extrapolated_total_gpu_hours": 0.6407135849050266,
+    "projected_cpu_hours_ridge_io_bootstrap": 0.14000965156894582,
+    "budget_limits": {
+      "stage_b_gpu_limit": 1.0,
+      "stage_c_gpu_limit": 4.0,
+      "stage_d_gpu_limit": 3.0,
+      "total_gpu_limit": 8.0
+    },
+    "budget_passed": true,
+    "budget_fail_reasons": []
+  }
+}
