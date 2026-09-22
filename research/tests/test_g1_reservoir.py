@@ -18,6 +18,9 @@ from research.pipeline.g1_reservoir import (
     scale_weights_to_spectral_radius,
 )
 
+if HAS_TORCH:
+    import torch
+
 
 def _create_synthetic_sparse_reservoir(n_neurons: int = 50, density: float = 0.1, seed: int = 42) -> sp.csr_matrix:
     """Helper to create a reproducible small random sparse connectome."""
