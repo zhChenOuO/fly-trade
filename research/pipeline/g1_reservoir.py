@@ -638,17 +638,13 @@ def run_timed_pilot(
     if torch.cuda.is_available() and res.actual_device != "cpu":
         peak_vram_mb = float(torch.cuda.max_memory_allocated() / (1024 * 1024))
 
-    # Extrapolate for G1 full experiment:
-    # 61 graphs (1 real + 60 controls) x 3 rho candidate grid
-    # Each graph x rho runs:
-    # Train: 10 seqs x 5,500 = 55,000 updates
-    # Val: 3 seqs x 2,500 = 7,500 updates
-    # Test: 10 seqs x 5,500 = 55,000 updates
-    # Total per graph x rho = 117,500 updates (SPEC §8, REVIEW_v3_codex Q2)
-    updates_per_graph_rho = 117500
-    n_graphs = 61
-    n_rhos = 3
-    total_g1_updates = n_graphs * n_rhos * updates_per_graph_rho
+    # Extrapolate for G1 v2 full experiment (frozen spec, G1_SPEC_v2_draft.md §3.2/§8):
+    # 21 graphs (1 real + 20 scramble_mixed), single fixed rho=0.95 (rho search withdrawn in v2).
+    # Stage B: 1 real x (diagnostic-fit 10x2,500 + diagnostic-check 10x2,500) = 50,000 updates.
+    # Stage C: 21 graphs x (Main-Train 55,000 + Main-Val 7,500 + Calibration 55,000) = 2,467,500 updates.
+    # Stage D: 21 graphs x Main-Test 55,000 = 1,155,000 updates.
+    # Total v2 state updates = 3,672,500 (matches REMOTE_TASK_G1a.md §3; superseded pre-v2 61x3 figure removed).
+    total_g1_updates = 3672500
     extrapolated_gpu_hours = (total_g1_updates * time_per_update_sec) / 3600.0
 
     budget_hours = 8.0
@@ -679,7 +675,7 @@ def run_timed_pilot(
     print(f"Time per step: {time_per_step_sec*1000:.2f} ms ({time_per_update_sec*1000:.4f} ms per sequence update).")
     print(f"Peak VRAM: {peak_vram_mb:.1f} MB.")
     print(f"Streaming saturation: ratio={sat_summary['saturation_ratio']:.4f}, passed={sat_summary['passed']}.")
-    print(f"Total G1 updates: {total_g1_updates:,} (61 graphs x 3 rhos x 117,500 updates).")
+    print(f"Total G1 v2 updates: {total_g1_updates:,} (21 graphs x single rho=0.95, frozen spec).")
     print(f"Extrapolated total GPU runtime: {extrapolated_gpu_hours:.2f} hours (Budget: {budget_hours} h).")
     print(f"Verdict: {'PASS (Within 8h budget)' if within_budget else 'FAIL (Over budget, STOP)'}.")
 
