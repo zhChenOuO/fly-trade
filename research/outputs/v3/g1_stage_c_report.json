@@ -1,0 +1,81 @@
+{
+  "protocol": "G1_v2_Stage_C",
+  "stage": "C",
+  "status": "RUN_INVALID",
+  "timestamp_utc": "2026-09-23T11:54:24.603070+00:00",
+  "env": {
+    "os": "linux",
+    "platform": "Linux-6.17.7-ba29.fc43.x86_64-x86_64-with-glibc2.42",
+    "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [GCC 13.3.0]",
+    "torch_version": "2.14.0+cu130",
+    "cuda_available": true,
+    "cuda_device_name": "NVIDIA GeForce RTX 5070",
+    "requested_device": "cuda",
+    "require_cuda": true
+  },
+  "hashes": {
+    "spec_sha256": "d375d14dc9ec876f4a1ed36197ce5a5227c2ff496f6bf694019af603dd3ef5a4",
+    "source_snapshot_sha256": "4a4c0c8cef8847f7e0725ea39a379baa898aa5d6cca61b9061a5d5dc3ef9c224",
+    "manifest_sha256": "5d47698a80292a521b2d0ed2d171e45b65ea33bd655a3bc37ed07ba51c0c19d8",
+    "simulator_hash": "a275d954f6ed1be2fe7b895a6400f42565c241feed635355eecbf979a89e85b2",
+    "readout_hash": "148f3c395237c9c9500010848091671e50782f0d838ab0aba9b0acfb1b6f487c",
+    "scorer_hash": "d4dcbb439b165da02a7342c09845e4b1c06b650633460dace1b3a1f5762a6dc0",
+    "real_graph_sha256_unscaled": "79a74589bac471f752499f616978b4a13f93a23e635ccec1da52ce7c7bf5404d",
+    "real_graph_sha256_scaled": "18f4c95237173da9590fcc7c5cb4ff94311b23af9f988979e6de958afac63d91",
+    "control_scaled_sha256s": [
+      "bda4e8f6cb8026e1e9aa0ce314bf7edc2a79fe4149c237b57892b4ae1fca60d6",
+      "6122c6e2859827e5da8b46f6748c70d6b4e8f3a3ac7340fc38cfcbac1b9742a9",
+      "936fedf76d2df2d46aac3e283bfa1ec1bba940e452d3228290f58ef1401c67c2",
+      "85e84f3e0e1eec38b717ff7e5a72efbebc693a8e66eb67c19f199a54bd2f0e94",
+      "1a58a62a2cb0ea3f0f84d1581903d2f1e6a9dd43845a1ce444669c5f996fe409",
+      "942465877e7bbbd62d6a7780385f2c45ce46e904cb24a634952ad63a66154470",
+      "3fb19825db7bfdf2fc99bf16292fa826b321b0495e062d43dd6d9b0e08f27252",
+      "10974c15cc3ce3c98cce488fbf49838f2fa996a415a1ac81068adb192c02f74d",
+      "dfd419c4dec9df8872cdf2a2bf16e37a23a338def522ec91576195cc0a4f9ed9",
+      "3d11d42258de0706ab0debce4e7d67771fed703816f672377056b89bebb5a21f",
+      "7df7435bf1ea36975f5b3946bfacba2116a4f6c45f56ed0c2436e9833adb148c",
+      "bd1f4541fd8692a23c38cebfb2256754386c487fd5bb47c95165fc6713e91a8b",
+      "a2e7c1c9121b478cb33ddb1d389702ebc7390bf25e3f6c9a0df64f7247d2b352",
+      "b9abfb79d3cc6a49c867df5956760a22cd0a1dbd4660b67a5148ae5384f61a3e",
+      "cebab64c4d824df220ca422a68623b50ae0111d4c3de655bc7d69acf9ff0a0f6",
+      "e9232a5bbf053dcb964d0d6532d883cd3ab00c756a89359c3927857a729f5582",
+      "bcac5175112d234c35f99821bdf208fa546f47125b38bd3631a1ccb594b7a0e0",
+      "09343044f8dcef2f2f2a105e107df361087704c43c5932cda7de72ac94c18df0",
+      "1d1ee85cd4184972a2638955c71a2faa267f7f4a8b6e7088d813da5697bea800",
+      "c33b6a699e7d02e3ce9d6cd67241c42c561dfcaf8dc3f29dffbfa76c9ffe0e6e"
+    ]
+  },
+  "provenance": {
+    "real": {
+      "graph_source": "real",
+      "n_neurons": 138639,
+      "r16_indices_count": 7932,
+      "dn_indices_count": 1291,
+      "spectral_radius_unscaled": 2164.2928022082824,
+      "spectral_radius_target": 0.95,
+      "spectral_scale_factor": 0.00043894245687584
+    },
+    "n_controls": 20
+  },
+  "graphs": {},
+  "primary_contrast": {},
+  "statistical_calibration": {},
+  "gates": {},
+  "budget_ledger": {},
+  "incident": {
+    "incident_type": "code_or_data_defect",
+    "first_discovered_at": "2026-09-23T13:01:52.201716+00:00",
+    "independent_evidence": "Exception in execute_stage_c: TypeError: TorchG1Reservoir.__init__() got an unexpected keyword argument 'dtype'",
+    "results_already_viewed": [],
+    "changed_files": [],
+    "new_hashes": {
+      "manifest": "5d47698a80292a521b2d0ed2d171e45b65ea33bd655a3bc37ed07ba51c0c19d8"
+    },
+    "remaining_budget": {
+      "remaining_person_hours": 32.0,
+      "remaining_gpu_hours": 7.974
+    }
+  },
+  "error": "TorchG1Reservoir.__init__() got an unexpected keyword argument 'dtype'",
+  "total_wall_seconds": 4047.5986844450235
+}

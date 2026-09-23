@@ -1,0 +1,10 @@
+{
+  "status": "RUN_INVALID",
+  "stage": "C",
+  "primary_contrast": {},
+  "gates": {},
+  "total_wall_seconds": 4047.5986844450235
+}
+Command exited with non-zero status 2
+gpu_job_process_wall_seconds=4049.96
+process_exit_code=2
