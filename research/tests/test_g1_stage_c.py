@@ -243,3 +243,27 @@ def test_stage_c_prior_gpu_hours_accounting(tmp_path: Path):
     assert rep_over["gates"]["stage_c_go"] is False
     assert rep_over["status"] == "STAGE_C_NO_GO"
     assert code_over == 1
+
+
+def test_torch_engine_factory_kwargs_match_constructor():
+    """Regression: build_engine's TorchG1Reservoir call must use only accepted kwargs.
+
+    Caught in production on the GPU machine (TypeError: unexpected keyword 'dtype')
+    because Mac has no torch and this path is never exercised by CPU-only test runs.
+    """
+    pytest.importorskip("torch")
+    from research.pipeline.g1_reservoir import TorchG1Reservoir
+    from src.connectome.synthetic import make_synthetic_connectome
+
+    g = make_synthetic_connectome(n_neurons=50, avg_out_degree=6.0, n_sensory=8, n_motor=8, seed=1)
+    # Exact kwarg set used by g1_stage_c.build_engine (minus the removed invalid 'dtype').
+    res = TorchG1Reservoir(
+        weights=g.weights,
+        sensory_idx=g.sensory_idx,
+        readout_idx=g.motor_idx,
+        target_rho=0.95,
+        leak=0.5,
+        device="cpu",
+        verify_spectral_radius=False,
+    )
+    assert res is not None

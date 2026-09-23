@@ -454,7 +454,6 @@ def execute_stage_c(
                     target_rho=DEFAULT_TARGET_RHO,
                     leak=DEFAULT_LEAK,
                     device=device,
-                    dtype=torch.float32,
                     verify_spectral_radius=False,
                 )
             else:
