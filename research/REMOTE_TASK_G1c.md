@@ -15,7 +15,7 @@
 
 1. **21 圖完整拓樸對照組**：
    - 1 張真實 FlyWire v783 全腦圖（138,639 神經元，1,509 萬突觸）。
-   - 20 張 `scramble_mixed` 重接圖（固定種子 5001..5020，來自 manifest `scramble` namespace）。
+   - 20 張 `scramble_mixed` 重接圖（固定種子 35001..35020，以 `g1_manifest.SEED_NAMESPACES["scramble"]` 為準，此處數字僅供參考）。
    - 嚴格驗證每張 scramble 圖的無縮放不變量（edge overlap $\le 5\%$、in/out degree、source out-strength、權重多重集、無自環/重複邊）。
    - 全 21 張圖各自獨立縮放譜半徑至 $\rho=0.95$（收斂殘差 $\le 10^{-6}$，獨立初始化相對差 $\le 10^{-3}$）。
 2. **固定輸入、動力學與時序契約**：
@@ -58,6 +58,7 @@ mkdir -p research/outputs/v3
     --graph-source real \
     --device cuda \
     --require-cuda \
+    --prior-gpu-hours 0.026 \
     2>&1 | tee research/outputs/v3/g1_stage_c.log
 ```
 

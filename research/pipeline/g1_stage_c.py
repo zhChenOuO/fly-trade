@@ -218,6 +218,7 @@ def execute_stage_c(
     n_bootstraps: int = DEFAULT_BOOTSTRAPS,
     custom_real_graph: ConnectomeGraph | None = None,
     save_report: bool = True,
+    prior_gpu_hours: float = 0.0,
 ) -> tuple[dict[str, Any], int]:
     """Execute complete Stage C 21-graph protocol, primary contrast, and power/FPR calibration.
 
@@ -235,6 +236,7 @@ def execute_stage_c(
     n_bootstraps: number of cross-bootstrap resamples (default 2000)
     custom_real_graph: optional pre-loaded ConnectomeGraph
     save_report: bool, whether to write report JSON to disk
+    prior_gpu_hours: cumulative GPU hours from prior stages (e.g. 0.026 from Stages A & B)
 
     Returns
     -------
@@ -304,6 +306,8 @@ def execute_stage_c(
     }
 
     ledger = BudgetLedger()
+    if prior_gpu_hours > 0.0:
+        ledger.record_usage("B", person_hours=0.0, gpu_hours=float(prior_gpu_hours))
     runner = G1Runner(manifest=manifest, ledger=ledger)
 
     try:
@@ -496,12 +500,6 @@ def execute_stage_c(
                 n_neurons=g.n_neurons,
             )
 
-            health_passed = bool(sat_train["passed"] and forget_res["passed"])
-            if is_fixture and fixture_mode in ["saturation_fail", "health_fail"] and g_idx == 0:
-                health_passed = False
-                sat_train["passed"] = False
-                sat_train["saturation_ratio"] = 0.95
-
             # 4c. Main-Train Ridge Fit (5-fold sequence CV)
             train_features = [states_train[i, 500:] for i in range(len(main_train_seqs))]
             ridge = G1RidgeReadout(alphas=ALPHA_GRID, std_cutoff=1e-8)
@@ -516,14 +514,14 @@ def execute_stage_c(
             y_tr_pred = [ridge.predict(train_features[i]) for i in range(len(main_train_seqs))]
             nmse_train = compute_pooled_nmse(np.concatenate(train_targets), np.concatenate(y_tr_pred))
 
-            # 4d. Main-Val Simulation (Integrity & finite check only, no selection)
+            # 4d. Main-Val Simulation (Integrity, finite & saturation check, no selection)
             states_val, _, sat_val = engine_inst.simulate(
                 u_val_batch, track_saturation=True, washout=500, input_centering=False,
             )
             if not np.all(np.isfinite(states_val)):
                 raise ValueError(f"Non-finite states in Main-Val simulation for {label}")
 
-            # 4e. Calibration Simulation & Prediction
+            # 4e. Calibration Simulation & Prediction (Integrity, finite & saturation check)
             states_calib, _, sat_calib = engine_inst.simulate(
                 u_calib_batch, track_saturation=True, washout=500, input_centering=False,
             )
@@ -541,6 +539,18 @@ def execute_stage_c(
             elapsed_g = time.perf_counter() - t0_g
             total_sim_time += elapsed_g
 
+            # Combined Dynamics Health Gates across Main-Train, Main-Val, and Calibration (SPEC §4.2)
+            health_passed = bool(
+                sat_train["passed"]
+                and forget_res["passed"]
+                and sat_val["passed"]
+                and sat_calib["passed"]
+            )
+            if is_fixture and fixture_mode in ["saturation_fail", "health_fail"] and g_idx == 0:
+                health_passed = False
+                sat_train["passed"] = False
+                sat_train["saturation_ratio"] = 0.95
+
             rec = {
                 "label": label,
                 "is_real": bool(g_idx == 0),
@@ -548,8 +558,14 @@ def execute_stage_c(
                 "is_alpha_upper_bound": is_alpha_upper_bound,
                 "train_nmse": nmse_train,
                 "calib_nmse": nmse_calib,
-                "saturation_ratio": float(sat_train["saturation_ratio"]),
-                "saturation_passed": bool(sat_train["passed"]),
+                "saturation_train_ratio": float(sat_train["saturation_ratio"]),
+                "saturation_train_passed": bool(sat_train["passed"]),
+                "saturation_val_ratio": float(sat_val["saturation_ratio"]),
+                "saturation_val_passed": bool(sat_val["passed"]),
+                "saturation_calib_ratio": float(sat_calib["saturation_ratio"]),
+                "saturation_calib_passed": bool(sat_calib["passed"]),
+                "saturation_ratio": float(max(sat_train["saturation_ratio"], sat_val["saturation_ratio"], sat_calib["saturation_ratio"])),
+                "saturation_passed": bool(sat_train["passed"] and sat_val["passed"] and sat_calib["passed"]),
                 "forgetting_passed_pairs": int(forget_res["n_passed_pairs"]),
                 "forgetting_passed": bool(forget_res["passed"]),
                 "health_passed": health_passed,
@@ -641,9 +657,14 @@ def execute_stage_c(
         passed_power_gate = bool(mc_calib["bounds"]["passed_power_gate"])
         passed_fpr_gate = bool(mc_calib["bounds"]["passed_fpr_gate"])
 
-        # Cost tracking
+        # Cost tracking & GPU budget ledger (SPEC §8, A24)
         total_wall_time = time.perf_counter() - t_stage_start
-        approx_gpu_h = (total_sim_time / 3600.0) if device == "cuda" else 0.0
+        stage_c_job_wall_hours = total_wall_time / 3600.0
+        stage_c_sim_hours = total_sim_time / 3600.0
+
+        # Entire job wall time is billed as GPU hours when executing on GPU device,
+        # since the rented GPU instance and slot are occupied across all steps (including Ridge & MC bootstrap).
+        approx_gpu_h = stage_c_job_wall_hours if device == "cuda" else 0.0
         approx_person_h = total_wall_time / 3600.0
 
         ledger.record_usage("C", person_hours=approx_person_h, gpu_hours=approx_gpu_h)
@@ -672,12 +693,23 @@ def execute_stage_c(
         }
 
         report["budget_ledger"] = {
-            "stage_c_person_hours": approx_person_h,
+            "prior_gpu_hours": float(prior_gpu_hours),
+            "stage_c_job_wall_seconds": total_wall_time,
+            "stage_c_job_wall_hours": stage_c_job_wall_hours,
+            "stage_c_sim_seconds": total_sim_time,
+            "stage_c_sim_hours": stage_c_sim_hours,
             "stage_c_gpu_hours": approx_gpu_h,
+            "stage_c_person_hours": approx_person_h,
             "total_person_hours": ledger.total_person_hours,
             "total_gpu_hours": ledger.total_gpu_hours,
             "stage_c_gpu_limit": STAGE_BUDGET_LIMITS["C"]["gpu_hours"],
             "total_gpu_limit": TOTAL_BUDGET_LIMITS["gpu_hours"],
+            "definitions": {
+                "stage_c_job_wall_hours": "Full Stage C job wall-clock time from start to report generation (includes graph operations, simulations, Ridge CV, and Monte Carlo bootstrap).",
+                "stage_c_sim_hours": "Cumulative time spent specifically inside reservoir simulation calls across all 21 graphs.",
+                "stage_c_gpu_hours": "GPU hours billed for Stage C (full job wall time on GPU instance if device=='cuda', else 0.0).",
+                "total_gpu_hours": "Cumulative GPU hours across Stage A/B (prior_gpu_hours) plus Stage C gpu_hours.",
+            },
         }
 
         report["status"] = "STAGE_C_GO" if stage_c_go else "STAGE_C_NO_GO"
@@ -733,6 +765,8 @@ def main():
                         help=f"Number of MC cohorts for power/FPR (default {DEFAULT_MC_REPLICATES})")
     parser.add_argument("--n-bootstraps", type=int, default=DEFAULT_BOOTSTRAPS,
                         help=f"Number of bootstrap resamples (default {DEFAULT_BOOTSTRAPS})")
+    parser.add_argument("--prior-gpu-hours", type=float, default=0.0,
+                        help="Prior cumulative GPU hours from earlier stages (e.g. 0.026 from Stages A & B)")
 
     args = parser.parse_args()
 
@@ -746,6 +780,7 @@ def main():
         n_controls=args.n_controls,
         n_replicates=args.n_replicates,
         n_bootstraps=args.n_bootstraps,
+        prior_gpu_hours=args.prior_gpu_hours,
     )
 
     print(json.dumps({

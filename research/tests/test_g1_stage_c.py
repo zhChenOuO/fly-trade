@@ -56,6 +56,9 @@ def test_stage_c_end_to_end_fixture_execution(tmp_path: Path):
     assert "train_nmse" in report["graphs"]["real"]
     assert "calib_nmse" in report["graphs"]["real"]
     assert report["graphs"]["real"]["health_passed"] is True
+    assert report["graphs"]["real"]["saturation_train_passed"] is True
+    assert report["graphs"]["real"]["saturation_val_passed"] is True
+    assert report["graphs"]["real"]["saturation_calib_passed"] is True
 
     assert "controls" in report["graphs"]
     assert len(report["graphs"]["controls"]) == 4
@@ -63,6 +66,8 @@ def test_stage_c_end_to_end_fixture_execution(tmp_path: Path):
         assert ctrl["is_real"] is False
         assert "calib_nmse" in ctrl
         assert ctrl["health_passed"] is True
+        assert ctrl["saturation_val_passed"] is True
+        assert ctrl["saturation_calib_passed"] is True
 
     # 4. Check primary contrast
     pc = report["primary_contrast"]
@@ -88,6 +93,13 @@ def test_stage_c_end_to_end_fixture_execution(tmp_path: Path):
     assert "passed_power_gate" in gates
     assert "passed_fpr_gate" in gates
     assert "passed_budget_gate" in gates
+
+    # 7. Check budget ledger fields and definitions
+    bl = report["budget_ledger"]
+    assert "stage_c_job_wall_hours" in bl
+    assert "stage_c_sim_hours" in bl
+    assert "prior_gpu_hours" in bl
+    assert "definitions" in bl
 
 
 def test_stage_c_dynamics_gate_failure_nogo(tmp_path: Path):
@@ -189,3 +201,45 @@ def test_stage_c_budget_ledger_enforcement():
     # Total so far = 6.5 hours. Stage C limit is 4.0. Projected 2.0 is <= 4.0, but total 6.5 + 2.0 = 8.5 > 8.0.
     with pytest.raises(RuntimeError, match="Total budget exceeded"):
         ledger.check_limits("C", projected_gpu=2.0)
+
+
+def test_stage_c_prior_gpu_hours_accounting(tmp_path: Path):
+    """Verify that prior_gpu_hours is correctly accumulated into budget ledger."""
+    out_json = tmp_path / "prior_gpu.json"
+
+    # 1. Normal prior hours (0.026) recorded correctly
+    rep, code = execute_stage_c(
+        graph_source="fixture",
+        device="cpu",
+        engine="scipy",
+        repo_root=REPO_ROOT,
+        output_path=out_json,
+        n_controls=2,
+        n_replicates=5,
+        n_bootstraps=20,
+        prior_gpu_hours=0.026,
+        save_report=False,
+    )
+    bl = rep["budget_ledger"]
+    assert bl["prior_gpu_hours"] == 0.026
+    assert bl["total_gpu_hours"] >= 0.026
+    assert bl["stage_c_gpu_limit"] == 4.0
+    assert bl["total_gpu_limit"] == 8.0
+
+    # 2. Excessive prior hours (8.5 > 8.0 total limit) fails budget gate
+    rep_over, code_over = execute_stage_c(
+        graph_source="fixture",
+        device="cpu",
+        engine="scipy",
+        repo_root=REPO_ROOT,
+        output_path=out_json,
+        n_controls=2,
+        n_replicates=5,
+        n_bootstraps=20,
+        prior_gpu_hours=8.5,
+        save_report=False,
+    )
+    assert rep_over["gates"]["passed_budget_gate"] is False
+    assert rep_over["gates"]["stage_c_go"] is False
+    assert rep_over["status"] == "STAGE_C_NO_GO"
+    assert code_over == 1
