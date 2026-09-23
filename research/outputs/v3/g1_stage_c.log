@@ -1,0 +1,33 @@
+/var/home/zh/Documents/github/fly-trade/.worktrees/g1_stage_c/research/pipeline/g1_reservoir.py:445: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  self.W_torch = torch.sparse_csr_tensor(
+/var/home/zh/Documents/github/fly-trade/.worktrees/g1_stage_c/research/pipeline/g1_reservoir.py:445: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  self.W_torch = torch.sparse_csr_tensor(
+{
+  "status": "STAGE_C_NO_GO",
+  "stage": "C",
+  "primary_contrast": {
+    "real_calib_nmse": 0.5119673902636817,
+    "control_median_calib_nmse": 0.4086094891579304,
+    "delta": -0.2529503201669473,
+    "ci_lower_95": -0.2746684998112601,
+    "ci_upper_95": -0.23405149977933923,
+    "ci_lower_gt_0": false,
+    "delta_ge_5pct": false,
+    "passed_primary_gate": false,
+    "n_bootstraps": 2000
+  },
+  "gates": {
+    "passed_health_gates": true,
+    "passed_alpha_boundary": true,
+    "n_alpha_max": 0,
+    "alpha_max_ratio": 0.0,
+    "passed_power_gate": true,
+    "passed_fpr_gate": false,
+    "passed_budget_gate": true,
+    "stage_c_go": false
+  },
+  "total_wall_seconds": 6290.450691320992
+}
+Command exited with non-zero status 1
+gpu_job_process_wall_seconds=6293.15
+process_exit_code=1
