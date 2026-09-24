@@ -1,5 +1,35 @@
 # G1 v2 結果（connectome-as-reservoir，合成基準）
 
+## 最終判定（2026-09-24）：STAGE_C_NO_GO，G1 結案
+
+主測（Stage C，21 圖：1 real + 20 scramble_mixed，NARMA10）已完整執行，結果為 **NO-GO**。依預先議定的停損規則（`REVIEW_stop_rule.md`），有效 gate 失敗即結案，不換 readout／rho／alpha／seed／效果門檻重跑。**G1（connectome-as-reservoir 一般計算能力）研究到此為止。**
+
+### 結果
+| 指標 | 數值 |
+|---|---|
+| real 圖 Calibration NMSE | 0.5120 |
+| 20 個 scramble_mixed 圖 NMSE 範圍 | 0.4025 – 0.4224（中位數 0.4086） |
+| Δ = (中位數−real)/中位數 | **−0.2530**（real 比全部 20 個對照都差，不是「沒有優勢」，是「輸給每一個」） |
+| 95% CI（2,000 次交叉 bootstrap） | [−0.2747, −0.2341]（完全不含 0，更不含 +5%） |
+| Health / α 撞上界 / Power / Budget gate | 全 PASS（0/21 圖撞 α 上界；health 全過） |
+| FPR gate | **FAIL**（點估計 0.102，97.5% 上界 0.1224，門檻 ≤0.05；空校準本身超出容許誤判率，獨立於 Δ 為負這件事） |
+| GPU 成本 | Stage C 1.747 小時；累計 1.773 / 8 小時 |
+
+Claude 已獨立核對：20 個控制圖的 α 全部是 0（無正則化）、NMSE 緊密分布在 0.40–0.42，real 的 0.512 明顯高於全部 20 個控制圖，不是邊界情況。
+
+### 判讀
+- **不是「real 沒有優勢」，是「real 在此任務下比隨機重接還差」。** 這本身是有資訊量的負結果。
+- **FPR gate 另外失敗**（獨立於 Δ）：空校準（null calibration）的假陽性率 0.102 超出 0.05 門檻，代表這套統計程序本身在「真的沒有差異」時容易誤判有差異。這不會反過來讓 Δ=−0.253 這個强烈負值變得可疑——CI 完全落在負值區，遠離 0，不太可能是 FPR 過鬆造成的假訊號（那只會讓「real 更好」的誤判機率增加，不會系統性地讓 real 看起來更差）。但這代表若未來要重用同一套統計框架，需要另外查 FPR 偏高的機制。
+- 依規格 §2：結論僅限「在此固定 specimen、固定輸入/讀出/動力學、此組 20 個 scramble_mixed 對照下，real 未證明優於對照，且觀測值方向為劣」，不代表其他個體、其他 benchmark、或市場預測能力。
+
+### 過程記錄（本次執行前，連續攔下 4 輪程式/文件缺陷，未浪費 GPU 時間）
+1. MC 校準內層 bootstrap 次數被限制在 500，與規格要求的 2,000 不符（`dbd8e85`）。
+2. 任務文件的 scramble 種子過時、Main-Val/Calibration 缺飽和 gate、GPU 帳本沒有累計既有用量（`41cba30`）。
+3. `TorchG1Reservoir` 收到不支援的 `dtype` 參數，Mac 本機測試從未真正跑過 Torch 路徑而漏掉此問題（`4389d3e`）。
+4. Git 分支分歧（先前失敗紀錄的 commit 造成 `--ff-only` 失敗），改開新分支 `remote/g1_stage_c_v2` 解決，未 force push、未遺失任何資料。
+
+證據：`research/outputs/v3/g1_stage_c_report.json`、`.log`。
+
 ## 更正紀錄（2026-09-22，Codex 獨立審查後，Claude 已親自驗證）
 原判定「VALID_GATE_FAIL，DN 線性讀出無非線性能力」**已撤回**。Codex 唯讀審查發現 Blocker 級設計缺陷：`d2 = v[t]·v[t−9]` 這個 target 在數學上不可能被 Stage B 使用的讀出狀態預測到，與拓樸、讀出、演算法能力全部無關。Claude 已獨立讀碼與實測驗證此缺陷成立（見下）。**判定改為 STAGE_B_INVALID（診斷設計缺陷），結論未定，非「拓樸/連接體/監督式學習無能力」。**
 
